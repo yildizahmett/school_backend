@@ -1,3 +1,6 @@
 from util import db
-db.drop_all()
+try:
+    db.drop_all()
+except:
+    pass
 db.create_all()
