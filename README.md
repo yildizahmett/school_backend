@@ -1,2 +1,1 @@
-# school_backend
- UPS Backend
+# UP School v1
