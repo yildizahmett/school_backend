@@ -23,7 +23,7 @@ def student_register():
         db.session.add(user)
         db.session.commit()
 
-        return jsonify({'message': 'User created successfully'}), 201
+        return jsonify({'message': 'User created successfully'}), 200
     except:
         return jsonify({'message': 'Something went wrong'}), 500
 
@@ -81,7 +81,7 @@ def employee_register():
         db.session.add(user)
         db.session.commit()
 
-        return jsonify({'message': 'User created successfully'}), 201
+        return jsonify({'message': 'User created successfully'}), 200
     except:
         return jsonify({'message': 'Something went wrong'}), 500
     
