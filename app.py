@@ -130,11 +130,11 @@ def student_profile_update():
             elif request.method == 'POST':
                 data = request.get_json()
 
-                if 'password' in data.keys():
+                """if 'password' in data.keys():
                     hashed_password = bcrypt.generate_password_hash(data["password"]).decode('utf-8')
                     setattr(student, "password", hashed_password)
                     # delete password from data
-                    del data["password"]
+                    del data["password"]"""
 
                 for key, value in data.items():
                     try:
