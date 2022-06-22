@@ -50,7 +50,7 @@ def student_login():
             access_token = create_access_token(identity=token_identity)
             return jsonify({'access_token': access_token}), 200
         else:
-            return jsonify({'message': 'Incorrect password'}), 400
+            return jsonify({'message': 'Incorrect password or email'}), 400
         
     except:
         return jsonify({'message': 'Something went wrong'}), 500
