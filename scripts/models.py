@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from scripts.util import db
-
+# to be able to run update_db.py successfully, remove 'scripts.'  from the line above then add it after you're done
 
 class Students(db.Model):
     __table_name__ = 'students'
@@ -14,7 +14,7 @@ class Students(db.Model):
     github = db.Column(db.String(240), nullable=True)
     medium = db.Column(db.String(240), nullable=True)
     program_name = db.Column(db.String(120), nullable=True)
-    comp_skils = db.Column(db.ARRAY(db.String(120)), nullable=True)
+    comp_skills = db.Column(db.ARRAY(db.String(120)), nullable=True)
     hobbies = db.Column(db.ARRAY(db.String(120)), nullable=True)
     birth_date = db.Column(db.DateTime, nullable=True)
     english_level = db.Column(db.String(120), nullable=True)
@@ -26,6 +26,7 @@ class Students(db.Model):
     country = db.Column(db.String(120), nullable=True)
     salary_min = db.Column(db.Integer, nullable=True)
     salary_max = db.Column(db.Integer, nullable=True)
+    salary_currency = db.Column(db.String(10), nullable=True)
     is_temp = db.Column(db.Boolean, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
 

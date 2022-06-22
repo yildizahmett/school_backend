@@ -1,9 +1,10 @@
+from cmath import e
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from datetime import datetime, timedelta
 import random
 import json
-from scripts.util import app, bcrypt, jwt, db
+from scripts.util import app, bcrypt, jwt, db, update_table_data, update_profile_data
 from scripts.models import Companies, Employees, Favourites, Students
 
 
@@ -109,56 +110,54 @@ def employee_login():
     except:
         return jsonify({'message': 'Something went wrong'}), 500
 
+# ========================================================================================
+#   Profile Update Section
+# ========================================================================================
+#   General, Activities, Hardskills, Softskills, Job, Settings
+#   'Settings' route will be coded later -> features mail sending, changing email and password
 
-@app.route('/student-profile-update', methods=['GET', 'POST'])
+@app.route('/profile-update', methods=['GET', 'POST'])
 @jwt_required()
-def student_profile_update():
+def profile_update_general():
+    return update_profile_data(request, get_jwt_identity(), Students, 'general')
+
+
+@app.route('/profile-update/activities', methods=['GET', 'POST'])
+@jwt_required()
+def profile_update_activities():
+    return update_profile_data(request, get_jwt_identity(), Students, 'activities')
+
+
+@app.route('/profile-update/hardskills', methods=['GET', 'POST'])
+@jwt_required()
+def profile_update_hardskills():
+    return update_profile_data(request, get_jwt_identity(), Students, 'hardskills')
+
+
+@app.route('/profile-update/softskills', methods=['GET', 'POST'])
+@jwt_required()
+def profile_update_softskills():
+    return update_profile_data(request, get_jwt_identity(), Students, 'softskills')
+
+
+@app.route('/profile-update/job', methods=['GET', 'POST'])
+@jwt_required()
+def profile_update_job():
+    return update_profile_data(request, get_jwt_identity(), Students, 'job')
+
+
+@app.route('/profile-update/settings', methods=['GET', 'POST'])
+@jwt_required()
+def profile_update_settings():
     try:
-        jwt_identitiy = get_jwt_identity()
-        user_type = jwt_identitiy['user_type']
-        email = jwt_identitiy['email']
-
-        message = ""
-
-        if user_type != 'student' and user_type != 'temp_student':
-            return jsonify({'message': 'You are not a student'}), 400
-
-        try:
-            student = Students.query.filter_by(email=email).first()
-            if request.method == 'GET':
-                return jsonify(student.to_dict()), 200
-
-            elif request.method == 'POST':
-                data = request.get_json()
-
-                """if 'password' in data.keys():
-                    hashed_password = bcrypt.generate_password_hash(data["password"]).decode('utf-8')
-                    setattr(student, "password", hashed_password)
-                    # delete password from data
-                    del data["password"]"""
-
-                for key, value in data.items():
-                    try:
-                        setattr(student, key, value)
-                    except Exception as e:
-                        print(e)
-                        message += 'but the key ' + key + ' is not in the model '
-                
-                db.session.commit()
-                return jsonify({'message': 'User updated successfully' + message}), 200
-
-        except:
-            return jsonify({'message': 'Something went wrong in request operations'}), 500
-
+        pass
     except:
-        return jsonify({'message': 'Something went wrong'}), 500
-            
+        pass
 
 
-
-
-"""----------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------"""
+# ========================================================================================
+#   End of profile update
+# ========================================================================================
 
 @app.route('/company-register', methods=['POST'])
 def company_register():
