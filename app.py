@@ -3,8 +3,9 @@ from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identi
 from datetime import datetime, timedelta
 import random
 import json
+from scripts.util import app, bcrypt, jwt, db
+from scripts.models import Companies, Employees, Favourites, Students
 
-from scripts.util import app, bcrypt, jwt, db, Students, Employees, Companies, Favourites
 
 @app.route('/student-register', methods=['POST'])
 def student_register():
