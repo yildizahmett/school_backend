@@ -3,6 +3,7 @@ from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
+import json
 from datetime import timedelta
 
 TOKEN_EXPIRE_TIME = 2 # HOURS
@@ -18,13 +19,12 @@ CORS(app)
 
 # This category needs to be updated!
 data_category = {
-    'general': ['name', 'surname', 'birth_date', 'salary_min', 'salary_max', 'salary_currency'],
-    'activities': ['school_stuffs'],
-    'hardskills': ['comp_skills'],
-    'softskills': ['hobbies'],
-    'job': ['experiences', 'educations']
+    'general': ['name', 'surname', 'phone', 'birth_date', 'city', 'country', 'job_title', 'starting_date', 'salary_min', 'salary_max', 'salary_currency'],
+    'activities': ['school_stuffs'], # UNFINISHED!
+    'hardskills': ['educations', 'experiences', 'projects', 'languages'],
+    'softskills': ['comp_skills', 'hobbies'], # UNFINISHED!
+    'job': ['experiences', 'educations'] # UNFINISHED!
 }
-
 
 def get_specific_data(member, needed_data):
     try:

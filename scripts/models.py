@@ -1,36 +1,44 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import JSON as pg_JSON
 from datetime import datetime
 from scripts.util import db
 # to be able to run update_db.py successfully, remove 'scripts.'  from the line above then add it after you're done
 
-class Students(db.Model):
-    __table_name__ = 'students'
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    name = db.Column(db.String(120), nullable=False)
-    surname = db.Column(db.String(120), nullable=False)
-    linkedin = db.Column(db.String(240), nullable=True)
-    github = db.Column(db.String(240), nullable=True)
-    medium = db.Column(db.String(240), nullable=True)
-    program_name = db.Column(db.String(120), nullable=True)
-    comp_skills = db.Column(db.ARRAY(db.String(120)), nullable=True)
-    hobbies = db.Column(db.ARRAY(db.String(120)), nullable=True)
-    birth_date = db.Column(db.DateTime, nullable=True)
-    english_level = db.Column(db.String(120), nullable=True)
-    reference = db.Column(db.String(120), nullable=True)
-    starting_date = db.Column(db.DateTime, nullable=True)
-    job_title = db.Column(db.String(120), nullable=True)
-    workplace_type = db.Column(db.String(120), nullable=True)
-    city = db.Column(db.String(120), nullable=True)
-    country = db.Column(db.String(120), nullable=True)
-    salary_min = db.Column(db.Integer, nullable=True)
-    salary_max = db.Column(db.Integer, nullable=True)
-    salary_currency = db.Column(db.String(10), nullable=True)
-    is_temp = db.Column(db.Boolean, nullable=False)
-    date = db.Column(db.DateTime, nullable=False)
 
-    favourites = db.relationship('Favourites', backref='students_ref', lazy=True)
+class Students(db.Model):
+    __table_name__  = 'students'
+    id              = db.Column(db.Integer, primary_key=True)
+    email           = db.Column(db.String(120), unique=True, nullable=False)
+    password        = db.Column(db.String(255), nullable=False)
+    name            = db.Column(db.String(120), nullable=False)
+    surname         = db.Column(db.String(120), nullable=False)
+    phone           = db.Column(db.String(25), nullable=True) # the length may be shortened
+    summary         = db.Column(db.String(255), nullable=True)
+    linkedin        = db.Column(db.String(240), nullable=True)
+    github          = db.Column(db.String(240), nullable=True)
+    medium          = db.Column(db.String(240), nullable=True)
+    program_name    = db.Column(db.String(120), nullable=True)
+    comp_skills     = db.Column(db.ARRAY(db.String(120)), nullable=True)
+    hobbies         = db.Column(db.ARRAY(db.String(120)), nullable=True)
+    birth_date      = db.Column(db.DateTime, nullable=True)
+    english_level   = db.Column(db.String(120), nullable=True) # this might be removed due to how languages are stored
+    reference       = db.Column(db.String(120), nullable=True)
+    starting_date   = db.Column(db.DateTime, nullable=True)
+    job_title       = db.Column(db.String(120), nullable=True)
+    educations      = db.Column(pg_JSON)
+    experiences     = db.Column(pg_JSON)
+    projects        = db.Column(pg_JSON)
+    languages       = db.Column(pg_JSON)
+    workplace_type  = db.Column(db.String(120), nullable=True)
+    city            = db.Column(db.String(120), nullable=True)
+    country         = db.Column(db.String(120), nullable=True)
+    salary_min      = db.Column(db.Integer, nullable=True)
+    salary_max      = db.Column(db.Integer, nullable=True)
+    salary_currency = db.Column(db.String(10), nullable=True)
+    is_temp         = db.Column(db.Boolean, nullable=False)
+    date            = db.Column(db.DateTime, nullable=False)
+
+    favourites      = db.relationship('Favourites', backref='students_ref', lazy=True)
 
     def __init__(self, email, password, name, surname):
         self.email = email
