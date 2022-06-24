@@ -91,6 +91,18 @@ class Employees(db.Model):
         self.company = company
         self.date = datetime.now()
 
+class Admins(db.Model):
+    __tablename__ = 'admins'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    phone = db.Column(db.String(25), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+
+    def __init__(self, email, phone, password):
+        self.email = email
+        self.phone = phone
+        self.password = password
+
 class Favourites(db.Model):
     __tablename__ = 'favourites'
     id=db.Column(db.Integer,primary_key=True)

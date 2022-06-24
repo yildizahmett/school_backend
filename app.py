@@ -3,8 +3,8 @@ from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identi
 from datetime import datetime, timedelta
 import random
 import json
-from scripts.util import app, bcrypt, jwt, db, update_table_data, update_profile_data
-from scripts.models import Companies, Employees, Favourites, Students
+from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data
+from scripts.models import Admins, Companies, Employees, Favourites, Students
 
 
 @app.route('/student-register', methods=['POST'])
@@ -105,7 +105,7 @@ def employee_login():
             access_token = create_access_token(identity=token_identity)
             return jsonify({'access_token': access_token}), 200
         else:
-            return jsonify({'message': 'Incorrect password'}), 400
+            return jsonify({'message': 'Incorrect password or email'}), 400
     except:
         return jsonify({'message': 'Something went wrong'}), 500
 
@@ -153,10 +153,10 @@ def profile_update_settings():
     except:
         pass
 
-
 # ========================================================================================
 #   End of profile update
 # ========================================================================================
+
 
 @app.route('/company-register', methods=['POST'])
 def company_register():
@@ -174,6 +174,30 @@ def company_register():
     return jsonify({'message': 'Company created successfully'}), 201
 
 
+#         !!!!!!!!          Daha denenmedi  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@app.route('/super-secret-admin-login', methods=['POST'])
+def administrator_login():
+    try:
+        data = request.get_json()
+        email = data['email']
+        password = data['password']
+
+        admin = Admins.query.filter_by(email=email).first()
+
+        if not admin:
+            return jsonify({'message': 'Administrator with those credentials does not exist'}), 400
+
+        token_identity = {'user_type': 'admin', 'email': email}
+
+        if bcrypt.check_password_hash(admin.password, password):
+            access_token = create_access_token(identity=token_identity)
+            return jsonify({'access_token': access_token}), 200
+        else:
+            return jsonify({'message': 'Incorrect password or email'}), 400
+    except:
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
 @app.route('/student-dashboard', methods=['GET'])
 @jwt_required()
 def student_dashboard():
@@ -185,6 +209,21 @@ def student_dashboard():
     
     user = Students.query.filter_by(email=email).first()
     return jsonify({'email': user.email}), 200
+
+
+@app.route('/admin/students', methods=['GET'])
+def admin_test():
+    students = Students.query.all()
+    students = [get_specific_data(student, 'admin-test-students', get_raw=True) for student in students]
+    return jsonify({'students': students}), 200
+
+
+@app.route('/admin/companies', methods=['GET'])
+def admin_test_companies():
+    companies = Companies.query.all()
+    companies = [get_specific_data(company, 'admin-test-companies', get_raw=True) for company in companies]
+    return jsonify({'companies': companies}), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)

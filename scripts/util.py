@@ -23,15 +23,20 @@ data_category = {
     'activities': ['school_stuffs'], # UNFINISHED!
     'hardskills': ['educations', 'experiences', 'projects', 'languages'],
     'softskills': ['comp_skills', 'hobbies'], # UNFINISHED!
-    'job': ['experiences', 'educations'] # UNFINISHED!
+    'job': ['experiences', 'educations'], # UNFINISHED!
+
+    'admin-test-students': ['name', 'surname', 'salary_currency'],
+    'admin-test-companies': ['company_name', 'company_users']
 }
 
-def get_specific_data(member, needed_data):
+def get_specific_data(member, needed_data, get_raw=False):
     try:
         prior_data = member.to_dict()
 
         final_data = {key: val for key, val in prior_data.items() if (key in data_category[needed_data])}
 
+        if get_raw:
+            return final_data
         return jsonify(final_data), 200
     except Exception as e:
         print(e)
