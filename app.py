@@ -1,10 +1,11 @@
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from datetime import datetime, timedelta
+import os
 import random
 import json
 from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data
-from scripts.models import Admins, Companies, Employees, Favourites, Students
+from scripts.models import Companies, Employees, Favourites, Students
 
 
 @app.route('/student-register', methods=['POST'])
@@ -158,23 +159,50 @@ def profile_update_settings():
 # ========================================================================================
 
 
-@app.route('/company-register', methods=['POST'])
+@app.route('/admin/company-register', methods=['POST'])
 def company_register():
-    data = request.get_json()
-    company_name = data['company_name']
-    special_id = data['special_id']
-    company_users = data['company_users']
+    try:
+        data = request.get_json()
+        company_name = data['company_name']
+        #special_id = data['special_id']
+        special_id = '123abc'
+        company_users = data['company_users']
 
-    if Companies.query.filter_by(company_name=company_name).first():
-        return jsonify({'message': 'Company already exists'}), 400
+        if Companies.query.filter_by(company_name=company_name).first():
+            return jsonify({'message': 'Company already exists'}), 400
 
-    company = Companies(company_name, special_id, company_users)
-    db.session.add(company)
-    db.session.commit()
-    return jsonify({'message': 'Company created successfully'}), 201
+        company = Companies(company_name, special_id, company_users)
+        db.session.add(company)
+        db.session.commit()
+        return jsonify({'message': 'Company created successfully'}), 201
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
 
 
-#         !!!!!!!!          Daha denenmedi  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@app.route('/admin/company-add-employee', methods=['POST'])
+def company_add_user():
+    try:
+        data = request.get_json()
+        company_name = data['company_name']
+        new_employees = data['company_users']
+        
+        try:
+            company = Companies.query.filter_by(company_name=company_name).first()
+            final_employees = company.company_users + new_employees
+            
+            setattr(company, 'company_users', final_employees)
+            db.session.commit()
+            return jsonify({'message': 'Employees updated succesfully. Current: ' + str(final_employees)}), 200
+        except Exception as e:
+            print(e)
+            return jsonify({'message': 'Something went wrong in request operations'}), 500
+
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
 @app.route('/super-secret-admin-login', methods=['POST'])
 def administrator_login():
     try:
@@ -182,47 +210,61 @@ def administrator_login():
         email = data['email']
         password = data['password']
 
-        admin = Admins.query.filter_by(email=email).first()
+        admin = None
 
-        if not admin:
-            return jsonify({'message': 'Administrator with those credentials does not exist'}), 400
+        with open('admins/admin1.json', 'r') as j:
+            admin = json.load(j)
+        admin = dict(admin)
 
-        token_identity = {'user_type': 'admin', 'email': email}
-
-        if bcrypt.check_password_hash(admin.password, password):
-            access_token = create_access_token(identity=token_identity)
-            return jsonify({'access_token': access_token}), 200
-        else:
+        if email != admin['email'] or admin['password'] != password:
             return jsonify({'message': 'Incorrect password or email'}), 400
-    except:
+
+        print(admin)
+        
+        return jsonify({'message': 'Admin login successful'}), 200
+    except Exception as e:
+        print(e)
         return jsonify({'message': 'Something went wrong'}), 500
 
 
+# This code shall be removed later!
 @app.route('/student-dashboard', methods=['GET'])
 @jwt_required()
 def student_dashboard():
-    token_identity = get_jwt_identity()
-    user_type = token_identity['user_type']
-    email = token_identity['email']
-    if user_type != 'student':
-        return jsonify({'message': 'You are not a student'}), 400
-    
-    user = Students.query.filter_by(email=email).first()
-    return jsonify({'email': user.email}), 200
+    try:
+        token_identity = get_jwt_identity()
+        user_type = token_identity['user_type']
+        email = token_identity['email']
+        if user_type != 'student':
+            return jsonify({'message': 'You are not a student'}), 400
+        
+        user = Students.query.filter_by(email=email).first()
+        return jsonify({'email': user.email}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
 
 
 @app.route('/admin/students', methods=['GET'])
 def admin_test():
-    students = Students.query.all()
-    students = [get_specific_data(student, 'admin-test-students', get_raw=True) for student in students]
-    return jsonify({'students': students}), 200
+    try:
+        students = Students.query.all()
+        students = [get_specific_data(student, 'admin-test-students', get_raw=True) for student in students]
+        return jsonify({'students': students}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
 
 
 @app.route('/admin/companies', methods=['GET'])
 def admin_test_companies():
-    companies = Companies.query.all()
-    companies = [get_specific_data(company, 'admin-test-companies', get_raw=True) for company in companies]
-    return jsonify({'companies': companies}), 200
+    try:
+        companies = Companies.query.all()
+        companies = [get_specific_data(company, 'admin-test-companies', get_raw=True) for company in companies]
+        return jsonify({'companies': companies}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
 
 
 if __name__ == '__main__':

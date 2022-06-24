@@ -56,7 +56,7 @@ class Companies(db.Model):
     id=db.Column(db.Integer,primary_key=True)
     company_name = db.Column(db.String(100), nullable=False, unique=True)
     special_id = db.Column(db.String(20), unique=True)
-    company_users = db.Column(db.ARRAY(db.String(100)))
+    company_users = db.Column(db.ARRAY(db.String(100)), nullable=True)
     date = db.Column(db.DateTime, nullable=False)
 
     employees = db.relationship('Employees', backref='companies_ref', lazy=True)
@@ -70,6 +70,9 @@ class Companies(db.Model):
 
     def add_user(self, user):
         self.company_users.append(user)
+
+    def to_dict(self):
+        return {i.name: getattr(self, i.name) for i in self.__table__.columns}
 
 class Employees(db.Model):
     __table_name__ = 'employees'
@@ -91,17 +94,6 @@ class Employees(db.Model):
         self.company = company
         self.date = datetime.now()
 
-class Admins(db.Model):
-    __tablename__ = 'admins'
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    phone = db.Column(db.String(25), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-
-    def __init__(self, email, phone, password):
-        self.email = email
-        self.phone = phone
-        self.password = password
 
 class Favourites(db.Model):
     __tablename__ = 'favourites'
