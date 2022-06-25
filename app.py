@@ -116,7 +116,7 @@ def employee_login():
 #   General, Activities, Hardskills, Softskills, Job, Settings
 #   'Settings' route will be coded later -> features mail sending, changing email and password
 
-@app.route('/profile-update', methods=['GET', 'POST'])
+@app.route('/profile-update/general', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_general():
     return update_profile_data(request, get_jwt_identity(), Students, 'general')
