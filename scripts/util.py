@@ -26,7 +26,7 @@ data_category = {
     'job': ['experiences', 'educations'], # UNFINISHED!
 
     'admin-test-students': ['name', 'surname', 'salary_currency'],
-    'admin-test-companies': ['company_name', 'company_users']
+    'admin-companies': ['company_name', 'special_id', 'company_users']
 }
 
 def get_specific_data(member, needed_data, get_raw=False):

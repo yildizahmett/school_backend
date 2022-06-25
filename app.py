@@ -1,14 +1,17 @@
+from click import edit
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from datetime import datetime, timedelta
 import os
 import random
 import json
+
+from sqlalchemy import delete
 from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data
 from scripts.models import Companies, Employees, Favourites, Students
 
 
-@app.route('/student-register', methods=['POST'])
+@app.route('/student/register', methods=['POST'])
 def student_register():
     try:
         data = request.get_json()
@@ -30,7 +33,7 @@ def student_register():
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/student-login', methods=['POST'])
+@app.route('/student/login', methods=['POST'])
 def student_login():
     try:
         data = request.get_json()
@@ -57,7 +60,7 @@ def student_login():
         return jsonify({'message': 'Something went wrong'}), 500
     
 
-@app.route('/employee-register', methods=['POST'])
+@app.route('/employee/register', methods=['POST'])
 def employee_register():
     try:
         data = request.get_json()
@@ -88,7 +91,7 @@ def employee_register():
         return jsonify({'message': 'Something went wrong'}), 500
     
 
-@app.route('/employee-login', methods=['POST'])
+@app.route('/employee/login', methods=['POST'])
 def employee_login():
     try:
         data = request.get_json()
@@ -116,37 +119,37 @@ def employee_login():
 #   General, Activities, Hardskills, Softskills, Job, Settings
 #   'Settings' route will be coded later -> features mail sending, changing email and password
 
-@app.route('/profile-update/general', methods=['GET', 'POST'])
+@app.route('/student/profile-update/general', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_general():
     return update_profile_data(request, get_jwt_identity(), Students, 'general')
 
 
-@app.route('/profile-update/activities', methods=['GET', 'POST'])
+@app.route('/student/profile-update/activities', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_activities():
     return update_profile_data(request, get_jwt_identity(), Students, 'activities')
 
 
-@app.route('/profile-update/hardskills', methods=['GET', 'POST'])
+@app.route('/student/profile-update/hardskills', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_hardskills():
     return update_profile_data(request, get_jwt_identity(), Students, 'hardskills')
 
 
-@app.route('/profile-update/softskills', methods=['GET', 'POST'])
+@app.route('/student/profile-update/softskills', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_softskills():
     return update_profile_data(request, get_jwt_identity(), Students, 'softskills')
 
 
-@app.route('/profile-update/job', methods=['GET', 'POST'])
+@app.route('/student/profile-update/job', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_job():
     return update_profile_data(request, get_jwt_identity(), Students, 'job')
 
 
-@app.route('/profile-update/settings', methods=['GET', 'POST'])
+@app.route('/student/profile-update/settings', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_settings():
     try:
@@ -158,28 +161,161 @@ def profile_update_settings():
 #   End of profile update
 # ========================================================================================
 
+"""/admin/companies/<company>/delete
 
-@app.route('/admin/company-register', methods=['POST'])
-def company_register():
+/admin/companies/<company>/edit
+/admin/companies/<company>/add-employee
+"""
+
+@app.route('/admin/login', methods=['POST'])
+def administrator_login():
     try:
         data = request.get_json()
-        company_name = data['company_name']
-        #special_id = data['special_id']
-        special_id = '123abc'
-        company_users = data['company_users']
+        email = data['email']
+        password = data['password']
 
-        if Companies.query.filter_by(company_name=company_name).first():
-            return jsonify({'message': 'Company already exists'}), 400
+        admin = None
 
-        company = Companies(company_name, special_id, company_users)
-        db.session.add(company)
-        db.session.commit()
-        return jsonify({'message': 'Company created successfully'}), 201
+        try:
+            with open('admins/admin1.json', 'r') as j:
+                admin = json.load(j)
+        except:
+            return jsonify({'message': 'Something went wrong'}), 500
+
+        admin = dict(admin)
+
+        if email != admin['email'] or admin['password'] != password:
+            return jsonify({'message': 'Incorrect password or email'}), 400
+
+        token_identity = {'user_type': 'admin', 'login_date': datetime.now().timestamp()}
+        access_token = create_access_token(identity=token_identity)
+        
+        return jsonify({'access_token': access_token}), 200
+
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong'}), 500
 
 
+@app.route('/admin/company', methods=['GET'])
+@jwt_required()
+def admin_test_companies():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        try:
+            companies = Companies.query.all()
+            companies = [get_specific_data(company, 'admin-companies', get_raw=True) for company in companies]
+            return jsonify({'companies': companies}), 200
+
+        except Exception as e:
+            print(e)
+            return jsonify({'message': 'Something went wrong'}), 500
+
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/admin/company/register', methods=['POST'])
+@jwt_required()
+def company_register():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        try:
+            data = request.get_json()
+            company_name = data['company_name']
+            #special_id = data['special_id']
+            special_id = '123abc'
+            company_users = data['company_users']
+
+            if Companies.query.filter_by(company_name=company_name).first():
+                return jsonify({'message': 'Company already exists'}), 400
+
+            company = Companies(company_name, special_id, company_users)
+            db.session.add(company)
+            db.session.commit()
+            return jsonify({'message': 'Company created successfully'}), 201
+        except Exception as e:
+            print(e)
+            return jsonify({'message': 'Something went wrong'}), 500
+
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/admin/company/<company_name>', methods=['GET'])
+@jwt_required()
+def get_company(company_name):
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        try:
+            company = Companies.query.filter_by(company_name=company_name).first()
+            if not company:
+                return jsonify({'message': 'Company does not exist'}), 400
+
+            return jsonify(get_specific_data(company, 'admin-test-companies', get_raw=True)), 200
+
+        except Exception as e:
+            print(e)
+            return jsonify({'message': 'Something went wrong'}), 500
+
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/admin/company/<company_name>/edit', methods=['POST'])
+@jwt_required()
+def edit_company(company_name):
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        try:
+            company = Companies.query.filter_by(company_name=company_name).first()
+            if not company:
+                return jsonify({'message': 'Company does not exist'}), 400
+
+            data = request.get_json()
+
+            if "company_users" in data.keys():
+                del data["company_users"]
+
+            for key, value in data.items():
+                try:
+                    setattr(company, key, value)
+                except Exception as e:
+                    print(e)
+                    
+            return jsonify({'message': 'User updated successfully. '}), 200
+
+        except Exception as e:
+            print(e)
+            return jsonify({'message': 'Something went wrong'}), 500
+
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+
+#--------------------------------------------------------------------------
 @app.route('/admin/company-add-employee', methods=['POST'])
 def company_add_user():
     try:
@@ -198,30 +334,6 @@ def company_add_user():
             print(e)
             return jsonify({'message': 'Something went wrong in request operations'}), 500
 
-    except Exception as e:
-        print(e)
-        return jsonify({'message': 'Something went wrong'}), 500
-
-
-@app.route('/super-secret-admin-login', methods=['POST'])
-def administrator_login():
-    try:
-        data = request.get_json()
-        email = data['email']
-        password = data['password']
-
-        admin = None
-
-        with open('admins/admin1.json', 'r') as j:
-            admin = json.load(j)
-        admin = dict(admin)
-
-        if email != admin['email'] or admin['password'] != password:
-            return jsonify({'message': 'Incorrect password or email'}), 400
-
-        print(admin)
-        
-        return jsonify({'message': 'Admin login successful'}), 200
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong'}), 500
@@ -251,17 +363,6 @@ def admin_test():
         students = Students.query.all()
         students = [get_specific_data(student, 'admin-test-students', get_raw=True) for student in students]
         return jsonify({'students': students}), 200
-    except Exception as e:
-        print(e)
-        return jsonify({'message': 'Something went wrong'}), 500
-
-
-@app.route('/admin/companies', methods=['GET'])
-def admin_test_companies():
-    try:
-        companies = Companies.query.all()
-        companies = [get_specific_data(company, 'admin-test-companies', get_raw=True) for company in companies]
-        return jsonify({'companies': companies}), 200
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong'}), 500
