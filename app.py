@@ -107,7 +107,7 @@ def student_login():
                 confirm_url = url_for('email_verify', token=token, _external=True)
                 msg = 'Please click the link to activate your account {} '.format(confirm_url)
                 send_mail(temp_student.email, 'Verify Your Account', msg)
-                return jsonify({'message': 'Verification email sent'}), 200
+                return jsonify({'message': 'Verification email sent'}), 401
             else:
                 return jsonify({'message': 'Incorrect password or email'}), 400
         
