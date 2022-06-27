@@ -5,6 +5,23 @@ from scripts.util import db
 # to be able to run update_db.py successfully, remove 'scripts.'  from the line above then add it after you're done
 
 
+class Temps(db.Model):
+    __table_name__  = 'temps'
+    id              = db.Column(db.Integer, primary_key=True)
+    email           = db.Column(db.String(120), unique=True, nullable=False)
+    password        = db.Column(db.String(255), nullable=False)
+    name            = db.Column(db.String(120), nullable=False)
+    surname         = db.Column(db.String(120), nullable=False)
+    date            = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, email, password, name, surname):
+        self.email = email
+        self.password = password
+        self.name = name
+        self.surname = surname
+        self.date = datetime.now()
+
+
 class Students(db.Model):
     __table_name__  = 'students'
     id              = db.Column(db.Integer, primary_key=True)
@@ -35,7 +52,7 @@ class Students(db.Model):
     salary_min      = db.Column(db.Integer, nullable=True)
     salary_max      = db.Column(db.Integer, nullable=True)
     salary_currency = db.Column(db.String(10), nullable=True)
-    is_temp         = db.Column(db.Boolean, nullable=False)
+    profile_complete = db.Column(db.Boolean, nullable=False)
     date            = db.Column(db.DateTime, nullable=False)
 
     favourites      = db.relationship('Favourites', backref='students_ref', lazy=True)
@@ -45,7 +62,7 @@ class Students(db.Model):
         self.password = password
         self.name = name
         self.surname = surname
-        self.is_temp = True
+        self.profile_complete = False
         self.date = datetime.now()
 
     def to_dict(self):
