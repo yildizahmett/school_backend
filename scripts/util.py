@@ -35,7 +35,7 @@ DC_ST_GENERAL       = 'general'
 DC_ST_ACTIVITIES       = 'activities'
 DC_ST_HARDSKILLS    = 'hardskills'
 DC_ST_SOFTSKILLS    = 'softskills'
-DC_ST_JOB           = 'admin companies'
+DC_ST_JOB           = 'job'
 
 
 def get_specific_data(member, needed_data, get_raw=False):
