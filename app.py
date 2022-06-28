@@ -303,7 +303,7 @@ def company_register():
             data = request.get_json()
             company_name = data['company_name']
             #special_id = data['special_id']
-            special_id = random_id_generator()
+            special_id = random_id_generator(4)
             company_users = data['company_users']
 
             # TODO: frontendde yoksa kontrol, duplicate emailleri silme operasyonu yapılsın
@@ -311,7 +311,7 @@ def company_register():
             if Companies.query.filter_by(company_name=company_name).first():
                 return jsonify({'message': 'Company already exists'}), 400
 
-            while Companies.query.filter_by(special_id=special_id):
+            if Companies.query.filter_by(special_id=special_id):
                 special_id = random_id_generator(4)
 
             company = Companies(company_name, special_id, company_users)
