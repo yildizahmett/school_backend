@@ -304,8 +304,10 @@ def company_register():
             data = request.get_json()
             company_name = data['company_name']
             #special_id = data['special_id']
-            special_id = '123abc'
+            special_id = '123abcson'
             company_users = data['company_users']
+
+            # TODO: frontendde yoksa kontrol, duplicate emailleri silme operasyonu yapılsın
 
             if Companies.query.filter_by(company_name=company_name).first():
                 return jsonify({'message': 'Company already exists'}), 400
@@ -313,6 +315,14 @@ def company_register():
             company = Companies(company_name, special_id, company_users)
             db.session.add(company)
             db.session.commit()
+
+            # Send mails to employees so they know they can register
+            for em in company_users:
+                register_url = url_for('employee_register', _external=True)
+                subj = 'Dear {} Employee'.format(company.company_name)
+                msg = 'You can register at {} with this id: {}'.format(register_url, special_id)
+                send_mail(em, subj, msg)
+
             return jsonify({'message': 'Company created successfully'}), 201
         except Exception as e:
             print(e)
