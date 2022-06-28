@@ -312,7 +312,7 @@ def company_register():
                 return jsonify({'message': 'Company already exists'}), 400
 
             while Companies.query.filter_by(special_id=special_id):
-                special_id = random_id_generator()
+                special_id = random_id_generator(4)
 
             company = Companies(company_name, special_id, company_users)
             db.session.add(company)
