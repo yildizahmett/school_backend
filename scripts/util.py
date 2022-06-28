@@ -17,17 +17,26 @@ db = SQLAlchemy(app)
 CORS(app)
 
 
-# This category needs to be updated!
+# Bunu dışardan json olarak alıp dict yapalım burada, böylelikle burası temiz olur.
 data_category = {
-    'general': ['name', 'surname', 'phone', 'birth_date', 'city', 'country', 'job_title', 'starting_date', 'salary_min', 'salary_max', 'salary_currency'],
-    'activities': ['school_stuffs'], # UNFINISHED!
-    'hardskills': ['educations', 'experiences', 'projects', 'languages', 'comp_skills'],
-    'softskills': ['hobbies'], # UNFINISHED!
-    'job': ['experiences', 'educations'], # UNFINISHED!
+    'general': ['name', 'surname', 'phone', 'birth_date', 'city', 'country', 'job_title', 'starting_date', ],
+    'activities': ['school_programs'],
+    'hardskills': ['educations', 'experiences', 'projects', 'languages', 'certificates', 'comp_skills'],
+    'softskills': ['hobbies'],
+    'job': ['workplace_type', 'salary_min', 'salary_max', 'salary_currency'],
 
-    'admin-test-students': ['name', 'surname', 'salary_currency'],
+    'admin-students': ['email', 'name', 'surname', 'salary_currency'],
     'admin-companies': ['company_name', 'special_id', 'company_users']
 }
+# Data Category Constants
+DC_AD_STUDENT       = 'admin-students'
+DC_AD_COMPANIES     = 'admin-companies'
+DC_ST_GENERAL       = 'general'
+DC_ST_ACTIVITIES       = 'activities'
+DC_ST_HARDSKILLS    = 'hardskills'
+DC_ST_SOFTSKILLS    = 'softskills'
+DC_ST_JOB           = 'admin companies'
+
 
 def get_specific_data(member, needed_data, get_raw=False):
     try:

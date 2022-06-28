@@ -1,7 +1,7 @@
 from flask import request, jsonify, url_for
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from datetime import datetime, timedelta
-import os
+
 import random
 import json
 
@@ -9,6 +9,7 @@ from itsdangerous import URLSafeTimedSerializer
 
 from sqlalchemy import delete
 from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data
+from scripts.util import DC_AD_STUDENT, DC_AD_COMPANIES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_SOFTSKILLS, DC_ST_JOB
 from scripts.models import Companies, Employees, Favourites, Students, Temps
 from scripts.mail_ops import send_mail
 
@@ -181,40 +182,42 @@ def employee_login():
     except:
         return jsonify({'message': 'Something went wrong'}), 500
 
+
 # ========================================================================================
 #   Profile Update Section
 # ========================================================================================
 #   General, Activities, Hardskills, Softskills, Job, Settings
 #   'Settings' route will be coded later -> features mail sending, changing email and password
 
+
 @app.route('/student/profile-update/general', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_general():
-    return update_profile_data(request, get_jwt_identity(), Students, 'general')
+    return update_profile_data(request, get_jwt_identity(), Students, DC_ST_GENERAL)
 
 
 @app.route('/student/profile-update/activities', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_activities():
-    return update_profile_data(request, get_jwt_identity(), Students, 'activities')
+    return update_profile_data(request, get_jwt_identity(), Students, DC_ST_ACTIVITIES)
 
 
 @app.route('/student/profile-update/hardskills', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_hardskills():
-    return update_profile_data(request, get_jwt_identity(), Students, 'hardskills')
+    return update_profile_data(request, get_jwt_identity(), Students, DC_ST_HARDSKILLS)
 
 
 @app.route('/student/profile-update/softskills', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_softskills():
-    return update_profile_data(request, get_jwt_identity(), Students, 'softskills')
+    return update_profile_data(request, get_jwt_identity(), Students, DC_ST_SOFTSKILLS)
 
 
 @app.route('/student/profile-update/job', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_job():
-    return update_profile_data(request, get_jwt_identity(), Students, 'job')
+    return update_profile_data(request, get_jwt_identity(), Students, DC_ST_JOB)
 
 
 @app.route('/student/profile-update/settings', methods=['GET', 'POST'])
@@ -225,15 +228,11 @@ def profile_update_settings():
     except:
         return jsonify({'message': 'Not implemented'}), 500
 
+
 # ========================================================================================
 #   End of profile update
 # ========================================================================================
 
-"""/admin/companies/<company>/delete
-
-/admin/companies/<company>/edit
-/admin/companies/<company>/add-employee
-"""
 
 @app.route('/admin/login', methods=['POST'])
 def administrator_login():
@@ -277,7 +276,7 @@ def admin_test_companies():
 
         try:
             companies = Companies.query.all()
-            companies = [get_specific_data(company, 'admin-companies', get_raw=True) for company in companies]
+            companies = [get_specific_data(company, DC_AD_COMPANIES, get_raw=True) for company in companies]
             return jsonify({'companies': companies}), 200
 
         except Exception as e:
@@ -381,7 +380,7 @@ def get_company(company_name):
             if not company:
                 return jsonify({'message': 'Company does not exist'}), 400
 
-            return jsonify(get_specific_data(company, 'admin-companies', get_raw=True)), 200
+            return jsonify(get_specific_data(company, DC_AD_COMPANIES, get_raw=True)), 200
 
         except Exception as e:
             print(e)
@@ -523,7 +522,7 @@ def admin_test():
             return jsonify({'message': 'You are not an administrator'}), 400
 
         students = Students.query.all()
-        students = [get_specific_data(student, 'admin-test-students', get_raw=True) for student in students]
+        students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
         return jsonify({'students': students}), 200
     except Exception as e:
         print(e)
