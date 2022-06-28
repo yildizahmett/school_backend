@@ -4,6 +4,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 import json
+from random import randint
 from datetime import timedelta
 
 TOKEN_EXPIRE_TIME = 2 # HOURS
@@ -36,6 +37,17 @@ DC_ST_ACTIVITIES       = 'activities'
 DC_ST_HARDSKILLS    = 'hardskills'
 DC_ST_SOFTSKILLS    = 'softskills'
 DC_ST_JOB           = 'job'
+
+
+def random_id_generator(length):
+    # Primitive Version
+    code = ''
+
+    for x in range(length):
+        code += str(randint(0, 9))
+        code += chr(randint(65, 90))
+
+    return code
 
 
 def get_specific_data(member, needed_data, get_raw=False):

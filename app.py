@@ -8,7 +8,7 @@ import json
 from itsdangerous import URLSafeTimedSerializer
 
 from sqlalchemy import delete
-from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data
+from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data, random_id_generator
 from scripts.util import DC_AD_STUDENT, DC_AD_COMPANIES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_SOFTSKILLS, DC_ST_JOB
 from scripts.models import Companies, Employees, Favourites, Students, Temps
 from scripts.mail_ops import send_mail
@@ -303,13 +303,16 @@ def company_register():
             data = request.get_json()
             company_name = data['company_name']
             #special_id = data['special_id']
-            special_id = '123abcson'
+            special_id = random_id_generator()
             company_users = data['company_users']
 
             # TODO: frontendde yoksa kontrol, duplicate emailleri silme operasyonu yapılsın
 
             if Companies.query.filter_by(company_name=company_name).first():
                 return jsonify({'message': 'Company already exists'}), 400
+
+            while Companies.query.filter_by(special_id=special_id):
+                special_id = random_id_generator()
 
             company = Companies(company_name, special_id, company_users)
             db.session.add(company)
