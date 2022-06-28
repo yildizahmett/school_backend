@@ -20,7 +20,7 @@ CORS(app)
 
 # Bunu dışardan json olarak alıp dict yapalım burada, böylelikle burası temiz olur.
 data_category = {
-    'general': ['name', 'surname', 'phone', 'birth_date', 'city', 'country', 'job_title', 'starting_date', ],
+    'general': ['name', 'surname', 'phone', 'birth_date', 'city', 'country', 'job_title', 'starting_date', 'summary'],
     'activities': ['school_programs'],
     'hardskills': ['educations', 'experiences', 'projects', 'languages', 'certificates', 'comp_skills'],
     'softskills': ['hobbies'],
