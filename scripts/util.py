@@ -21,8 +21,8 @@ CORS(app)
 data_category = {
     'general': ['name', 'surname', 'phone', 'birth_date', 'city', 'country', 'job_title', 'starting_date', 'salary_min', 'salary_max', 'salary_currency'],
     'activities': ['school_stuffs'], # UNFINISHED!
-    'hardskills': ['educations', 'experiences', 'projects', 'languages'],
-    'softskills': ['comp_skills', 'hobbies'], # UNFINISHED!
+    'hardskills': ['educations', 'experiences', 'projects', 'languages', 'comp_skills'],
+    'softskills': ['hobbies'], # UNFINISHED!
     'job': ['experiences', 'educations'], # UNFINISHED!
 
     'admin-test-students': ['name', 'surname', 'salary_currency'],
