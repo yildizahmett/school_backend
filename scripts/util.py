@@ -25,18 +25,7 @@ def json_to_dict(filename):
     return data
 
 data_category = json_to_dict('./json_files/category.json')
-print('Did it reach?:', data_category)
-# Bunu dışardan json olarak alıp dict yapalım burada, böylelikle burası temiz olur.
-data_category = {
-    'general': ['name', 'surname', 'phone', 'birth_date', 'city', 'country', 'job_title', 'starting_date', 'summary'],
-    'activities': ['school_programs'],
-    'hardskills': ['educations', 'experiences', 'projects', 'languages', 'certificates', 'comp_skills'],
-    'softskills': ['hobbies'],
-    'job': ['workplace_type', 'salary_min', 'salary_max', 'salary_currency'],
 
-    'admin-students': ['email', 'name', 'surname', 'salary_currency'],
-    'admin-companies': ['company_name', 'special_id', 'company_users']
-}
 # Data Category Constants
 DC_AD_STUDENT       = 'admin-students'
 DC_AD_COMPANIES     = 'admin-companies'
