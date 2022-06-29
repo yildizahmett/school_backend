@@ -57,6 +57,9 @@ def email_verify(token):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
+# ========================================================================================
+#   STUDENT Routes
+# ========================================================================================
 @app.route('/student/register', methods=['POST'])
 def student_register():
     try:
@@ -127,60 +130,6 @@ def student_login():
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong'}), 500
-    
-
-@app.route('/employee/register', methods=['POST'])
-def employee_register():
-    try:
-        data = request.get_json()
-        email = data['email']
-        password = data['password']
-        name = data['name']
-        surname = data['surname']
-        special_id = data['special_id']
-
-        company = Companies.query.filter_by(special_id=special_id).first()
-        if not company:
-            return jsonify({'message': 'Special ID does not exist'}), 400
-
-        company_users = company.company_users
-        if not email in company_users:
-            return jsonify({'message': 'Email is not approved'}), 400
-
-        if Employees.query.filter_by(email=email).first():
-            return jsonify({'message': 'Email already exists'}), 400
-
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        user = Employees(name, surname, email, hashed_password, special_id)
-        db.session.add(user)
-        db.session.commit()
-
-        return jsonify({'message': 'User created successfully'}), 200
-    except:
-        return jsonify({'message': 'Something went wrong'}), 500
-    
-
-@app.route('/employee/login', methods=['POST'])
-def employee_login():
-    try:
-        data = request.get_json()
-        email = data['email']
-        password = data['password']
-
-        employee = Employees.query.filter_by(email=email).first()
-
-        if not employee:
-            return jsonify({'message': 'Employee does not exist'}), 400
-
-        token_identity = {'user_type': 'employee', 'email': email}
-
-        if bcrypt.check_password_hash(employee.password, password):
-            access_token = create_access_token(identity=token_identity)
-            return jsonify({'access_token': access_token}), 200
-        else:
-            return jsonify({'message': 'Incorrect password or email'}), 400
-    except:
-        return jsonify({'message': 'Something went wrong'}), 500
 
 
 # ========================================================================================
@@ -188,8 +137,6 @@ def employee_login():
 # ========================================================================================
 #   General, Activities, Hardskills, Softskills, Job, Settings
 #   'Settings' route will be coded later -> features mail sending, changing email and password
-
-
 @app.route('/student/profile-update/general', methods=['GET', 'POST'])
 @jwt_required()
 def profile_update_general():
@@ -230,10 +177,173 @@ def profile_update_settings():
 
 
 # ========================================================================================
-#   End of profile update
+#   End of STUDENT Routes
 # ========================================================================================
 
 
+# ========================================================================================
+#   EMPLOYEE Routes
+# ========================================================================================
+@app.route('/employee/register', methods=['POST'])
+def employee_register():
+    try:
+        data = request.get_json()
+        email = data['email']
+        password = data['password']
+        name = data['name']
+        surname = data['surname']
+        special_id = data['special_id']
+
+        company = Companies.query.filter_by(special_id=special_id).first()
+        if not company:
+            return jsonify({'message': 'Special ID does not exist'}), 400
+
+        company_users = company.company_users
+        if not email in company_users:
+            return jsonify({'message': 'Email is not approved'}), 400
+
+        if Employees.query.filter_by(email=email).first():
+            return jsonify({'message': 'Email already exists'}), 400
+
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        user = Employees(name, surname, email, hashed_password, special_id)
+        db.session.add(user)
+        db.session.commit()
+
+        return jsonify({'message': 'User created successfully'}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+    
+
+@app.route('/employee/login', methods=['POST'])
+def employee_login():
+    try:
+        data = request.get_json()
+        email = data['email']
+        password = data['password']
+
+        employee = Employees.query.filter_by(email=email).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        token_identity = {'user_type': 'employee', 'email': email}
+
+        if bcrypt.check_password_hash(employee.password, password):
+            access_token = create_access_token(identity=token_identity)
+            return jsonify({'access_token': access_token}), 200
+        else:
+            return jsonify({'message': 'Incorrect password or email'}), 400
+    except:
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/employee/talent-market', methods=['GET'])
+@jwt_required()
+def employee_talent_get():
+    try:
+        data = get_jwt_identity()
+        user_type = data['user_type']
+        email = data['email']
+
+        if user_type != 'employee':
+            return jsonify({'message': 'You are not an employee'}), 400
+        
+        employee = Employees.query.filter_by(email=email).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        students = Students.query.all()
+        students_list = [student.to_dict() for student in students if student.profile_complete]
+
+        print('Sent students:', students_list)
+
+        return jsonify({'students': students_list}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/employee/talent-market/<email>', methods=['POST'])
+@jwt_required()
+def employee_talent_add():
+    try:
+        data = get_jwt_identity()
+        user_type = data['user_type']
+        email = data['email']
+
+        if user_type != 'employee':
+            return jsonify({'message': 'You are not an employee'}), 400
+        
+        employee = Employees.query.filter_by(email=email).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        data = request.get_json()
+        student_email = data['email']
+        student = Students.query.filter_by(email=student_email).first()
+
+        if not student:
+            return jsonify({'message': 'Student does not exist'}), 400
+
+        if not student.profile_complete:
+            return jsonify({'message': 'Student has an incomplete profile'}), 400
+
+        company_name = Companies.query.filter_by(special_id=employee.company).first().company_name
+        talent = Favourites(student.id, company_name, employee.email)
+        db.session.add(talent)
+        db.session.commit()
+
+        return jsonify({'message': 'Student profile updated'}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/employee/company_pool', methods=['GET'])
+@jwt_required()
+def employee_company_pool_get():
+    try:
+        data = get_jwt_identity()
+        user_type = data['user_type']
+        email = data['email']
+
+        if user_type != 'employee':
+            return jsonify({'message': 'You are not an employee'}), 400
+        
+        employee = Employees.query.filter_by(email=email).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        company_name = Companies.query.filter_by(special_id=employee.company).first().company_name
+
+        talents = [talent for talent in Favourites.query.filter_by(company_name=company_name).all()]
+
+        print('Sent talents:', talents)
+
+        return jsonify({'talents': talents}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+# These are for later
+# /employee/featured_talents
+# /employee/featured_talents/<email>
+
+
+# ========================================================================================
+#   End of EMPLOYEE Routes
+# ========================================================================================
+
+
+# ========================================================================================
+#   ADMINISTRATOR Routes
+# ========================================================================================
 @app.route('/admin/login', methods=['POST'])
 def administrator_login():
     try:
@@ -530,6 +640,11 @@ def admin_test():
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong'}), 500
+
+
+# ========================================================================================
+#   ADMINISTRATOR Routes
+# ========================================================================================
 
 
 if __name__ == '__main__':
