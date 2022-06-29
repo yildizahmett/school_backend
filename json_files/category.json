@@ -1,0 +1,9 @@
+{
+    "general": ["name", "surname", "phone", "birth_date", "city", "country", "job_title", "starting_date", "summary"],
+    "activities": ["school_programs"],
+    "hardskills": ["educations", "experiences", "projects", "languages", "certificates", "comp_skills"],
+    "softskills": ["hobbies"],
+    "job": ["workplace_type", "salary_min", "salary_max", "salary_currency"],
+    "admin-students": ["email", "name", "surname", "salary_currency"],
+    "admin-companies": ["company_name", "special_id", "company_users"]
+}

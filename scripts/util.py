@@ -3,6 +3,7 @@ from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
+import os
 import json
 from random import randint
 from datetime import timedelta
@@ -18,6 +19,13 @@ db = SQLAlchemy(app)
 CORS(app)
 
 
+def json_to_dict(filename):
+    with open(filename, 'r') as j:
+        data = json.load(j)
+    return data
+
+data_category = json_to_dict('./json_files/category.json')
+print('Did it reach?:', data_category)
 # Bunu dışardan json olarak alıp dict yapalım burada, böylelikle burası temiz olur.
 data_category = {
     'general': ['name', 'surname', 'phone', 'birth_date', 'city', 'country', 'job_title', 'starting_date', 'summary'],
