@@ -283,7 +283,7 @@ def employee_talent_add(student_email):
             return jsonify({'message': 'Employee does not exist'}), 400
 
         data = request.get_json()
-        student_email = data['email']
+        
         student = Students.query.filter_by(email=student_email).first()
 
         if not student:
