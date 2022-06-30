@@ -266,7 +266,7 @@ def employee_talent_get():
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/employee/talent-market/<student-email>', methods=['POST'])
+@app.route('/employee/talent-market/<student_email>', methods=['POST'])
 @jwt_required()
 def employee_talent_add(student_email):
     try:
