@@ -167,13 +167,41 @@ def profile_update_job():
     return update_profile_data(request, get_jwt_identity(), Students, DC_ST_JOB)
 
 
-@app.route('/student/profile-update/settings', methods=['GET', 'POST'])
+@app.route('/student/profile-update/settings', methods=['POST'])
 @jwt_required()
 def profile_update_settings():
     try:
+        jwt_data = get_jwt_identity()
+        user_type = jwt_data['user_type']
+        email = jwt_data['email']
+        
+        if user_type != 'student' and user_type != 'student_incomplete':
+            return jsonify({'message': 'You are not a student'}), 400
+        
+        student = Students.query.filter_by(email=email).first()
+        
+        if not student:
+            return jsonify({'message': 'Student does not exist'}), 400
+
+        """
+        Şimdiii, birisi email veya password değiştirmek istediğinde ne yapılmalııııı
+
+        >Email Change:
+        Şifre doğru girilsin
+        
+        """
+        """
+        token = generate_confirmation_token(temp_student.email)
+        confirm_url = url_for('email_verify', token=token, _external=True)
+        msg = 'Please click the link to activate your account: {} '.format(confirm_url)
+
+        send_mail(temp_student.email, 'Verify Your Account', msg)
+        """
+
         return jsonify({'message': 'Not implemented'}), 500
-    except:
-        return jsonify({'message': 'Not implemented'}), 500
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong. ' + str(e)}), 500
 
 
 # ========================================================================================

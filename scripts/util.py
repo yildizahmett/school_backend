@@ -88,7 +88,7 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
 
         message = ''
 
-        if user_type != 'student' and user_type != 'temp_student':
+        if user_type != 'student' and user_type != 'student_incomplete':
             return jsonify({'message': 'You are not a student'}), 400
 
         try:
