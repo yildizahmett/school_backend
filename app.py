@@ -201,7 +201,7 @@ def profile_update_settings():
         return jsonify({'message': 'Something went wrong. ' + str(e)}), 500
 
 
-@app.route('/student/confirm-new-password/<token>', methods=['POST'])
+@app.route('/student/confirm-new-password/<token>')
 def student_confirm_new_password(token):
     try:
         email, new_password = confirm_token(token)
