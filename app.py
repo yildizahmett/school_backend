@@ -116,10 +116,10 @@ def student_login():
                 return jsonify({'message': 'Incorrect password or email'}), 400
         
         # Student exists in DB
-        if student.profile_complete == True:
-            token_identity = {'user_type': 'student_incomplete', 'email': email}
-        else:
+        if student.profile_complete:
             token_identity = {'user_type': 'student', 'email': email}
+        else:
+            token_identity = {'user_type': 'student_incomplete', 'email': email}
 
         if bcrypt.check_password_hash(student.password, password):
             access_token = create_access_token(identity=token_identity)
@@ -223,6 +223,55 @@ def student_confirm_new_password(token):
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/student/forgot-password', methods=['POST'])
+def student_forgot_password():
+    try:
+        data = request.get_json()
+        email = data['email']
+
+        student = Students.query.filter_by(email=email).first()
+
+        if not student:
+            return jsonify({'message': 'Student does not exist'}), 400
+        
+        token = generate_confirmation_token(email)
+        confirm_url = url_for('student_reset_password', token=token, _external=True)
+        msg = 'Please click the link to reset your password: {} '.format(confirm_url)
+        send_mail(student.email, 'Password Reset', msg)
+
+        return jsonify({'message': 'Verification email sent'}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong. ' + str(e)}), 500
+
+
+@app.route('/student/reset-password/<token>', methods=['POST'])
+def student_reset_password(token):
+    try:
+        data = request.get_json()
+        new_password = data['new_password']
+
+        email = confirm_token(token)
+
+        if not email:
+            return jsonify({'message': 'The confirmation link is invalid or has expired.'}), 400
+
+        student = Students.query.filter_by(email=email).first()
+
+        if not Students.query.filter_by(email=email).first():
+            return jsonify({'message': 'Student does not exist'}), 400
+
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+
+        setattr(student, 'password', hashed_password)
+        db.session.commit()
+        
+        return jsonify({'message': 'Password reset successfully'}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong. ' + str(e)}), 500
 
 
 # ========================================================================================
