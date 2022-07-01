@@ -167,41 +167,62 @@ def profile_update_job():
     return update_profile_data(request, get_jwt_identity(), Students, DC_ST_JOB)
 
 
-@app.route('/student/profile-update/settings', methods=['POST'])
+@app.route('/student/profile-update/settings/change-password', methods=['POST'])
 @jwt_required()
 def profile_update_settings():
     try:
         jwt_data = get_jwt_identity()
         user_type = jwt_data['user_type']
         email = jwt_data['email']
-        
+
+        data = request.get_json()
+        new_password = data['new_password']
+        password = data['password']
+
         if user_type != 'student' and user_type != 'student_incomplete':
             return jsonify({'message': 'You are not a student'}), 400
-        
+
         student = Students.query.filter_by(email=email).first()
         
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
 
-        """
-        Şimdiii, birisi email veya password değiştirmek istediğinde ne yapılmalııııı
-
-        >Email Change:
-        Şifre doğru girilsin
+        if not bcrypt.check_password_hash(student.password, password):
+            return jsonify({'message': 'Incorrect password'}), 400
         
-        """
-        """
-        token = generate_confirmation_token(temp_student.email)
-        confirm_url = url_for('email_verify', token=token, _external=True)
-        msg = 'Please click the link to activate your account: {} '.format(confirm_url)
+        token = generate_confirmation_token([email, new_password])
+        confirm_url = url_for('student_confirm_new_password', token=token, _external=True)
+        msg = 'Please click the link to confirm your new password: {} '.format(confirm_url)
+        send_mail(student.email, 'Password Change', msg)
 
-        send_mail(temp_student.email, 'Verify Your Account', msg)
-        """
-
-        return jsonify({'message': 'Not implemented'}), 500
+        return jsonify({'message': 'Verification email sent'}), 200
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong. ' + str(e)}), 500
+
+
+@app.route('/student/confirm-new-password/<token>', methods=['POST'])
+def student_confirm_new_password(token):
+    try:
+        email, new_password = confirm_token(token)
+
+        if not email:
+            return jsonify({'message': 'The confirmation link is invalid or has expired.'}), 400
+
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+
+        student = Students.query.filter_by(email=email).first()
+
+        if not Students.query.filter_by(email=email).first():
+            return jsonify({'message': 'Student does not exist'}), 400
+
+        setattr(student, 'password', hashed_password)
+        db.session.commit()
+        
+        return jsonify({'message': 'Password changed successfully'}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
 
 
 # ========================================================================================
