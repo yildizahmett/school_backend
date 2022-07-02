@@ -9,7 +9,7 @@ from itsdangerous import URLSafeTimedSerializer
 
 from sqlalchemy import delete
 from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data, random_id_generator
-from scripts.util import DC_AD_STUDENT, DC_AD_COMPANIES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_SOFTSKILLS, DC_ST_JOB
+from scripts.util import DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_SOFTSKILLS, DC_ST_JOB
 from scripts.models import Companies, Employees, Favourites, Students, Temps
 from scripts.mail_ops import send_mail
 
@@ -304,8 +304,13 @@ def employee_register():
             return jsonify({'message': 'Email already exists'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        user = Employees(name, surname, email, hashed_password, special_id)
-        db.session.add(user)
+        employee = Employees(name, surname, email, hashed_password, special_id)
+
+        setattr(employee, "t_c", False)
+        setattr(employee, "duration", 0)
+        setattr(employee, "pool_amount", 0)
+        setattr(employee, "fav_amount", 0)
+        db.session.add(employee)
         db.session.commit()
 
         return jsonify({'message': 'User created successfully'}), 200
@@ -641,6 +646,7 @@ def edit_company(company_name):
 
 
 # Admin adds new employee mails to a company
+# TODO: SEND EMAIL TO EMPLOYEES ADDED HERE!!!!!!
 @app.route('/admin/company/<company_name>/add-employee', methods=['POST'])
 @jwt_required()
 def company_add_user(company_name):
@@ -721,10 +727,33 @@ def company_remove_user(company_name):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
+@app.route('/admin/employee', methods=['GET'])
+@jwt_required()
+def admin_employees():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        try:
+            employees = Employees.query.all()
+            employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
+            return jsonify({'employees': employees}), 200
+
+        except Exception as e:
+            print(e)
+            return jsonify({'message': 'Something went wrong'}), 500
+
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
 # Admin gets all the students' data (TODO: Only give the students in batches of 20 for example, aka paging)
 @app.route('/admin/student', methods=['GET'])
 @jwt_required()
-def admin_test():
+def admin_students():
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -732,6 +761,8 @@ def admin_test():
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
+        # (x - 1) * num_of_entries + 1
+        # Students.query().limit(5).all()
         students = Students.query.all()
         students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
         return jsonify({'students': students}), 200

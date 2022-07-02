@@ -29,6 +29,7 @@ data_category = json_to_dict('./json_files/category.json')
 # Data Category Constants
 DC_AD_STUDENT       = 'admin-students'
 DC_AD_COMPANIES     = 'admin-companies'
+DC_AD_EMPLOYEES     = 'admin-employees'
 DC_ST_GENERAL       = 'general'
 DC_ST_ACTIVITIES    = 'activities'
 DC_ST_HARDSKILLS    = 'hardskills'
