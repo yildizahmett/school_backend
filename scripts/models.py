@@ -149,7 +149,7 @@ class Favourites(db.Model):
 
 # TODO: Poola göre düzenle
 class Pools(db.Model):
-    __tablename__ = 'favourites'
+    __tablename__ = 'pools'
     id=db.Column(db.Integer,primary_key=True)
     student_id = db.Column(db.ForeignKey('students.id'), nullable=False)
     company_name = db.Column(db.ForeignKey('companies.company_name'), nullable=False)
