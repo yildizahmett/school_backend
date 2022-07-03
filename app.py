@@ -727,23 +727,44 @@ def company_remove_user(company_name):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/admin/employee', methods=['GET'])
+@app.route('/admin/employee/page-<int:page_no>', methods=['GET'])
 @jwt_required()
-def admin_employees():
+def admin_employees(page_no):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
+        
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        try:
-            employees = Employees.query.all()
-            employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
-            return jsonify({'employees': employees}), 200
+        if page_no < 1:
+            return jsonify({'message': 'Page number must at least be 1'}), 400
 
-        except Exception as e:
-            print(e)
-            return jsonify({'message': 'Something went wrong'}), 500
+        data = request.get_json()
+        entry_amount = data['entry_amount']
+        selected_filter = data['selected_filter']
+
+        
+
+        page_start =  (page_no - 1)*entry_amount + 1
+        page_end   = page_start + entry_amount
+
+        employees = None
+        if selected_filter == 'id':
+            employees = Employees.query.order_by(Employees.id.asc()).slice(page_start - 1, page_end - 1).all()
+        elif selected_filter == 'name':
+            employees = Employees.query.order_by(Employees.name.asc()).slice(page_start - 1, page_end - 1).all()
+        elif selected_filter == 'company_name':
+            employees = Employees.query.order_by(Employees.company_name.asc()).slice(page_start - 1, page_end - 1).all()
+        elif selected_filter == 't_c':
+            employees = Employees.query.order_by(Employees.t_c.asc()).slice(page_start - 1, page_end - 1).all()
+        elif selected_filter == 'profile_complete':
+            employees = Employees.query.order_by(Employees.profile_complete.asc()).slice(page_start - 1, page_end - 1).all()
+        else:
+            return jsonify({'message': 'Selected filter does not exist'}), 400
+
+        employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
+        return jsonify({'employees': employees}), 200
 
     except Exception as e:
         print(e)
@@ -758,15 +779,17 @@ def admin_students(page_no):
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
 
-        data = request.get_json()
-        entry_amount = data['entry_amount']
-        selected_filter = data['selected_filter']
-
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
         if page_no < 1:
             return jsonify({'message': 'Page number must at least be 1'}), 400
+
+        data = request.get_json()
+        entry_amount = data['entry_amount']
+        selected_filter = data['selected_filter']
+
+        
 
         page_start =  (page_no - 1)*entry_amount + 1
         page_end   = page_start + entry_amount
