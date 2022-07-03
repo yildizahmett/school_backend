@@ -751,19 +751,40 @@ def admin_employees():
 
 
 # Admin gets all the students' data (TODO: Only give the students in batches of 20 for example, aka paging)
-@app.route('/admin/student', methods=['GET'])
+@app.route('/admin/student/page-<int:page_no>', methods=['GET'])
 @jwt_required()
-def admin_students():
+def admin_students(page_no):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
 
+        data = request.get_json()
+        entry_amount = data['entry_amount']
+        selected_filter = data['selected_filter']
+
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        # (x - 1) * num_of_entries + 1
-        # Students.query().limit(5).all()
-        students = Students.query.all()
+        if page_no < 1:
+            return jsonify({'message': 'Page number must at least be 1'}), 400
+
+        page_start =  (page_no - 1)*entry_amount + 1
+        page_end   = page_start + entry_amount
+        
+        students = None
+        if selected_filter == 'id':
+            students = Students.query.order_by(Students.id.asc()).slice(page_start - 1, page_end - 1).all()
+        elif selected_filter == 'name':
+            students = Students.query.order_by(Students.name.asc()).slice(page_start - 1, page_end - 1).all()
+        elif selected_filter == 'program_name':
+            students = Students.query.order_by(Students.program_name.asc()).slice(page_start - 1, page_end - 1).all()
+        elif selected_filter == 'grad_status':
+            students = Students.query.order_by(Students.grad_status.asc()).slice(page_start - 1, page_end - 1).all()
+        elif selected_filter == 'profile_complete':
+            students = Students.query.order_by(Students.profile_complete.asc()).slice(page_start - 1, page_end - 1).all()
+        else:
+            return jsonify({'message': 'Selected filter does not exist'}), 400
+
         students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
         return jsonify({'students': students}), 200
     except Exception as e:
