@@ -10,7 +10,7 @@ from itsdangerous import URLSafeTimedSerializer
 from sqlalchemy import delete
 from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data, random_id_generator
 from scripts.util import DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_SOFTSKILLS, DC_ST_JOB
-from scripts.models import Companies, Employees, Favourites, Students, Temps
+from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs, Pools
 from scripts.mail_ops import send_mail
 
 
@@ -813,8 +813,66 @@ def admin_students(page_no):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
+@app.route('/admin/create-program', methods=['POST'])
+@jwt_required()
+def admin_create_program():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        data = request.get_json()
+        program_name = data['program_name']
+        program_code = data['program_code']
+        emails       = data['emails']
+
+        if Programs.query.filter_by(program_name).first():
+            return jsonify({'message': 'Program already exists'}), 400
+
+        if Programs.query.filter_by(program_code).first():
+            return jsonify({'message': 'Program code is already in use'}), 400
+
+        # TODO: EMAIL YOLLAMA KISIMLARI
+        #       ya burada, ya da session.commit() ten sonra mail yollama
+
+        """
+        for mail in emails:
+            if Students.query.filter_by(email=mail).first():
+                print(f'Following email is already in Students table: {mail}')
+                continue
+            if Temps.query.filter_by(email=mail).first():
+                print(f'Following email is already in Temps table: {mail}')
+                continue
+            
+            try:
+                # Add Student to Temps table????????????????????????**
+                # Send the mail now
+                register_url = url_for('student_register', _external=True)
+                subj = 'Dear {} Graduate'.format(program_name)
+                msg = 'You can register at {} with this code: {}'.format(register_url, program_code)
+                send_mail(mail, subj, msg)
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                print('Error:', e)
+
+        """
+
+        program = Programs(program_name, program_code)
+        db.session.add(program)
+        db.session.commit()
+        
+        return jsonify({'message': 'Program created succesfully'}), 200
+
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
 # ========================================================================================
-#   ADMINISTRATOR Routes
+#   End of ADMINISTRATOR Routes
 # ========================================================================================
 
 

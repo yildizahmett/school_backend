@@ -12,6 +12,7 @@ class Temps(db.Model):
     password        = db.Column(db.String(255), nullable=False)
     name            = db.Column(db.String(120), nullable=False)
     surname         = db.Column(db.String(120), nullable=False)
+    program_name    = db.Column(db.String(120), nullable=False)
     date            = db.Column(db.DateTime, nullable=False)
 
     def __init__(self, email, password, name, surname):
@@ -161,3 +162,11 @@ class Pools(db.Model):
         self.company_name = company_name
         self.employee_email = employee_email
         self.date = datetime.now()
+
+
+class Programs(db.Model):
+    __tablename__= 'programs'
+    id=db.Column(db.Integer,primary_key=True)
+    program_name = db.Column(db.String(120), nullable=False, unique=True)
+    program_code = db.Column(db.String(255), nullable=False, unique=True)
+
