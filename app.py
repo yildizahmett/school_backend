@@ -758,8 +758,6 @@ def admin_employees(page_no):
             employees = Employees.query.order_by(Employees.company_name.asc()).slice(page_start - 1, page_end - 1).all()
         elif selected_filter == 't_c':
             employees = Employees.query.order_by(Employees.t_c.asc()).slice(page_start - 1, page_end - 1).all()
-        elif selected_filter == 'profile_complete':
-            employees = Employees.query.order_by(Employees.profile_complete.asc()).slice(page_start - 1, page_end - 1).all()
         else:
             return jsonify({'message': 'Selected filter does not exist'}), 400
 
