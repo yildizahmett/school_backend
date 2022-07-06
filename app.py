@@ -238,7 +238,8 @@ def student_forgot_password():
             return jsonify({'message': 'Student does not exist'}), 400
         
         token = generate_confirmation_token(email)
-        confirm_url = url_for('student_reset_password', token=token, _external=True)
+        #confirm_url = url_for('student_reset_password', token=token, _external=True)
+        confirm_url = 'http://localhost:3000' + '/student/reset-password/' + token
         msg = 'Please click the link to reset your password: {} '.format(confirm_url)
         send_mail(student.email, 'Password Reset', msg)
 
