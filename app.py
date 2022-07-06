@@ -192,7 +192,7 @@ def profile_update_settings():
         
         token = generate_confirmation_token([email, new_password])
         #confirm_url = url_for('student_confirm_new_password', token=token, _external=True)
-        confirm_url = 'http://localhost:3000' + '/student/confirm-new-password/<token>'
+        confirm_url = 'http://localhost:3000' + '/student/confirm-new-password/' + token
         msg = 'Please click the link to confirm your new password: {} '.format(confirm_url)
         send_mail(student.email, 'Password Change', msg)
 
