@@ -12,7 +12,7 @@ class Temps(db.Model):
     password        = db.Column(db.String(255), nullable=False)
     name            = db.Column(db.String(120), nullable=False)
     surname         = db.Column(db.String(120), nullable=False)
-    #program_name    = db.Column(db.String(120), nullable=False)
+    program_name    = db.Column(db.String(120), nullable=False)
     date            = db.Column(db.DateTime, nullable=False)
 
     def __init__(self, email, password, name, surname):
