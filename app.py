@@ -115,11 +115,8 @@ def student_login():
             else:
                 return jsonify({'message': 'Incorrect password or email'}), 400
         
-        # Student exists in DB
-        if student.profile_complete:
-            token_identity = {'user_type': 'student', 'email': email}
-        else:
-            token_identity = {'user_type': 'student_incomplete', 'email': email}
+
+        token_identity = {'user_type': 'student', 'email': email, 'profile_complete': student.profile_complete}
 
         if bcrypt.check_password_hash(student.password, password):
             access_token = create_access_token(identity=token_identity)
@@ -179,7 +176,7 @@ def profile_update_settings():
         new_password = data['new_password']
         password = data['password']
 
-        if user_type != 'student' and user_type != 'student_incomplete':
+        if user_type != 'student':
             return jsonify({'message': 'You are not a student'}), 400
 
         student = Students.query.filter_by(email=email).first()
@@ -428,7 +425,7 @@ def employee_company_pool_get():
 
         talents = [talent for talent in Favourites.query.filter_by(company_name=company_name).all()]
 
-        print('Sent talents:', talents)
+        print('Sent talents:', talents) # TODO: Remove later, just for testing
 
         return jsonify({'talents': talents}), 200
     except Exception as e:
