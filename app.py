@@ -7,7 +7,6 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from sqlalchemy import delete
 from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data, random_id_generator
 from scripts.util import DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_SOFTSKILLS, DC_ST_JOB
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs, Pools
@@ -518,7 +517,7 @@ def company_register():
             special_id = random_id_generator(4)
             company_users = data['company_users']
 
-            # TODO: frontendde yoksa kontrol, duplicate emailleri silme operasyonu yapılsın
+            # TODO: frontendde kontrol edilmiyorsa, duplicate emailleri silme operasyonu yapılsın
 
             if Companies.query.filter_by(company_name=company_name).first():
                 return jsonify({'message': 'Company already exists'}), 400
@@ -726,7 +725,7 @@ def company_remove_user(company_name):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/admin/employee/page-<int:page_no>', methods=['GET'])
+@app.route('/admin/employee/<int:page_no>', methods=['GET'])
 @jwt_required()
 def admin_employees(page_no):
     try:
@@ -742,8 +741,6 @@ def admin_employees(page_no):
         data = request.get_json()
         entry_amount = data['entry_amount']
         selected_filter = data['selected_filter']
-
-        
 
         page_start =  (page_no - 1)*entry_amount + 1
         page_end   = page_start + entry_amount
@@ -769,7 +766,7 @@ def admin_employees(page_no):
 
 
 # Admin gets all the students' data (TODO: Only give the students in batches of 20 for example, aka paging)
-@app.route('/admin/student/page-<int:page_no>', methods=['GET'])
+@app.route('/admin/student/<int:page_no>', methods=['GET'])
 @jwt_required()
 def admin_students(page_no):
     try:
@@ -783,27 +780,51 @@ def admin_students(page_no):
             return jsonify({'message': 'Page number must at least be 1'}), 400
 
         data = request.get_json()
-        entry_amount = data['entry_amount']
-        selected_filter = data['selected_filter']
-
         
+        entry_amount    = data['entry_amount']
+        selected_filter = data['selected_filter']
+        selected_sort   = data['selected_sort']
+        ascending       = data['ascending']
 
         page_start =  (page_no - 1)*entry_amount + 1
         page_end   = page_start + entry_amount
         
+        student_sort = dict()
+        student_sort['all']              = Students.id
+        student_sort['id']               = Students.id
+        student_sort['name']             = Students.name
+        student_sort['program_name']     = Students.program_name
+        student_sort['grad_status']      = Students.grad_status
+        student_sort['profile_complete'] = Students.profile_complete
+
+        student_filter = dict()
+        student_filter['program_name']  = {'program_name': selected_filter[1]}
+        student_filter['grad_status'] = {'grad_status': selected_filter[1]}
+        student_filter['profile_complete'] = {'profile_complete': selected_filter[1]}
+
         students = None
-        if selected_filter == 'id':
-            students = Students.query.order_by(Students.id.asc()).slice(page_start - 1, page_end - 1).all()
-        elif selected_filter == 'name':
-            students = Students.query.order_by(Students.name.asc()).slice(page_start - 1, page_end - 1).all()
-        elif selected_filter == 'program_name':
-            students = Students.query.order_by(Students.program_name.asc()).slice(page_start - 1, page_end - 1).all()
-        elif selected_filter == 'grad_status':
-            students = Students.query.order_by(Students.grad_status.asc()).slice(page_start - 1, page_end - 1).all()
-        elif selected_filter == 'profile_complete':
-            students = Students.query.order_by(Students.profile_complete.asc()).slice(page_start - 1, page_end - 1).all()
+        if ascending:
+            if selected_filter[0] == 'all':
+                try:
+                    students = Students.query.order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
+                except KeyError:
+                    return jsonify({'message': 'Selected sortable does not exist'}), 400
+            else:
+                try:
+                    students = Students.query.filter_by(**student_filter[selected_filter[0]]).order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
+                except KeyError:
+                    return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
         else:
-            return jsonify({'message': 'Selected filter does not exist'}), 400
+            if selected_filter[0] == 'all':
+                try:
+                    students = Students.query.order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+                except KeyError:
+                    return jsonify({'message': 'Selected sortable does not exist'}), 400
+            else:
+                try:
+                    students = Students.query.filter_by(**student_filter[selected_filter[0]]).order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+                except KeyError:
+                    return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
         students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
         return jsonify({'students': students}), 200
