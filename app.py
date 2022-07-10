@@ -77,7 +77,8 @@ def student_register():
         db.session.commit()
 
         token = generate_confirmation_token(temp_student.email)
-        confirm_url = url_for('email_verify', token=token, _external=True)
+        #confirm_url = url_for('email_verify', token=token, _external=True)
+        confirm_url = 'http://localhost:3000' + '/student/confirm-new-password/' + token
         msg = 'Please click the link to activate your account: {} '.format(confirm_url)
 
         send_mail(temp_student.email, 'Verify Your Account', msg)
@@ -107,7 +108,8 @@ def student_login():
             if bcrypt.check_password_hash(temp_student.password, password):
                 # resend email verification
                 token = generate_confirmation_token(temp_student.email)
-                confirm_url = url_for('email_verify', token=token, _external=True)
+                #confirm_url = url_for('email_verify', token=token, _external=True)
+                confirm_url = 'http://localhost:3000' + '/student/confirm-new-password/' + token
                 msg = 'Please click the link to activate your account {} '.format(confirm_url)
                 send_mail(temp_student.email, 'Verify Your Account', msg)
                 return jsonify({'message': 'Verification email sent'}), 401
