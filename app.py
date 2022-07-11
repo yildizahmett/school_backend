@@ -8,7 +8,7 @@ import json
 from itsdangerous import URLSafeTimedSerializer
 
 from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data, random_id_generator
-from scripts.util import DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_SOFTSKILLS, DC_ST_JOB
+from scripts.util import DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs, Pools
 from scripts.mail_ops import send_mail
 
@@ -151,12 +151,6 @@ def profile_update_activities():
 @jwt_required()
 def profile_update_hardskills():
     return update_profile_data(request, get_jwt_identity(), Students, DC_ST_HARDSKILLS)
-
-
-@app.route('/student/profile-update/softskills', methods=['GET', 'POST'])
-@jwt_required()
-def profile_update_softskills():
-    return update_profile_data(request, get_jwt_identity(), Students, DC_ST_SOFTSKILLS)
 
 
 @app.route('/student/profile-update/job', methods=['GET', 'POST'])
