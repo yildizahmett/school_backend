@@ -121,7 +121,7 @@ def student_login():
 
         if bcrypt.check_password_hash(student.password, password):
             access_token = create_access_token(identity=token_identity)
-            return jsonify({'Student Profile Complete': student.profile_complete, 'access_token': access_token}), 200
+            return jsonify({'Student Profile Complete': student.profile_complete, 'name':student.name, 'access_token': access_token}), 200
         else:
             return jsonify({'message': 'Incorrect password or email'}), 400
         
