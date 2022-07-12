@@ -51,6 +51,7 @@ class Students(db.Model):
     languages       = db.Column(pg_JSON)
     certificates    = db.Column(pg_JSON)
     school_programs = db.Column(pg_JSON)
+    volunteer       = db.Column(pg_JSON)
     workplace_type  = db.Column(db.String(120), nullable=True)
     salary_min      = db.Column(db.Integer, nullable=True)
     salary_max      = db.Column(db.Integer, nullable=True)
