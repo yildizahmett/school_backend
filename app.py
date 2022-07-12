@@ -727,7 +727,7 @@ def admin_employees(page_no):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
-        
+
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
@@ -735,23 +735,29 @@ def admin_employees(page_no):
             return jsonify({'message': 'Page number must at least be 1'}), 400
 
         data = request.get_json()
-        entry_amount = data['entry_amount']
-        selected_filter = data['selected_filter']
+        
+        entry_amount    = data['entry_amount']
+        selected_sort   = data['selected_sort']
+        ascending       = data['ascending']
 
         page_start =  (page_no - 1)*entry_amount + 1
         page_end   = page_start + entry_amount
+        
+        employee_sort = dict()
+        employee_sort['id']           = Employees.id
+        employee_sort['name']         = Employees.name
+        employee_sort['company_name'] = Employees.company_name
+        employee_sort['t_c']          = Employees.t_c
+        employee_sort['sign_up_date'] = Employees.sign_up_date
 
         employees = None
-        if selected_filter == 'id':
-            employees = Employees.query.order_by(Employees.id.asc()).slice(page_start - 1, page_end - 1).all()
-        elif selected_filter == 'name':
-            employees = Employees.query.order_by(Employees.name.asc()).slice(page_start - 1, page_end - 1).all()
-        elif selected_filter == 'company_name':
-            employees = Employees.query.order_by(Employees.company_name.asc()).slice(page_start - 1, page_end - 1).all()
-        elif selected_filter == 't_c':
-            employees = Employees.query.order_by(Employees.t_c.asc()).slice(page_start - 1, page_end - 1).all()
-        else:
-            return jsonify({'message': 'Selected filter does not exist'}), 400
+        try:
+            if ascending:
+                employees = Employees.query.order_by(employee_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
+            else:
+                employees = Employees.query.order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+        except KeyError:
+                return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
         employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
         return jsonify({'employees': employees}), 200
@@ -786,7 +792,6 @@ def admin_students(page_no):
         page_end   = page_start + entry_amount
         
         student_sort = dict()
-        student_sort['all']              = Students.id
         student_sort['id']               = Students.id
         student_sort['name']             = Students.name
         student_sort['program_name']     = Students.program_name
@@ -799,28 +804,19 @@ def admin_students(page_no):
         student_filter['profile_complete'] = {'profile_complete': selected_filter[1]}
 
         students = None
-        if ascending:
-            if selected_filter[0] == 'all':
-                try:
+        try:
+            if ascending:
+                if selected_filter[0] == 'all':
                     students = Students.query.order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
-                except KeyError:
-                    return jsonify({'message': 'Selected sortable does not exist'}), 400
-            else:
-                try:
+                else:
                     students = Students.query.filter_by(**student_filter[selected_filter[0]]).order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
-                except KeyError:
-                    return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
-        else:
-            if selected_filter[0] == 'all':
-                try:
-                    students = Students.query.order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-                except KeyError:
-                    return jsonify({'message': 'Selected sortable does not exist'}), 400
             else:
-                try:
+                if selected_filter[0] == 'all':
+                    students = Students.query.order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+                else:
                     students = Students.query.filter_by(**student_filter[selected_filter[0]]).order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-                except KeyError:
-                    return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
+        except KeyError:
+            return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
         students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
         return jsonify({'students': students}), 200

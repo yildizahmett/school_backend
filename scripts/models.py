@@ -111,7 +111,7 @@ class Employees(db.Model):
     password        = db.Column(db.String(255), nullable=False)
     company_name    = db.Column(db.String(255), nullable=True)
     t_c             = db.Column(db.Boolean, nullable=True)
-    t_c_date        = db.Column(db.DateTime, nullable=True)
+    #t_c_date        = db.Column(db.DateTime, nullable=True)
     sign_up_date    = db.Column(db.DateTime, nullable=True)
     duration        = db.Column(db.String(255), nullable=True)
     fav_amount      = db.Column(db.Integer, nullable=True)
