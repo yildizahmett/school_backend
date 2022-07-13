@@ -834,23 +834,18 @@ def admin_students(page_no):
         student_sort['grad_status']      = Students.grad_status
         student_sort['profile_complete'] = Students.profile_complete
 
-        student_filter = dict()
-        student_filter['program_name']  = {'program_name': selected_filter[1]}
-        student_filter['grad_status'] = {'grad_status': selected_filter[1]}
-        student_filter['profile_complete'] = {'profile_complete': selected_filter[1]}
-
         students = None
         try:
             if ascending:
-                if selected_filter[0] == 'all':
+                if selected_filter == {}:
                     students = Students.query.order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
                 else:
-                    students = Students.query.filter_by(**student_filter[selected_filter[0]]).order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
+                    students = Students.query.filter_by(**selected_filter).order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
             else:
-                if selected_filter[0] == 'all':
+                if selected_filter == {}:
                     students = Students.query.order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
                 else:
-                    students = Students.query.filter_by(**student_filter[selected_filter[0]]).order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+                    students = Students.query.filter_by(**selected_filter).order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
         except KeyError:
             return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
