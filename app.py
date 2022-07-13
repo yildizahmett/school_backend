@@ -764,7 +764,7 @@ def admin_employees(page_no):
 
         page_amount = ceil(Employees.query.count() / entry_amount)
 
-        return jsonify({'pages': page_amount, 'employees': employees}), 200
+        return jsonify({'max_pages': page_amount, 'employees': employees}), 200
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong'}), 500
@@ -825,7 +825,7 @@ def admin_students(page_no):
 
         page_amount = ceil(Students.query.count() / entry_amount)
         
-        return jsonify({'pages': page_amount, 'students': students}), 200
+        return jsonify({'max_pages': page_amount, 'students': students}), 200
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong'}), 500
