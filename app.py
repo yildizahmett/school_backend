@@ -1,3 +1,4 @@
+from math import ceil
 from flask import request, jsonify, url_for
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from datetime import datetime, timedelta
@@ -760,8 +761,10 @@ def admin_employees(page_no):
                 return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
         employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
-        return jsonify({'employees': employees}), 200
 
+        page_amount = ceil(Employees.query.count() / entry_amount)
+
+        return jsonify({'pages': page_amount, 'employees': employees}), 200
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong'}), 500
