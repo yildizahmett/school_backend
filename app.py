@@ -771,6 +771,7 @@ def admin_employees(page_no):
         
         entry_amount    = data['entry_amount']
         selected_sort   = data['selected_sort']
+        selected_filter = data['selected_filter']
         ascending       = data['ascending']
 
         page_start =  (page_no - 1)*entry_amount + 1
@@ -786,9 +787,15 @@ def admin_employees(page_no):
         employees = None
         try:
             if ascending:
-                employees = Employees.query.order_by(employee_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
+                if selected_filter == {}:
+                    employees = Employees.query.order_by(employee_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
+                else:
+                    employees = Employees.query.filter_by(**selected_filter).order_by(employee_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
             else:
-                employees = Employees.query.order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+                if selected_filter == {}:
+                    employees = Employees.query.order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+                else:
+                    employees = Employees.query.filter_by(**selected_filter).order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
         except KeyError:
                 return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
@@ -846,7 +853,9 @@ def admin_students(page_no):
                     students = Students.query.order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
                 else:
                     students = Students.query.filter_by(**selected_filter).order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-        except KeyError:
+        except Exception as e:
+            log_body = f'Admin > Students > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
         students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
