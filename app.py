@@ -6,9 +6,10 @@ from datetime import datetime, timedelta
 import random
 import json
 
+
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data, random_id_generator
+from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging
 from scripts.util import DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs, Pools
 from scripts.mail_ops import send_mail
@@ -53,7 +54,8 @@ def email_verify(token):
         db.session.commit()
         return jsonify({'message': 'Email verified successfully'}), 200
     except Exception as e:
-        print(e)
+        log_body = f'Student > Email Verification > ERROR > {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -86,7 +88,8 @@ def student_register():
 
         return jsonify({'message': 'Student created successfully'}), 200
     except Exception as e:
-        print(e)
+        log_body = f'Student > Register > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -127,7 +130,8 @@ def student_login():
             return jsonify({'message': 'Incorrect password or email'}), 400
         
     except Exception as e:
-        print(e)
+        log_body = f'Student > Login > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -191,8 +195,9 @@ def profile_update_settings():
 
         return jsonify({'message': 'Verification email sent'}), 200
     except Exception as e:
-        print(e)
-        return jsonify({'message': 'Something went wrong. ' + str(e)}), 500
+        log_body = f'Student > Profile Update Settings > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong. ' + repr(e)}), 500
 
 
 @app.route('/student/confirm-new-password/<token>')
@@ -215,7 +220,8 @@ def student_confirm_new_password(token):
         
         return jsonify({'message': 'Password changed successfully'}), 200
     except Exception as e:
-        print(e)
+        log_body = f'Student > Confirm New Password > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -238,8 +244,9 @@ def student_forgot_password():
 
         return jsonify({'message': 'Verification email sent'}), 200
     except Exception as e:
-        print(e)
-        return jsonify({'message': 'Something went wrong. ' + str(e)}), 500
+        log_body = f'Student > Forgot Password > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong. ' + repr(e)}), 500
 
 
 @app.route('/student/reset-password/<token>', methods=['POST'])
@@ -265,8 +272,9 @@ def student_reset_password(token):
         
         return jsonify({'message': 'Password reset successfully'}), 200
     except Exception as e:
-        print(e)
-        return jsonify({'message': 'Something went wrong. ' + str(e)}), 500
+        log_body = f'Student > Reset Password > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong. ' + repr(e)}), 500
 
 
 # ========================================================================================
@@ -310,7 +318,8 @@ def employee_register():
 
         return jsonify({'message': 'User created successfully'}), 200
     except Exception as e:
-        print(e)
+        log_body = f'Employee > Register > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
     
 
@@ -333,7 +342,9 @@ def employee_login():
             return jsonify({'access_token': access_token}), 200
         else:
             return jsonify({'message': 'Incorrect password or email'}), 400
-    except:
+    except Exception as e:
+        log_body = f'Employee > Login > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 # DENEME
@@ -360,7 +371,8 @@ def employee_talent_get():
 
         return jsonify({'students': students_list}), 200
     except Exception as e:
-        print(e)
+        log_body = f'Employee > Talent Market > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 # DENEME
@@ -397,7 +409,8 @@ def employee_talent_add(student_email):
 
         return jsonify({'message': 'Student profile updated'}), 200
     except Exception as e:
-        print(e)
+        log_body = f'Employee > Talent Add > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 # DENEME
@@ -425,7 +438,8 @@ def employee_company_pool_get():
 
         return jsonify({'talents': talents}), 200
     except Exception as e:
-        print(e)
+        log_body = f'Employee > Company Pool > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -454,7 +468,9 @@ def administrator_login():
         try:
             with open('admins/admin1.json', 'r') as j:
                 admin = json.load(j)
-        except:
+        except Exception as e:
+            log_body = f'Admin > Login > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong'}), 500
 
         admin = dict(admin)
@@ -468,7 +484,8 @@ def administrator_login():
         return jsonify({'access_token': access_token}), 200
 
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Login > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -488,11 +505,13 @@ def admin_test_companies():
             return jsonify({'companies': companies}), 200
 
         except Exception as e:
-            print(e)
+            log_body = f'Admin > Companies > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong'}), 500
 
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Companies > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -535,11 +554,13 @@ def company_register():
 
             return jsonify({'message': 'Company created successfully'}), 201
         except Exception as e:
-            print(e)
+            log_body = f'Admin > Company Register > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong'}), 500
 
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Company Register > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -567,11 +588,13 @@ def company_remove():
             db.session.commit()
             return jsonify({'message': 'Company removed successfully'}), 201
         except Exception as e:
-            print(e)
+            log_body = f'Admin > Remove Company > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong'}), 500
 
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Remove Company > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -594,11 +617,13 @@ def get_company(company_name):
             return jsonify(get_specific_data(company, DC_AD_COMPANIES, get_raw=True)), 200
 
         except Exception as e:
-            print(e)
+            log_body = f'Admin > Get Company > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong'}), 500
 
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Get Company > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -627,16 +652,19 @@ def edit_company(company_name):
                 try:
                     setattr(company, key, value)
                 except Exception as e:
-                    print(e)
+                    log_body = f'Admin > Company Edit > setattr > ERROR : {repr(e)}'
+                    logging.warning(f'IP: {request.remote_addr} | {log_body}')
                     
             return jsonify({'message': 'User updated successfully. '}), 200
 
         except Exception as e:
-            print(e)
+            log_body = f'Admin > Company Edit > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong'}), 500
 
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Company Edit > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -678,11 +706,13 @@ def company_add_user(company_name):
             db.session.commit()
             return jsonify({'message': 'Employees updated succesfully. Current: ' + str(final_employees)}), 200
         except Exception as e:
-            print(e)
+            log_body = f'Admin > Company Add Employee > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong in request operations'}), 500
 
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Company Add Employee > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -714,11 +744,13 @@ def company_remove_user(company_name):
             db.session.commit()
             return jsonify({'message': 'Employee removed succesfully'}), 200
         except Exception as e:
-            print(e)
+            log_body = f'Admin > Company Remove Employee > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong in request operations'}), 500
 
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Company Remove Employee > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -766,7 +798,8 @@ def admin_employees(page_no):
 
         return jsonify({'max_pages': page_amount, 'employees': employees}), 200
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Employees > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -827,7 +860,8 @@ def admin_students(page_no):
         
         return jsonify({'max_pages': page_amount, 'students': students}), 200
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Students > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
@@ -885,7 +919,8 @@ def admin_create_program():
         return jsonify({'message': 'Program created succesfully'}), 200
 
     except Exception as e:
-        print(e)
+        log_body = f'Admin > Create Program > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 

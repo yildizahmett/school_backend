@@ -7,6 +7,7 @@ import os
 import json
 from random import randint
 from datetime import timedelta
+import logging
 
 TOKEN_EXPIRE_TIME = 2 # HOURS
 app = Flask(__name__)
@@ -36,6 +37,10 @@ DC_ST_HARDSKILLS    = 'hardskills'
 DC_ST_JOB           = 'job'
 
 
+format = '| %(asctime)s | %(message)s | %(levelname)s '
+logging.basicConfig(format=format, level=logging.INFO, datefmt='%D | %H:%M:%S')
+# filename='current.log', filemode='a', # add this code to the inside of basicConfig to store logs in a file instead of printing to the terminal
+
 def random_id_generator(length):
     # Primitive Version
     code = ''
@@ -57,7 +62,8 @@ def get_specific_data(member, needed_data, get_raw=False):
             return final_data
         return jsonify(final_data), 200
     except Exception as e:
-        print(e)
+        log_body = f'get_specific_data > ERROR : {repr(e)}'
+        logging.warning(f'{log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 def update_table_data(data, member, db):
@@ -78,7 +84,8 @@ def update_table_data(data, member, db):
         db.session.commit()
         return message
     except Exception as e:
-        print(e)
+        log_body = f'update_table_data > ERROR : {repr(e)}'
+        logging.warning(f'{log_body}')
         return 'ERROR: Something went wrong while changing data.'
 
 def update_profile_data(request, jwt_identitiy, Members, needed_data):
@@ -103,9 +110,10 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
                 return jsonify({'message': 'User updated successfully. ' + message}), 200
 
         except Exception as e:
-            print(e)
+            logging.info('update_profile_data : Request Operations : ERROR : ' + repr(e))
             return jsonify({'message': 'Something went wrong in request operations'}), 500
 
     except Exception as e:
-        print(e)
+        log_body = f'update_profile_data > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
