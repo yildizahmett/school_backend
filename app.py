@@ -822,7 +822,10 @@ def admin_students(page_no):
             return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
         students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
-        return jsonify({'students': students}), 200
+
+        page_amount = ceil(Students.query.count() / entry_amount)
+        
+        return jsonify({'pages': page_amount, 'students': students}), 200
     except Exception as e:
         print(e)
         return jsonify({'message': 'Something went wrong'}), 500
