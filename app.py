@@ -796,8 +796,10 @@ def admin_employees(page_no):
                     employees = Employees.query.order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
                 else:
                     employees = Employees.query.filter_by(**selected_filter).order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-        except KeyError:
-                return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
+        except Exception as e:
+            log_body = f'Admin > Employees > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
         employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
 
