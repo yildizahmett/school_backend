@@ -824,17 +824,22 @@ def admin_employees_multiple_remove():
         data = request.get_json()
         employees_to_remove = data['removed_users']
         
+        employees_removed = []
+
         try:
             for employee in employees_to_remove:
                 try:
                     employee = Employees.query.filter_by(email=employee).first()
+                    if employee:
+                        employees_removed.append(employee.email)
                     db.session.delete(employee)
                     db.session.commit()
                 except:
                     continue
-            return jsonify({'message': 'Employees removed succesfully'}), 200
+            
+            return jsonify({'message': 'Employees removed succesfully. Removed employees' + employees_removed}), 200
         except Exception as e:
-            log_body = f'Admin > Employees > Multiple Remove > ERROR : {repr(e)}'
+            log_body = f'Admin > Employees > Multiple Remove > Request Operation > ERROR : {repr(e)}'
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong in request operations'}), 500
 
@@ -917,17 +922,21 @@ def admin_students_multiple_remove():
         data = request.get_json()
         students_to_remove = data['removed_users']
         
+        students_removed = []
+
         try:
             for student in students_to_remove:
                 try:
                     student = Students.query.filter_by(email=student).first()
+                    if student:
+                        students_removed.append(student.email)
                     db.session.delete(student)
                     db.session.commit()
                 except:
                     continue
             return jsonify({'message': 'Students removed succesfully'}), 200
         except Exception as e:
-            log_body = f'Admin > Students > Multiple Remove > ERROR : {repr(e)}'
+            log_body = f'Admin > Students > Multiple Remove > Request Operation > ERROR : {repr(e)}'
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong in request operations'}), 500
 
