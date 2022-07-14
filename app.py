@@ -811,6 +811,38 @@ def admin_employees(page_no):
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
+@app.route('/admin/employee/multiple-remove', methods=['POST'])
+@jwt_required()
+def admin_employees_multiple_remove():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        data = request.get_json()
+        employees_to_remove = data['removed_users']
+        
+        try:
+            for employee in employees_to_remove:
+                try:
+                    employee = Employees.query.filter_by(id=employee).first()
+                    db.session.delete(employee)
+                except:
+                    continue
+            db.session.commit()
+            return jsonify({'message': 'Employees removed succesfully'}), 200
+        except Exception as e:
+            log_body = f'Admin > Employees > Multiple Remove > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            return jsonify({'message': 'Something went wrong in request operations'}), 500
+
+    except Exception as e:
+        log_body = f'Admin > Employees > Multiple Remove > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
 
 # Admin gets all the students' data (TODO: Only give the students in batches of 20 for example, aka paging)
 @app.route('/admin/student/<int:page_no>', methods=['GET'])
