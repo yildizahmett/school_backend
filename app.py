@@ -811,6 +811,27 @@ def admin_employees(page_no):
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
+@app.route('/admin/employee/get/<int:id>', methods=['GET'])
+@jwt_required()
+def admin_employee_get(id):
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        employee = Employees.query.filter_by(id=id).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        return jsonify({'employee': employee}), 200
+    except Exception as e:
+        log_body = f'Admin > Employee Get > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
 @app.route('/admin/employee/multiple-remove', methods=['POST'])
 @jwt_required()
 def admin_employees_multiple_remove():
@@ -904,6 +925,28 @@ def admin_students(page_no):
         return jsonify({'max_pages': page_amount, 'students': students}), 200
     except Exception as e:
         log_body = f'Admin > Students > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/admin/student/get/<int:id>', methods=['GET'])
+@jwt_required()
+def admin_student_get(id):
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        student = Students.query.filter_by(id=id).first()
+
+        if not student:
+            return jsonify({'message': 'Student does not exist'}), 400
+
+        return jsonify({'student': student}), 200
+    except Exception as e:
+        log_body = f'Admin > Student Get > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
