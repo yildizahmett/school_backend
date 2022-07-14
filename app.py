@@ -826,6 +826,9 @@ def admin_employee_get(id):
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
 
+        employee = employee.to_dict()
+        employee.pop('password')
+
         return jsonify({'employee': employee}), 200
     except Exception as e:
         log_body = f'Admin > Employee Get > ERROR : {repr(e)}'
@@ -943,6 +946,9 @@ def admin_student_get(id):
 
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
+
+        student = student.to_dict()
+        student.pop('password')
 
         return jsonify({'student': student}), 200
     except Exception as e:
