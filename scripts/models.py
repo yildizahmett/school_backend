@@ -99,7 +99,7 @@ class Companies(db.Model):
         self.company_users.append(user)
 
     def to_dict(self):
-        return {i.name: getattr(self, i.name) for i in self.__table__.columns}
+        return {i.name: getattr(self, i.name) for i in self.__table__.columns if i.name != 'password'}
 
 
 class Employees(db.Model):

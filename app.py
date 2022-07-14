@@ -827,7 +827,6 @@ def admin_employee_get(id):
             return jsonify({'message': 'Employee does not exist'}), 400
 
         employee = employee.to_dict()
-        employee.pop('password')
 
         return jsonify({'employee': employee}), 200
     except Exception as e:
@@ -948,7 +947,6 @@ def admin_student_get(id):
             return jsonify({'message': 'Student does not exist'}), 400
 
         student = student.to_dict()
-        student.pop('password')
 
         return jsonify({'student': student}), 200
     except Exception as e:
