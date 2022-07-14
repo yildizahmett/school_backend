@@ -829,9 +829,9 @@ def admin_employees_multiple_remove():
                 try:
                     employee = Employees.query.filter_by(id=employee).first()
                     db.session.delete(employee)
+                    db.session.commit()
                 except:
                     continue
-            db.session.commit()
             return jsonify({'message': 'Employees removed succesfully'}), 200
         except Exception as e:
             log_body = f'Admin > Employees > Multiple Remove > ERROR : {repr(e)}'
