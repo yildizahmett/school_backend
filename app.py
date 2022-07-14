@@ -858,7 +858,7 @@ def admin_employees_multiple_remove():
                 except:
                     continue
             
-            return jsonify({'message': 'Employees removed succesfully. Removed employees' + employees_removed}), 200
+            return jsonify({'message': 'Employees removed succesfully. Removed employees: ' + str(employees_removed)}), 200
         except Exception as e:
             log_body = f'Admin > Employees > Multiple Remove > Request Operation > ERROR : {repr(e)}'
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
@@ -977,7 +977,7 @@ def admin_students_multiple_remove():
                     db.session.commit()
                 except:
                     continue
-            return jsonify({'message': 'Students removed succesfully'}), 200
+            return jsonify({'message': 'Students removed succesfully. Removed students: ' + str(students_removed)'}), 200
         except Exception as e:
             log_body = f'Admin > Students > Multiple Remove > Request Operation > ERROR : {repr(e)}'
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
