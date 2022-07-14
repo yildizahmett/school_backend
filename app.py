@@ -903,6 +903,39 @@ def admin_students(page_no):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
+# Admin - Multiple remove students
+@app.route('/admin/student/multiple-remove', methods=['POST'])
+@jwt_required()
+def admin_students_multiple_remove():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        data = request.get_json()
+        students_to_remove = data['removed_users']
+        
+        try:
+            for student in students_to_remove:
+                try:
+                    student = Students.query.filter_by(email=student).first()
+                    db.session.delete(student)
+                    db.session.commit()
+                except:
+                    continue
+            return jsonify({'message': 'Students removed succesfully'}), 200
+        except Exception as e:
+            log_body = f'Admin > Students > Multiple Remove > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            return jsonify({'message': 'Something went wrong in request operations'}), 500
+
+    except Exception as e:
+        log_body = f'Admin > Students > Multiple Remove > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
 @app.route('/admin/create-program', methods=['POST'])
 @jwt_required()
 def admin_create_program():
