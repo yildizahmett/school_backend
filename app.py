@@ -827,7 +827,7 @@ def admin_employees_multiple_remove():
         try:
             for employee in employees_to_remove:
                 try:
-                    employee = Employees.query.filter_by(id=employee).first()
+                    employee = Employees.query.filter_by(email=employee).first()
                     db.session.delete(employee)
                     db.session.commit()
                 except:
