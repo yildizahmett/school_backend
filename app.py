@@ -811,9 +811,9 @@ def admin_employees(page_no):
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
-@app.route('/admin/employee/get/<int:id>', methods=['GET'])
+@app.route('/admin/employee/get/<email>', methods=['GET'])
 @jwt_required()
-def admin_employee_get(id):
+def admin_employee_get(email):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -821,7 +821,7 @@ def admin_employee_get(id):
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        employee = Employees.query.filter_by(id=id).first()
+        employee = Employees.query.filter_by(email=email).first()
 
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
@@ -931,9 +931,9 @@ def admin_students(page_no):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/admin/student/get/<int:id>', methods=['GET'])
+@app.route('/admin/student/get/<email>', methods=['GET'])
 @jwt_required()
-def admin_student_get(id):
+def admin_student_get(email):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -941,7 +941,7 @@ def admin_student_get(id):
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        student = Students.query.filter_by(id=id).first()
+        student = Students.query.filter_by(email=email).first()
 
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
