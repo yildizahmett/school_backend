@@ -834,6 +834,41 @@ def admin_employee_get(email):
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
+
+@app.route('/admin/employee/edit/<email>', methods=['POST'])
+@jwt_required()
+def admin_employee_edit(email):
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        data = request.get_json()
+        values = data['values']
+
+        try:
+            employee = Employees.query.filter_by(email=email).first()
+            if not employee:
+                return jsonify({'message': 'Employee does not exist'}), 400
+
+            for key, value in values.items():
+                setattr(employee, key, value)
+            db.session.commit()
+            
+        except Exception as e:
+            log_body = f'Admin > Employee Edit > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            return jsonify({'message': 'Something went wrong in request operations'}), 500
+
+        return jsonify({'message': 'Employee edited succesfully'}), 200
+    except Exception as e:
+        log_body = f'Admin > Employee Edit > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
 @app.route('/admin/employee/multiple-remove', methods=['POST'])
 @jwt_required()
 def admin_employees_multiple_remove():
@@ -951,6 +986,42 @@ def admin_student_get(email):
         return jsonify({'student': student}), 200
     except Exception as e:
         log_body = f'Admin > Student Get > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/admin/student/edit/<email>', methods=['POST'])
+@jwt_required()
+def admin_student_edit(email):
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        data = request.get_json()
+        student = Students.query.filter_by(email=email).first()
+
+        data = request.get_json()
+        values = data['values']
+
+        try:
+            student = Students.query.filter_by(email=email).first()
+            if not student:
+                return jsonify({'message': 'Student does not exist'}), 400
+
+            for key, value in values.items():
+                setattr(student, key, value)
+            db.session.commit()
+        except Exception as e:
+            log_body = f'Admin > Student Edit > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            return jsonify({'message': 'Something went wrong in request operations'}), 500
+
+        return jsonify({'message': 'Student edited succesfully'}), 200
+    except Exception as e:
+        log_body = f'Admin > Student Edit > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
