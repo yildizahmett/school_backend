@@ -848,6 +848,9 @@ def admin_employee_edit(email):
         data = request.get_json()
         values = data['values']
 
+        if 'password' in values.keys():
+            del values['password']
+
         try:
             employee = Employees.query.filter_by(email=email).first()
             if not employee:
@@ -1001,10 +1004,10 @@ def admin_student_edit(email):
             return jsonify({'message': 'You are not an administrator'}), 400
 
         data = request.get_json()
-        student = Students.query.filter_by(email=email).first()
-
-        data = request.get_json()
         values = data['values']
+
+        if 'password' in values.keys():
+            del values['password']
 
         try:
             student = Students.query.filter_by(email=email).first()
