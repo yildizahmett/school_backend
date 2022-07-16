@@ -830,6 +830,12 @@ def admin_employee_get(email):
 
         employee = employee.to_dict()
 
+        remove_info = ['pool_amount', 'sign_up_date']
+
+        for info in remove_info:
+            if info in employee.keys():
+                del employee[info]
+
         return jsonify({'employee': employee}), 200
     except Exception as e:
         log_body = f'Admin > Employee Get > ERROR : {repr(e)}'
