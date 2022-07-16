@@ -836,7 +836,7 @@ def admin_employee_get(email):
             if info in employee.keys():
                 del employee[info]
 
-        return jsonify({'employee': employee}), 200
+        return jsonify({**employee}), 200
     except Exception as e:
         log_body = f'Admin > Employee Get > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
@@ -1000,7 +1000,7 @@ def admin_student_get(email):
 
         student = student.to_dict()
 
-        return jsonify({'student': student}), 200
+        return jsonify({**student}), 200
     except Exception as e:
         log_body = f'Admin > Student Get > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
