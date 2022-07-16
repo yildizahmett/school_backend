@@ -830,7 +830,7 @@ def admin_employee_get(email):
 
         employee = employee.to_dict()
 
-        remove_info = ['pool_amount', 'sign_up_date']
+        remove_info = ['pool_amount', 'sign_up_date', 'id']
 
         for info in remove_info:
             if info in employee.keys():
