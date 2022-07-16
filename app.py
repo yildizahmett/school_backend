@@ -655,8 +655,9 @@ def edit_company(company_name):
                 except Exception as e:
                     log_body = f'Admin > Company Edit > setattr > ERROR : {repr(e)}'
                     logging.warning(f'IP: {request.remote_addr} | {log_body}')
-                    
-            return jsonify({'message': 'User updated successfully. '}), 200
+            
+            db.session.commit()
+            return jsonify({'message': 'Company updated successfully. '}), 200
 
         except Exception as e:
             log_body = f'Admin > Company Edit > Request Operation > ERROR : {repr(e)}'
