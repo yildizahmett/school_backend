@@ -644,11 +644,12 @@ def edit_company(company_name):
                 return jsonify({'message': 'Company does not exist'}), 400
 
             data = request.get_json()
+            values = data['values']
 
-            if "company_users" in data.keys():
-                del data["company_users"]
+            if "company_users" in values.keys():
+                del values["company_users"]
 
-            for key, value in data.items():
+            for key, value in values.items():
                 try:
                     setattr(company, key, value)
                 except Exception as e:
