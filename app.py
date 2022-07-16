@@ -852,6 +852,12 @@ def admin_employee_edit(email):
 
         if 'password' in values.keys():
             del values['password']
+        
+        if 'company' in values.keys():
+            del values['company']
+        
+        if 'company_name' in values.keys():
+            del values['company_name']
 
         try:
             employee = Employees.query.filter_by(email=email).first()
