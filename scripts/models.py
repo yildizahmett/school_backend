@@ -34,11 +34,11 @@ class Students(db.Model):
     linkedin        = db.Column(db.String(240), nullable=True)
     github          = db.Column(db.String(240), nullable=True)
     medium          = db.Column(db.String(240), nullable=True)
-    program_name    = db.Column(db.String(120), nullable=True)
+    program_name    = db.Column(db.String(120), nullable=True) # silinecek bu, işi yok
     comp_skills     = db.Column(db.ARRAY(db.String(120)), nullable=True)
     hobbies         = db.Column(db.ARRAY(db.String(120)), nullable=True)
     birth_date      = db.Column(db.DateTime, nullable=True)
-    english_level   = db.Column(db.String(120), nullable=True) # this might be removed due to how languages are stored
+    english_level   = db.Column(db.String(120), nullable=True)  # silinecek bu, işi yok
     reference       = db.Column(db.String(120), nullable=True)
     starting_date   = db.Column(db.DateTime, nullable=True)
     job_title       = db.Column(db.String(120), nullable=True)

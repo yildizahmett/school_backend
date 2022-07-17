@@ -1239,12 +1239,6 @@ def admin_data():
             'completed_total' : 20
         }
 
-        company_signup = {
-            'invite_total' : 55,
-            'signup_total' : 25,
-            'total_tc' : 15
-        }
-
         account_signup = {
             'invite_total' : 125,
             'signup_total' : 53,
@@ -1263,26 +1257,21 @@ def admin_data():
                 'signup_total': 60,
                 'completed_total' : 30
             },
-            'placeHolder1' : {
+            'frontend' : {
                 'grad_total': 20,
                 'signup_total': 37,
                 'completed_total' : 21
             },
-            'placeHolder2' : {
+            'backend' : {
                 'grad_total': 30,
                 'signup_total': 31,
                 'completed_total' : 26
             },
-            'placeHolder3' : {
+            'fullstack' : {
                 'grad_total': 90,
                 'signup_total': 39,
                 'completed_total' : 24
             }
-        }
-
-        job_find_time = {
-            'employed' : 2400,
-            'self_employed' : 168,
         }
 
         # This is going to be more complex than the others...
@@ -1331,11 +1320,11 @@ def admin_data():
 
         data = {
             'grad_profile': grad_profile,
-            'company_signup': company_signup,
+            #'company_signup': company_signup,
             'account_signup': account_signup,
             'employment_rate' : employment_rate,
             'grad_profile_programs' : grad_profile_programs,
-            'job_find_time' : job_find_time,
+            'job_find_time' : 5000,
             'filter_top5' : filter_top5
         }
 
