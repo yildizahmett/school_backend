@@ -547,7 +547,7 @@ def company_register():
             db.session.add(company)
             db.session.commit()
 
-            if not company_users:
+            if company_users:
                 # Send mails to employees so they know they can register
                 for em in company_users:
                     register_url = FRONTEND_LINK + '/employee/register'
