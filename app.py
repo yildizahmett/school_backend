@@ -1268,16 +1268,44 @@ def admin_data():
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
+        all_students  = Students.query.all()
+        all_temps     = Temps.query.all()
+        all_programs  = Programs.query.all()
+        all_companies = Companies.query.all()
+        all_employees = Employees.query.all()
+
+        students_table_count  = len(all_students)
+        temps_table_count     = len(all_temps)
+        programs_table_count  = len(all_programs)
+        companies_table_count = len(all_companies)
+        employees_table_count = len(all_employees)
+
+        # Ortalama İş Bulma Süresi Grafiği
+        if students_table_count != 0:
+            avg_job_find_time = sum([student.job_find_time for student in all_students]) / students_table_count
+        else:
+            avg_job_find_time = 0
+
+        # Öğrenci Veri Grafiği
+        student_grad_total      = students_table_count + temps_table_count
+        student_signup_total    = students_table_count
+        student_completed_total = Students.query.filter_by(profile_complete=True).count()
+
+        # Employee Veri Grafiği
+        employee_invite_total   = sum([len(company.company_users) for company in all_companies])
+        employee_signup_total   = 1
+        employee_tc_total       = 1
+
         grad_profile = {
-            'grad_total': 40,
-            'signup_total': 30,
-            'completed_total' : 20
+            'grad_total': student_grad_total,
+            'signup_total': student_signup_total,
+            'completed_total' : student_completed_total
         }
 
         account_signup = {
-            'invite_total' : 125,
-            'signup_total' : 53,
-            'total_tc' : 47
+            'invite_total' : employee_invite_total,
+            'signup_total' : employee_signup_total,
+            'total_tc' : employee_tc_total
         }
 
         employment_rate = {
@@ -1355,7 +1383,7 @@ def admin_data():
             'account_signup': account_signup,
             'employment_rate' : employment_rate,
             'grad_profile_programs' : grad_profile_programs,
-            'job_find_time' : 5000,
+            'avg_job_find_time' : avg_job_find_time,
             'filter_top5' : filter_top5
         }
 
