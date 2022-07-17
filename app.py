@@ -547,7 +547,7 @@ def company_register():
             # Send mails to employees so they know they can register
             for em in company_users:
                 register_url = FRONTEND_LINK + '/employee/register'
-                subj = 'Dear {} Employee'.format(company.company_name)
+                subj = 'Dear {} Employee'.format(company.company_name.upper())
                 msg = 'You can register at {} with this id: {}'.format(register_url, company.special_id)
                 send_mail(em, subj, msg)
 
@@ -716,7 +716,7 @@ def company_add_user(company_name):
             # Send mails to employees so they know they can register
             for em in employees_to_add:
                 register_url = FRONTEND_LINK + '/employee/register'
-                subj = 'Dear {} Employee'.format(company.company_name)
+                subj = 'Dear {} Employee'.format(company.company_name.upper())
                 msg = f'You can register at {register_url} with this id: {company.special_id}'
                 send_mail(em, subj, msg)
 
@@ -1134,7 +1134,7 @@ def admin_create_program():
                 msg = 'You can register at {} with this code: {}'.format(register_url, program_code)
                 send_mail(mail, subj, msg)
                 register_url = FRONTEND_LINK + '/employee/register'
-                subj = 'Dear {} Employee'.format(company.company_name)
+                subj = 'Dear {} Employee'.format(company.company_name.upper())
                 msg = f'You can register at {register_url} with this id: {company.special_id}'
                 send_mail(em, subj, msg)
             except KeyboardInterrupt:
