@@ -528,7 +528,7 @@ def company_register():
 
         try:
             data = request.get_json()
-            company_name = data['company_name']
+            company_name = data['company_name'].lower()
             #special_id = data['special_id']
             special_id = random_id_generator(4)
             company_users = data['company_users']
@@ -648,6 +648,9 @@ def edit_company(company_name):
 
             if "company_users" in values.keys():
                 del values["company_users"]
+
+            if "company_name" in values.keys():
+                values["company_name"] = values["company_name"].lower()
 
             for key, value in values.items():
                 try:
