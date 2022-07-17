@@ -41,7 +41,7 @@ DC_ST_JOB           = 'job'
 FRONTEND_LINK = 'http://localhost:3000'
 
 format = '| %(asctime)s | %(message)s | %(levelname)s '
-logging.basicConfig(format=format, level=logging.INFO, datefmt='%D | %H:%M:%S')
+logging.basicConfig(format=format, level=logging.INFO, datefmt='%d/%M/%Y | %H:%M:%S')
 # filename='current.log', filemode='a', # add this code to the inside of basicConfig to store logs in a file instead of printing to the terminal
 
 """
