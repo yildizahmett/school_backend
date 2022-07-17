@@ -1139,6 +1139,53 @@ def admin_create_program():
         return jsonify({'message': 'Something went wrong'}), 500
 
 
+@app.route('/admin/data', methods=['GET'])
+@jwt_required()
+def admin_data():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        grad_profile = {
+            'grad_total': 20,
+            'signup_total': 30,
+            'completed_total' : 40
+        }
+        company_signup = {
+            'invite_total' : 15,
+            'signup_total' : 25,
+            'total_tc' : 35
+        }
+        account_signup = {
+            'invite_total' : 5,
+            'signup_total' : 23,
+            'total_tc' : 47
+        }
+
+
+
+        data = {
+            'grad_profile': grad_profile,
+            'company_signup': company_signup,
+            'account_signup': account_signup
+        }
+
+
+
+
+        
+
+        return jsonify(**data), 200
+
+    except Exception as e:
+        log_body = f'Admin > Data > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
 # ========================================================================================
 #   End of ADMINISTRATOR Routes
 # ========================================================================================
