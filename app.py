@@ -10,7 +10,7 @@ import json
 from itsdangerous import URLSafeTimedSerializer
 
 from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging
-from scripts.util import DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
+from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs, Pools
 from scripts.mail_ops import send_mail
 
@@ -80,8 +80,7 @@ def student_register():
         db.session.commit()
 
         token = generate_confirmation_token(temp_student.email)
-        #confirm_url = url_for('email_verify', token=token, _external=True)
-        confirm_url = 'http://localhost:3000' + '/email-verification/' + token
+        confirm_url = FRONTEND_LINK + '/email-verification/' + token
         msg = 'Please click the link to activate your account: {} '.format(confirm_url)
 
         send_mail(temp_student.email, 'Verify Your Account', msg)
@@ -112,8 +111,7 @@ def student_login():
             if bcrypt.check_password_hash(temp_student.password, password):
                 # resend email verification
                 token = generate_confirmation_token(temp_student.email)
-                #confirm_url = url_for('email_verify', token=token, _external=True)
-                confirm_url = 'http://localhost:3000' + '/email-verification/' + token
+                confirm_url = FRONTEND_LINK + '/email-verification/' + token
                 msg = 'Please click the link to activate your account {} '.format(confirm_url)
                 send_mail(temp_student.email, 'Verify Your Account', msg)
                 return jsonify({'message': 'Verification email sent'}), 401
@@ -188,8 +186,7 @@ def profile_update_settings():
             return jsonify({'message': 'Incorrect password'}), 400
         
         token = generate_confirmation_token([email, new_password])
-        #confirm_url = url_for('student_confirm_new_password', token=token, _external=True)
-        confirm_url = 'http://localhost:3000' + '/student/confirm-new-password/' + token
+        confirm_url = FRONTEND_LINK + '/student/confirm-new-password/' + token
         msg = 'Please click the link to confirm your new password: {} '.format(confirm_url)
         send_mail(student.email, 'Password Change', msg)
 
@@ -237,8 +234,7 @@ def student_forgot_password():
             return jsonify({'message': 'Student does not exist'}), 400
         
         token = generate_confirmation_token(email)
-        #confirm_url = url_for('student_reset_password', token=token, _external=True)
-        confirm_url = 'http://localhost:3000' + '/student/reset-password/' + token
+        confirm_url = FRONTEND_LINK + '/student/reset-password/' + token
         msg = 'Please click the link to reset your password: {} '.format(confirm_url)
         send_mail(student.email, 'Password Reset', msg)
 
@@ -530,7 +526,7 @@ def company_register():
             data = request.get_json()
             company_name = data['company_name'].lower()
             #special_id = data['special_id']
-            special_id = random_id_generator(4)
+            special_id = random_id_generator(8)
             company_users = data['company_users']
 
             # TODO: frontendde kontrol edilmiyorsa, duplicate emailleri silme operasyonu yapılsın
@@ -538,8 +534,11 @@ def company_register():
             if Companies.query.filter_by(company_name=company_name).first():
                 return jsonify({'message': 'Company already exists'}), 400
 
-            if Companies.query.filter_by(special_id=special_id):
-                special_id = random_id_generator(4)
+            for x in range(20):
+                if Companies.query.filter_by(special_id=special_id).first():
+                    special_id = random_id_generator(8)
+                else:
+                    break
 
             company = Companies(company_name, special_id, company_users)
             db.session.add(company)
@@ -547,9 +546,9 @@ def company_register():
 
             # Send mails to employees so they know they can register
             for em in company_users:
-                register_url = url_for('employee_register', _external=True)
+                register_url = FRONTEND_LINK + '/employee/register'
                 subj = 'Dear {} Employee'.format(company.company_name)
-                msg = 'You can register at {} with this id: {}'.format(register_url, special_id)
+                msg = 'You can register at {} with this id: {}'.format(register_url, company.special_id)
                 send_mail(em, subj, msg)
 
             return jsonify({'message': 'Company created successfully'}), 201
@@ -689,15 +688,20 @@ def company_add_user(company_name):
         
         try:
             company = Companies.query.filter_by(company_name=company_name).first()
-            current_employees = company.company_users
+            if not company:
+                return jsonify({'message': 'Company does not exist'}), 400
 
+            current_employees = company.company_users
             if not current_employees:
                 setattr(company, 'company_users', new_employees)
                 db.session.commit()
-                return jsonify({'message': 'Employees updated succesfully. Current: ' + str(new_employees)}), 200
+                return jsonify({'message': 'Employees updated succesfully. Added: ' + str(new_employees)}), 200
 
             employees_to_add = []
             for em in new_employees:
+                if Employees.query.filter_by(email=em).first():
+                    continue
+
                 if em not in current_employees:
                     employees_to_add.append(em)
             
@@ -708,7 +712,15 @@ def company_add_user(company_name):
             
             setattr(company, 'company_users', final_employees)
             db.session.commit()
-            return jsonify({'message': 'Employees updated succesfully. Current: ' + str(final_employees)}), 200
+
+            # Send mails to employees so they know they can register
+            for em in employees_to_add:
+                register_url = FRONTEND_LINK + '/employee/register'
+                subj = 'Dear {} Employee'.format(company.company_name)
+                msg = f'You can register at {register_url} with this id: {company.special_id}'
+                send_mail(em, subj, msg)
+
+            return jsonify({'message': 'Employees updated succesfully. Added: ' + str(final_employees)}), 200
         except Exception as e:
             log_body = f'Admin > Company Add Employee > Request Operation > ERROR : {repr(e)}'
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
@@ -1116,10 +1128,15 @@ def admin_create_program():
             try:
                 # Add Student to Temps table????????????????????????**
                 # Send the mail now
+                # Aşağıdaki kodlar tam çalışmaz
                 register_url = url_for('student_register', _external=True)
                 subj = 'Dear {} Graduate'.format(program_name)
                 msg = 'You can register at {} with this code: {}'.format(register_url, program_code)
                 send_mail(mail, subj, msg)
+                register_url = FRONTEND_LINK + '/employee/register'
+                subj = 'Dear {} Employee'.format(company.company_name)
+                msg = f'You can register at {register_url} with this id: {company.special_id}'
+                send_mail(em, subj, msg)
             except KeyboardInterrupt:
                 break
             except Exception as e:
@@ -1242,7 +1259,7 @@ def admin_data():
 
         }
 
-
+        
 
 
         data = {
@@ -1254,11 +1271,6 @@ def admin_data():
             'job_find_time' : job_find_time,
             'filter_top5' : filter_top5
         }
-
-
-
-
-        
 
         return jsonify(**data), 200
 

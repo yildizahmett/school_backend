@@ -2,7 +2,6 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSON as pg_JSON
 from datetime import datetime
 from scripts.util import db
-# to be able to run update_db.py successfully, remove 'scripts.'  from the line above then add it after you're done
 
 
 class Temps(db.Model):
