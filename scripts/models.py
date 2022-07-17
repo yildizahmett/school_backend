@@ -169,4 +169,12 @@ class Programs(db.Model):
     id=db.Column(db.Integer,primary_key=True)
     program_name = db.Column(db.String(120), nullable=False, unique=True)
     program_code = db.Column(db.String(255), nullable=False, unique=True)
+    # TODO: Add date column here
+
+    def __init__(self, program_name, program_code):
+        self.program_name = program_name
+        self.program_code = program_code
+
+    def to_dict(self):
+        return {i.name: getattr(self, i.name) for i in self.__table__.columns if i.name != 'id'}
 

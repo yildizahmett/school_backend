@@ -1101,7 +1101,7 @@ def admin_students_multiple_remove():
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
-@app.route('/admin/create-program', methods=['POST'])
+@app.route('/admin/program/create', methods=['POST'])
 @jwt_required()
 def admin_create_program():
     try:
@@ -1116,10 +1116,10 @@ def admin_create_program():
         program_code = data['program_code']
         emails       = data['emails']
 
-        if Programs.query.filter_by(program_name).first():
+        if Programs.query.filter_by(program_name=program_name).first():
             return jsonify({'message': 'Program already exists'}), 400
 
-        if Programs.query.filter_by(program_code).first():
+        if Programs.query.filter_by(program_code=program_code).first():
             return jsonify({'message': 'Program code is already in use'}), 400
 
         # TODO: EMAIL YOLLAMA KISIMLARI
@@ -1164,6 +1164,64 @@ def admin_create_program():
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
+
+@app.route('/admin/program/edit/<program_code>', methods=['POST'])
+@jwt_required()
+def admin_program_edit(program_code):
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        data = request.get_json()
+
+        editable_data = ['program_name', 'program_code']
+
+        try:
+            program = Programs.query.filter_by(program_code=program_code).first()
+            if not program:
+                return jsonify({'message': 'Program does not exist'}), 400
+
+            for key, value in data.items():
+                if key in editable_data:
+                    setattr(program, key, value)
+            db.session.commit()
+        except Exception as e:
+            log_body = f'Admin > Program Edit > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            return jsonify({'message': 'Something went wrong in request operations'}), 500
+
+        return jsonify({'message': 'Program edited succesfully'}), 200
+    except Exception as e:
+        log_body = f'Admin > Program Edit > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+# get programs
+@app.route('/admin/program', methods=['GET'])
+@jwt_required()
+def admin_get_programs():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        programs = Programs.query.all()
+        total = len(programs)
+        programs_list = []
+        for program in programs:
+            programs_list.append(program.to_dict())
+        
+        return jsonify({'programs': programs_list, 'total': total}), 200
+    except Exception as e:
+        log_body = f'Admin > Program > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/admin/data', methods=['GET'])
 @jwt_required()
