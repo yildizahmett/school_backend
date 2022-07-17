@@ -1150,27 +1150,109 @@ def admin_data():
             return jsonify({'message': 'You are not an administrator'}), 400
 
         grad_profile = {
-            'grad_total': 20,
+            'grad_total': 40,
             'signup_total': 30,
-            'completed_total' : 40
+            'completed_total' : 20
         }
+
         company_signup = {
-            'invite_total' : 15,
+            'invite_total' : 55,
             'signup_total' : 25,
-            'total_tc' : 35
+            'total_tc' : 15
         }
+
         account_signup = {
-            'invite_total' : 5,
-            'signup_total' : 23,
+            'invite_total' : 125,
+            'signup_total' : 53,
             'total_tc' : 47
         }
+
+        employment_rate = {
+            'employed' : 253,
+            'self_employed' : 51,
+            'unemployed' : 215
+        }
+
+        grad_profile_programs = {
+            'data-science' : {
+                'grad_total': 140,
+                'signup_total': 60,
+                'completed_total' : 30
+            },
+            'placeHolder1' : {
+                'grad_total': 20,
+                'signup_total': 37,
+                'completed_total' : 21
+            },
+            'placeHolder2' : {
+                'grad_total': 30,
+                'signup_total': 31,
+                'completed_total' : 26
+            },
+            'placeHolder3' : {
+                'grad_total': 90,
+                'signup_total': 39,
+                'completed_total' : 24
+            }
+        }
+
+        job_find_time = {
+            'employed' : 2400,
+            'self_employed' : 168,
+        }
+
+        # This is going to be more complex than the others...
+        # God have mercy.
+        filter_top5 = {
+            'location' : {
+                'Remote' : 33,
+                'Istanbul' : 21,
+                'Bursa' : 15,
+                'Ankara' : 10,
+                'Van' : 3
+            },
+            'placeHolder1' : {
+                'remote' : 33,
+                'Istanbul' : 21,
+                'Bursa' : 15,
+                'Ankara' : 10,
+                'Van' : 3
+            },
+            'placeHolder2' : {
+                'remote' : 33,
+                'Istanbul' : 21,
+                'Bursa' : 15,
+                'Ankara' : 10,
+                'Van' : 3
+            },
+            'plcaeHolder3' : {
+                'remote' : 33,
+                'Istanbul' : 21,
+                'Bursa' : 15,
+                'Ankara' : 10,
+                'Van' : 3
+            },
+            'placeHolder4' : {
+                'remote' : 33,
+                'Istanbul' : 21,
+                'Bursa' : 15,
+                'Ankara' : 10,
+                'Van' : 3
+            }
+
+        }
+
 
 
 
         data = {
             'grad_profile': grad_profile,
             'company_signup': company_signup,
-            'account_signup': account_signup
+            'account_signup': account_signup,
+            'employment_rate' : employment_rate,
+            'grad_profile_programs' : grad_profile_programs,
+            'job_find_time' : job_find_time,
+            'filter_top5' : filter_top5
         }
 
 
