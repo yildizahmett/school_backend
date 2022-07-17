@@ -8,6 +8,8 @@ import json
 from random import randint
 from datetime import timedelta
 import logging
+import random
+import string
 
 TOKEN_EXPIRE_TIME = 2 # HOURS
 app = Flask(__name__)
@@ -36,20 +38,24 @@ DC_ST_ACTIVITIES    = 'activities'
 DC_ST_HARDSKILLS    = 'hardskills'
 DC_ST_JOB           = 'job'
 
+FRONTEND_LINK = 'http://localhost:3000'
 
 format = '| %(asctime)s | %(message)s | %(levelname)s '
 logging.basicConfig(format=format, level=logging.INFO, datefmt='%D | %H:%M:%S')
 # filename='current.log', filemode='a', # add this code to the inside of basicConfig to store logs in a file instead of printing to the terminal
 
+"""
 def random_id_generator(length):
     # Primitive Version
     code = ''
-
     for x in range(length):
         code += str(randint(0, 9))
         code += chr(randint(65, 90))
-
     return code
+"""
+
+def random_id_generator(size=8, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
 
 
 def get_specific_data(member, needed_data, get_raw=False):
