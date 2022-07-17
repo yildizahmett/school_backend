@@ -1101,6 +1101,7 @@ def admin_students_multiple_remove():
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
+
 @app.route('/admin/program/create', methods=['POST'])
 @jwt_required()
 def admin_create_program():
@@ -1196,6 +1197,40 @@ def admin_program_edit(program_code):
         return jsonify({'message': 'Program edited succesfully'}), 200
     except Exception as e:
         log_body = f'Admin > Program Edit > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/admin/program/add-students', methods=['POST'])
+@jwt_required()
+def admin_program_add_students():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        data = request.get_json()
+        program_code = data['program_code']
+        students_to_add = data['students_to_add']
+
+        try:
+            program = Programs.query.filter_by(program_code=program_code).first()
+            if not program:
+                return jsonify({'message': 'Program does not exist'}), 400
+
+            """
+            TODO: Student'lara mail yolla burada eğer Temps ve Students tablosunda değilse.
+            """
+        except Exception as e:
+            log_body = f'Admin > Program > Add Students > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            return jsonify({'message': 'Something went wrong in request operations'}), 500
+
+        return jsonify({'message': 'WIP WIP WIP WIP | Students added succesfully'}), 200
+    except Exception as e:
+        log_body = f'Admin > Program > Add Students > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
@@ -1312,11 +1347,7 @@ def admin_data():
                 'Ankara' : 10,
                 'Van' : 3
             }
-
         }
-
-        
-
 
         data = {
             'grad_profile': grad_profile,
