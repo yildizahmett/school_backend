@@ -533,11 +533,16 @@ def company_register():
             if Companies.query.filter_by(company_name=company_name).first():
                 return jsonify({'message': 'Company already exists'}), 400
 
+            # Try for a few times to generate a special id
             for x in range(20):
                 if Companies.query.filter_by(special_id=special_id).first():
                     special_id = random_id_generator(8)
                 else:
                     break
+
+            # If the special id is still taken, return an error
+            if Companies.query.filter_by(special_id=special_id).first():
+                    return jsonify({'message' : 'Couldn\'t generate a special ID. Please try again.'}), 500
 
             for em in company_users:
                 if Employees.query.filter_by(email=em).first():
