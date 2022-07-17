@@ -525,7 +525,6 @@ def company_register():
         try:
             data = request.get_json()
             company_name = data['company_name'].lower()
-            #special_id = data['special_id']
             special_id = random_id_generator(8)
             company_users = data['company_users']
 
@@ -540,16 +539,21 @@ def company_register():
                 else:
                     break
 
+            for em in company_users:
+                if Employees.query.filter_by(email=em).first():
+                    company_users.remove(em)
+
             company = Companies(company_name, special_id, company_users)
             db.session.add(company)
             db.session.commit()
 
-            # Send mails to employees so they know they can register
-            for em in company_users:
-                register_url = FRONTEND_LINK + '/employee/register'
-                subj = 'Dear {} Employee'.format(company.company_name.upper())
-                msg = 'You can register at {} with this id: {}'.format(register_url, company.special_id)
-                send_mail(em, subj, msg)
+            if not company_users:
+                # Send mails to employees so they know they can register
+                for em in company_users:
+                    register_url = FRONTEND_LINK + '/employee/register'
+                    subj = 'Dear {} Employee'.format(company.company_name.upper())
+                    msg = 'You can register at {} with this id: {}'.format(register_url, company.special_id)
+                    send_mail(em, subj, msg)
 
             return jsonify({'message': 'Company created successfully'}), 201
         except Exception as e:
@@ -576,7 +580,7 @@ def company_remove():
 
         try:
             data = request.get_json()
-            company_name = data['company_name']
+            company_name = data['company_name'].lower()
 
             company = Companies.query.filter_by(company_name=company_name).first()
 
