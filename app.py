@@ -644,15 +644,14 @@ def edit_company(company_name):
                 return jsonify({'message': 'Company does not exist'}), 400
 
             data = request.get_json()
-            values = data['values']
 
-            if "company_users" in values.keys():
-                del values["company_users"]
+            if "company_users" in data.keys():
+                del data["company_users"]
 
-            if "company_name" in values.keys():
-                values["company_name"] = values["company_name"].lower()
+            if "company_name" in data.keys():
+                data["company_name"] = data["company_name"].lower()
 
-            for key, value in values.items():
+            for key, value in data.items():
                 try:
                     setattr(company, key, value)
                 except Exception as e:
@@ -857,23 +856,22 @@ def admin_employee_edit(email):
             return jsonify({'message': 'You are not an administrator'}), 400
 
         data = request.get_json()
-        values = data['values']
 
-        if 'password' in values.keys():
-            del values['password']
+        if 'password' in data.keys():
+            del data['password']
         
-        if 'company' in values.keys():
-            del values['company']
+        if 'company' in data.keys():
+            del data['company']
         
-        if 'company_name' in values.keys():
-            del values['company_name']
+        if 'company_name' in data.keys():
+            del data['company_name']
 
         try:
             employee = Employees.query.filter_by(email=email).first()
             if not employee:
                 return jsonify({'message': 'Employee does not exist'}), 400
 
-            for key, value in values.items():
+            for key, value in data.items():
                 setattr(employee, key, value)
             db.session.commit()
             
@@ -1021,17 +1019,16 @@ def admin_student_edit(email):
             return jsonify({'message': 'You are not an administrator'}), 400
 
         data = request.get_json()
-        values = data['values']
 
-        if 'password' in values.keys():
-            del values['password']
+        if 'password' in data.keys():
+            del data['password']
 
         try:
             student = Students.query.filter_by(email=email).first()
             if not student:
                 return jsonify({'message': 'Student does not exist'}), 400
 
-            for key, value in values.items():
+            for key, value in data.items():
                 setattr(student, key, value)
             db.session.commit()
         except Exception as e:
