@@ -876,7 +876,7 @@ def admin_employee_edit(email):
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        data = request.get_json()
+        data = request.get_json()['values']
 
         if 'password' in data.keys():
             del data['password']
