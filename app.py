@@ -1115,16 +1115,12 @@ def admin_create_program():
         data = request.get_json()
         program_name = data['program_name']
         program_code = random_id_generator(8)
-        emails       = data['emails']
 
         if Programs.query.filter_by(program_name=program_name).first():
             return jsonify({'message': 'Program already exists'}), 400
 
         if Programs.query.filter_by(program_code=program_code).first():
             return jsonify({'message': 'Program code is already in use'}), 400
-
-        # TODO: EMAIL YOLLAMA KISIMLARI
-        #       ya burada, ya da session.commit() ten sonra mail yollama
 
         """
         for mail in emails:
