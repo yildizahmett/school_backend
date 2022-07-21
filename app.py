@@ -1114,7 +1114,7 @@ def admin_create_program():
 
         data = request.get_json()
         program_name = data['program_name']
-        program_code = data['program_code']
+        program_code = random_id_generator(8)
         emails       = data['emails']
 
         if Programs.query.filter_by(program_name=program_name).first():
