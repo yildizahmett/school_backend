@@ -1254,6 +1254,38 @@ def admin_get_programs():
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
+@app.route('/admin/program/remove', methods=['POST'])
+@jwt_required()
+def admin_program_remove():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        data = request.get_json()
+        program_name = data['program_name']
+
+        try:
+            program = Programs.query.filter_by(program_name=program_name).first()
+            if not program:
+                return jsonify({'message': 'Program does not exist'}), 400
+
+            db.session.delete(program)
+            db.session.commit()
+        except Exception as e:
+            log_body = f'Admin > Program > Remove > Request Operation > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            return jsonify({'message': 'Something went wrong in request operations'}), 500
+
+        return jsonify({'message': 'Program removed succesfully'}), 200
+    except Exception as e:
+        log_body = f'Admin > Program > Remove > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
 @app.route('/admin/data', methods=['GET'])
 @jwt_required()
 def admin_data():
