@@ -1282,7 +1282,7 @@ def admin_data():
 
         # Ortalama İş Bulma Süresi Grafiği
         if students_table_count != 0:
-            avg_job_find_time = sum([student.job_find_time for student in all_students]) / students_table_count
+            avg_job_find_time = sum([student.job_find_time for student in all_students if student.job_find_time ]) / students_table_count
         else:
             avg_job_find_time = 0
 
