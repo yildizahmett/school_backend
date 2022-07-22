@@ -123,10 +123,6 @@ def student_login():
         email = data['email']
         password = data['password']
 
-        temp_student = Temps.query.filter_by(email=email).first()
-        if temp_student:
-            return jsonify({'message': 'Please register'}), 400
-
         student = Students.query.filter_by(email=email).first()
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
@@ -1413,6 +1409,12 @@ def admin_data():
             'completed_total' : student_completed_total
         }
 
+        company_signup = {
+            'grad_total': student_grad_total,
+            'signup_total': student_signup_total,
+            'completed_total' : student_completed_total
+        }
+
         account_signup = {
             'invite_total' : employee_invite_total,
             'signup_total' : employee_signup_total,
@@ -1490,7 +1492,7 @@ def admin_data():
 
         data = {
             'grad_profile': grad_profile,
-            #'company_signup': company_signup,
+            'company_signup': company_signup,
             'account_signup': account_signup,
             'employment_rate' : employment_rate,
             'grad_profile_programs' : grad_profile_programs,
