@@ -1223,6 +1223,8 @@ def admin_program_invite_students():
             if not program:
                 return jsonify({'message': 'Program does not exist'}), 400
 
+            register_url = FRONTEND_LINK + '/student/register'
+
             for st_mail in students_to_invite:
                 if Students.query.filter_by(email=st_mail).first():
                     print(f'Following email is already in Students table: {st_mail}')
@@ -1232,23 +1234,18 @@ def admin_program_invite_students():
                     continue
                 
                 try:
-                    # Add Student to Temps table????????????????????????**
-                    # Send the mail now
-                    # Aşağıdaki kodlar tam çalışmaz
-                    # register_url = url_for('student_register', _external=True)
-                    # subj = 'Dear {} Graduate'.format(program_name)
-                    # msg = 'You can register at {} with this code: {}'.format(register_url, program.program_code)
-                    # send_mail(st_mail, subj, msg)
                     temp_student = Temps(st_mail, program_name)
                     db.session.add(temp_student)
 
-                    students_invited.append(st_mail)
-                except KeyboardInterrupt:
-                    break
+                    subj = 'Dear {} Graduate'.format(program_name)
+                    msg = 'You can register with the following link: {} .'.format(register_url)
+                    send_mail(st_mail, subj, msg)
+
                 except Exception as e:
                     print('Error:', e)
             
             db.session.commit()
+            
         except Exception as e:
             log_body = f'Admin > Program > Add Students > Request Operation > ERROR : {repr(e)}'
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
