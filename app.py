@@ -89,7 +89,7 @@ def student_register():
             student = Students(email, hashed_password, name, surname)
 
             programs = []
-            for program_name in temp_student.programs:
+            for program_name in temp_student.program_names:
 
                 program_to_add = {
                     "github_link": "",
@@ -1263,9 +1263,10 @@ def admin_program_invite_students():
                                 "summary": "",
                                 "video_link": ""
                             }
-                            school_programs.append(program_to_add)
+                            school_programs = school_programs + [program_to_add]
                             setattr(student, 'school_programs', school_programs)
                             db.session.commit()
+                            print(student.school_programs)
                     except Exception as e:
                         log_body = f'Admin > Program Invite > Student > ERROR : {repr(e)}'
                         logging.warning(f'IP: {request.remote_addr} | {log_body}')
@@ -1279,7 +1280,7 @@ def admin_program_invite_students():
                     try:
                         program_names = temp.program_names
                         if not program_name in program_names:
-                            program_names.append(program_name)
+                            program_names = program_names + [program_name]
                             setattr(temp, 'program_names', program_names)
                             db.session.commit()
                     except Exception as e:
@@ -1289,7 +1290,7 @@ def admin_program_invite_students():
                     continue
                 
                 try:
-                    temp_student = Temps(st_mail, program_name)
+                    temp_student = Temps(st_mail, [program_name])
                     db.session.add(temp_student)
 
                     subj = 'Dear {} Graduate'.format(program_name)
