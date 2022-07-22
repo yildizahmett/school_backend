@@ -253,7 +253,7 @@ def student_forgot_password():
 
         if token == -1:
             return jsonify({'message': 'An error has occured while trying to send email.'}), 400
-            
+
         confirm_url = FRONTEND_LINK + '/student/reset-password/' + token
         msg = 'Please click the link to reset your password: {} '.format(confirm_url)
         send_mail(student.email, 'Password Reset', msg)
@@ -1252,7 +1252,7 @@ def admin_program_invite_students():
 
                         temp_boolean = False
                         for sp in school_programs:
-                            if sp.program_name == program_name:
+                            if sp["program_name"] == program_name:
                                 print(f'Following student is already in this program: {st_mail}')
                                 temp_boolean = True
                         
