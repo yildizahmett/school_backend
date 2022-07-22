@@ -72,18 +72,32 @@ def student_register():
         surname = data['surname']
 
         if Students.query.filter_by(email=email).first():
-            return jsonify({'message': 'Email already exists'}), 400
+            return jsonify({'message': 'Student already registered'}), 400
+
+        temp_student = Temps.query.filter_by(email=email).first()
+        if not temp_student:
+            return jsonify({'message': 'This email is not invited'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        temp_student = Temps(email, hashed_password, name, surname)
-        db.session.add(temp_student)
-        db.session.commit()
 
-        token = generate_confirmation_token(temp_student.email)
-        confirm_url = FRONTEND_LINK + '/email-verification/' + token
-        msg = 'Please click the link to activate your account: {} '.format(confirm_url)
+        try:
+            student = Students(email, hashed_password, name, surname)
 
-        send_mail(temp_student.email, 'Verify Your Account', msg)
+            program_to_add = [{
+                "github_link": "",
+                "program_name": temp_student.program_name,
+                "summary": "",
+                "video_link": ""
+            }]
+
+            setattr(student, 'school_programs', program_to_add)
+
+            db.session.add(student)
+            db.session.commit()
+        except Exception as e:
+            log_body = f'Student > Register > Request Operation > ERROR > {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            return jsonify({'message': 'Something went wrong'}), 500
 
         return jsonify({'message': 'Student created successfully'}), 200
     except Exception as e:
@@ -99,25 +113,13 @@ def student_login():
         email = data['email']
         password = data['password']
 
-        student = Students.query.filter_by(email=email).first()
         temp_student = Temps.query.filter_by(email=email).first()
+        if temp_student:
+            return jsonify({'message': 'Please register'}), 400
 
-        # Student doesn't exist in DB
-        if not student and not temp_student:
+        student = Students.query.filter_by(email=email).first()
+        if not student:
             return jsonify({'message': 'Student does not exist'}), 400
-
-        # Student didn't verify their account -> Send another verification email
-        if not student and temp_student:
-            if bcrypt.check_password_hash(temp_student.password, password):
-                # resend email verification
-                token = generate_confirmation_token(temp_student.email)
-                confirm_url = FRONTEND_LINK + '/email-verification/' + token
-                msg = 'Please click the link to activate your account {} '.format(confirm_url)
-                send_mail(temp_student.email, 'Verify Your Account', msg)
-                return jsonify({'message': 'Verification email sent'}), 401
-            else:
-                return jsonify({'message': 'Incorrect password or email'}), 400
-        
 
         token_identity = {'user_type': 'student', 'email': email, 'profile_complete': student.profile_complete}
 
@@ -973,7 +975,7 @@ def admin_students(page_no):
         student_sort = dict()
         student_sort['id']               = Students.id
         student_sort['name']             = Students.name
-        student_sort['program_name']     = Students.program_name
+        # TODO: Bu olcak ama school_programs JSON'dan çekme falan -> student_sort['program_name']     = Students.program_name
         student_sort['grad_status']      = Students.grad_status
         student_sort['profile_complete'] = Students.profile_complete
 
@@ -1197,9 +1199,9 @@ def admin_program_edit(program_code):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/admin/program/add-students', methods=['POST'])
+@app.route('/admin/program/invite', methods=['POST'])
 @jwt_required()
-def admin_program_add_students():
+def admin_program_invite_students():
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -1208,23 +1210,52 @@ def admin_program_add_students():
             return jsonify({'message': 'You are not an administrator'}), 400
 
         data = request.get_json()
-        program_code = data['program_code']
-        students_to_add = data['students_to_add']
+        program_name = data['inviteProgramName']
+        students_to_invite = data['emails']
+
+        if not students_to_invite:
+            return jsonify({'message': 'No emails received'}), 400
+
+        students_invited = []
 
         try:
-            program = Programs.query.filter_by(program_code=program_code).first()
+            program = Programs.query.filter_by(program_name=program_name).first()
             if not program:
                 return jsonify({'message': 'Program does not exist'}), 400
 
-            """
-            TODO: Student'lara mail yolla burada eğer Temps ve Students tablosunda değilse.
-            """
+            for st_mail in students_to_invite:
+                if Students.query.filter_by(email=st_mail).first():
+                    print(f'Following email is already in Students table: {st_mail}')
+                    continue
+                if Temps.query.filter_by(email=st_mail).first():
+                    print(f'Following email is already in Temps table: {st_mail}')
+                    continue
+                
+                try:
+                    # Add Student to Temps table????????????????????????**
+                    # Send the mail now
+                    # Aşağıdaki kodlar tam çalışmaz
+                    # register_url = url_for('student_register', _external=True)
+                    # subj = 'Dear {} Graduate'.format(program_name)
+                    # msg = 'You can register at {} with this code: {}'.format(register_url, program.program_code)
+                    # send_mail(st_mail, subj, msg)
+                    temp_student = Temps(st_mail, program_name)
+                    db.session.add(temp_student)
+
+                    students_invited.append(st_mail)
+                except KeyboardInterrupt:
+                    break
+                except Exception as e:
+                    print('Error:', e)
+            
+            db.session.commit()
         except Exception as e:
             log_body = f'Admin > Program > Add Students > Request Operation > ERROR : {repr(e)}'
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong in request operations'}), 500
-
-        return jsonify({'message': 'WIP WIP WIP WIP | Students added succesfully'}), 200
+        
+        print('Invited emails: ' + str(students_invited))
+        return jsonify({'message': 'Students invited succesfully: ' + str(students_invited)}), 200
     except Exception as e:
         log_body = f'Admin > Program > Add Students > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
@@ -1243,12 +1274,11 @@ def admin_get_programs():
             return jsonify({'message': 'You are not an administrator'}), 400
 
         programs = Programs.query.all()
-        total = len(programs)
         programs_list = []
         for program in programs:
-            programs_list.append(program.to_dict())
+            programs_list.append(program.to_dict()['program_name'])
         
-        return jsonify({'programs': programs_list, 'total': total}), 200
+        return jsonify({'programs': programs_list}), 200
     except Exception as e:
         log_body = f'Admin > Program > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')

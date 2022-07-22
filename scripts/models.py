@@ -8,17 +8,12 @@ class Temps(db.Model):
     __table_name__  = 'temps'
     id              = db.Column(db.Integer, primary_key=True)
     email           = db.Column(db.String(120), unique=True, nullable=False)
-    password        = db.Column(db.String(255), nullable=False)
-    name            = db.Column(db.String(120), nullable=False)
-    surname         = db.Column(db.String(120), nullable=False)
     program_name    = db.Column(db.String(120), nullable=True)
     date            = db.Column(db.DateTime, nullable=False)
 
-    def __init__(self, email, password, name, surname):
+    def __init__(self, email, program_name):
         self.email = email
-        self.password = password
-        self.name = name
-        self.surname = surname
+        self.program_name = program_name
         self.date = datetime.now()
 
 
@@ -34,12 +29,9 @@ class Students(db.Model):
     linkedin        = db.Column(db.String(240), nullable=True)
     github          = db.Column(db.String(240), nullable=True)
     medium          = db.Column(db.String(240), nullable=True)
-    program_name    = db.Column(db.String(120), nullable=True) # silinecek bu, işi yok
     comp_skills     = db.Column(db.ARRAY(db.String(120)), nullable=True)
     hobbies         = db.Column(db.ARRAY(db.String(120)), nullable=True)
     birth_date      = db.Column(db.DateTime, nullable=True)
-    english_level   = db.Column(db.String(120), nullable=True)  # silinecek bu, işi yok
-    reference       = db.Column(db.String(120), nullable=True)
     starting_date   = db.Column(db.DateTime, nullable=True)
     job_title       = db.Column(db.String(120), nullable=True)
     city            = db.Column(db.String(120), nullable=True)
