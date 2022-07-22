@@ -8,13 +8,16 @@ class Temps(db.Model):
     __table_name__  = 'temps'
     id              = db.Column(db.Integer, primary_key=True)
     email           = db.Column(db.String(120), unique=True, nullable=False)
-    program_name    = db.Column(db.String(120), nullable=True)
+    program_names    = db.Column(db.ARRAY(db.String(120)), nullable=True)
     date            = db.Column(db.DateTime, nullable=False)
 
-    def __init__(self, email, program_name):
+    def __init__(self, email, program_names):
         self.email = email
-        self.program_name = program_name
+        self.program_names = program_names
         self.date = datetime.now()
+
+    def add_program(self, program_name):
+        self.program_names.append(program_name)
 
 
 class Students(db.Model):

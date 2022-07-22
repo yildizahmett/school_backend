@@ -16,22 +16,27 @@ from scripts.mail_ops import send_mail
 
 
 def generate_confirmation_token(email):
-    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-    return serializer.dumps(email, salt=app.config['SECURITY_PASSWORD_SALT'])
+    try:
+        serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        return serializer.dumps(email, salt=app.config['SECURITY_PASSWORD_SALT'])
+    except Exception as e:
+        log_body = f'generate_confirmation_token > ERROR : {repr(e)}'
+        logging.warning(f'{log_body}')
+        return -1
 
 
 def confirm_token(token, expiration=18000):
-    # 18000 is 5 hours.
-    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     try:
+        # 18000 is 5 hours.
+        serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
         email = serializer.loads(
             token,
             salt=app.config['SECURITY_PASSWORD_SALT'],
             max_age=expiration
         )
+        return email
     except:
         return False
-    return email
 
 
 @app.route('/email-verification/<token>')
@@ -83,14 +88,19 @@ def student_register():
         try:
             student = Students(email, hashed_password, name, surname)
 
-            program_to_add = [{
-                "github_link": "",
-                "program_name": temp_student.program_name,
-                "summary": "",
-                "video_link": ""
-            }]
+            programs = []
+            for program_name in temp_student.programs:
 
-            setattr(student, 'school_programs', program_to_add)
+                program_to_add = {
+                    "github_link": "",
+                    "program_name": program_name,
+                    "summary": "",
+                    "video_link": ""
+                }
+
+                programs.append(program_to_add)
+
+            setattr(student, 'school_programs', programs)
 
             db.session.add(student)
             db.session.commit()
@@ -188,6 +198,10 @@ def profile_update_settings():
             return jsonify({'message': 'Incorrect password'}), 400
         
         token = generate_confirmation_token([email, new_password])
+
+        if token == -1:
+            return jsonify({'message': 'An error has occured while trying to send email'}), 400
+
         confirm_url = FRONTEND_LINK + '/student/confirm-new-password/' + token
         msg = 'Please click the link to confirm your new password: {} '.format(confirm_url)
         send_mail(student.email, 'Password Change', msg)
@@ -236,6 +250,10 @@ def student_forgot_password():
             return jsonify({'message': 'Student does not exist'}), 400
         
         token = generate_confirmation_token(email)
+
+        if token == -1:
+            return jsonify({'message': 'An error has occured while trying to send email.'}), 400
+            
         confirm_url = FRONTEND_LINK + '/student/reset-password/' + token
         msg = 'Please click the link to reset your password: {} '.format(confirm_url)
         send_mail(student.email, 'Password Reset', msg)
@@ -1226,11 +1244,48 @@ def admin_program_invite_students():
             register_url = FRONTEND_LINK + '/student/register'
 
             for st_mail in students_to_invite:
-                if Students.query.filter_by(email=st_mail).first():
+                student = Students.query.filter_by(email=st_mail).first()
+                if student:
                     print(f'Following email is already in Students table: {st_mail}')
+                    try:
+                        school_programs = student.school_programs
+
+                        temp_boolean = False
+                        for sp in school_programs:
+                            if sp.program_name == program_name:
+                                print(f'Following student is already in this program: {st_mail}')
+                                temp_boolean = True
+                        
+                        if not temp_boolean:
+                            program_to_add = {
+                                "github_link": "",
+                                "program_name": program_name,
+                                "summary": "",
+                                "video_link": ""
+                            }
+                            school_programs.append(program_to_add)
+                            setattr(student, 'school_programs', school_programs)
+                            db.session.commit()
+                    except Exception as e:
+                        log_body = f'Admin > Program Invite > Student > ERROR : {repr(e)}'
+                        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+                        return jsonify({'message': 'Something went wrong in student operations'}), 500
                     continue
-                if Temps.query.filter_by(email=st_mail).first():
+
+                temp = Temps.query.filter_by(email=st_mail).first()
+                if temp:
                     print(f'Following email is already in Temps table: {st_mail}')
+
+                    try:
+                        program_names = temp.program_names
+                        if not program_name in program_names:
+                            program_names.append(program_name)
+                            setattr(temp, 'program_names', program_names)
+                            db.session.commit()
+                    except Exception as e:
+                        log_body = f'Admin > Program Invite > Invite Students > ERROR : {repr(e)}'
+                        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+                        return jsonify({'message': 'Something went wrong in request operations'}), 500
                     continue
                 
                 try:
