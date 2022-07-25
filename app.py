@@ -1057,6 +1057,9 @@ def admin_student_edit(email):
 
         data = request.get_json()
 
+        if 'job_find_time' in data:
+            del data['job_find_time']
+
         if 'password' in data.keys():
             del data['password']
 
