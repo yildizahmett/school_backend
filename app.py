@@ -803,7 +803,7 @@ def admin_employees(page_no):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         if page_no < 1:
             return jsonify({'message': 'Page number must at least be 1'}), 400
