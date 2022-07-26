@@ -825,11 +825,11 @@ def admin_employees(page_no):
         employee_sort['t_c']          = Employees.t_c
         employee_sort['sign_up_date'] = Employees.sign_up_date
 
-        exec_str = "select * from Employee where "
+        exec_str = "select * from employees where "
         for key, value in selected_filter.items():
             exec_str += "("
             for i in value:
-                exec_str += key + " = " + str(i) + " or "
+                exec_str += key + " = \"" + str(i) + "\" or "
             exec_str = exec_str[:-4] + ") and "
         exec_str = exec_str[:-5]
 
