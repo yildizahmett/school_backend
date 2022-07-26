@@ -2,6 +2,7 @@ from math import ceil
 from flask import request, jsonify, url_for
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from datetime import datetime, timedelta
+from sqlalchemy import text
 
 import random
 import json
@@ -9,7 +10,7 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, jwt, db, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging
+from scripts.util import app, bcrypt, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs, Pools
 from scripts.mail_ops import send_mail
@@ -798,7 +799,6 @@ def company_remove_user(company_name):
 @app.route('/admin/employee/<int:page_no>', methods=['GET'])
 @jwt_required()
 def admin_employees(page_no):
-    try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
 
@@ -825,7 +825,22 @@ def admin_employees(page_no):
         employee_sort['t_c']          = Employees.t_c
         employee_sort['sign_up_date'] = Employees.sign_up_date
 
-        employees = None
+        exec_str = "select * from Employee where "
+        for key, value in selected_filter.items():
+            exec_str += "("
+            for i in value:
+                exec_str += key + " = " + str(i) + " or "
+            exec_str = exec_str[:-4] + ") and "
+        exec_str = exec_str[:-5]
+
+        with engine.connect() as con:
+            result = con.execute(text(exec_str))
+            employees = result.fetchall()
+        
+        print(employees)
+        return jsonify({'employees': employees}), 200
+
+        """employees = None
         try:
             if ascending:
                 if selected_filter == {}:
@@ -850,7 +865,7 @@ def admin_employees(page_no):
     except Exception as e:
         log_body = f'Admin > Employees > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
-        return jsonify({'message': 'Something went wrong'}), 500
+        return jsonify({'message': 'Something went wrong'}), 500"""
 
 @app.route('/admin/employee/get/<email>', methods=['GET'])
 @jwt_required()
