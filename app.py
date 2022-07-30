@@ -1397,6 +1397,9 @@ def admin_data():
         else:
             avg_job_find_time = 0
 
+        # Geçici
+        avg_job_find_time = 158.91
+
         # Öğrenci Veri Grafiği
         student_grad_total      = students_table_count + temps_table_count
         student_signup_total    = students_table_count
@@ -1458,39 +1461,39 @@ def admin_data():
         # God have mercy.
         filter_top5 = {
             'location' : {
-                'Remote' : 33,
-                'Istanbul' : 21,
-                'Bursa' : 15,
-                'Ankara' : 10,
-                'Van' : 3
+                'Remote' : 1,
+                'Istanbul' : 2,
+                'Bursa' : 3,
+                'Ankara' : 4,
+                'Van' : 5
             },
-            'placeHolder1' : {
-                'remote' : 33,
-                'Istanbul' : 21,
-                'Bursa' : 15,
-                'Ankara' : 10,
-                'Van' : 3
+            'inner_peace' : {
+                'remote' : 6,
+                'Istanbul' : 7,
+                'Bursa' : 8,
+                'Ankara' : 9,
+                'Van' : 10
             },
-            'placeHolder2' : {
-                'remote' : 33,
-                'Istanbul' : 21,
-                'Bursa' : 15,
-                'Ankara' : 10,
-                'Van' : 3
+            'wrath' : {
+                'remote' : 11,
+                'Istanbul' : 12,
+                'Bursa' : 13,
+                'Ankara' : 14,
+                'Van' : 15
             },
-            'plcaeHolder3' : {
-                'remote' : 33,
-                'Istanbul' : 21,
-                'Bursa' : 15,
-                'Ankara' : 10,
-                'Van' : 3
+            'solitude' : {
+                'remote' : 16,
+                'Istanbul' : 17,
+                'Bursa' : 18,
+                'Ankara' : 19,
+                'Van' : 20
             },
-            'placeHolder4' : {
-                'remote' : 33,
-                'Istanbul' : 21,
-                'Bursa' : 15,
-                'Ankara' : 10,
-                'Van' : 3
+            'honesty' : {
+                'remote' : 21,
+                'Istanbul' : 22,
+                'Bursa' : 23,
+                'Ankara' : 24,
+                'Van' : 25
             }
         }
 
