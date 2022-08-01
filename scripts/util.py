@@ -41,7 +41,7 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start
                 exec_str += "obj->> 'program_name' IN ("
                 for v in value:
                     exec_str += f"'{v}',"
-                exec_str = exec_str[:-1] + ")"
+                exec_str = exec_str[:-1] + ") and "
             elif value != [] and key == 'grad_date':
                 print()
                 # grad_date to come
@@ -49,11 +49,11 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start
                 exec_str += "company_name IN ("
                 for v in value:
                     exec_str += f"'{v}',"
-                exec_str = exec_str[:-1] + ")"
+                exec_str = exec_str[:-1] + ") and "
             elif value != [] and key == 't_c':
-                exec_str += f"t_c = '{value[0]}'"
+                exec_str += f"t_c = '{value[0]}' and "
+        exec_str = exec_str[:-4]
                 
-        
         
 
         # for key, value in selected_filter.items():
