@@ -10,7 +10,7 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging
+from scripts.util import app, bcrypt, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging, db_filter
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs, Pools
 from scripts.mail_ops import send_mail
@@ -814,38 +814,39 @@ def admin_employees(page_no):
         entry_amount    = data['entry_amount']
         selected_sort   = data['selected_sort']
         selected_filter = data['selected_filter']
-        ascending       = data['ascending']
+        is_ascending       = data['ascending']
 
         page_start =  (page_no - 1)*entry_amount + 1
         page_end   = page_start + entry_amount
         
-        employee_sort = dict()
-        employee_sort['id']           = Employees.id
-        employee_sort['name']         = Employees.name
-        employee_sort['company_name'] = Employees.company_name
-        employee_sort['t_c']          = Employees.t_c
-        employee_sort['sign_up_date'] = Employees.sign_up_date
+        # employee_sort = dict()
+        # employee_sort['id']           = Employees.id
+        # employee_sort['name']         = Employees.name
+        # employee_sort['company_name'] = Employees.company_name
+        # employee_sort['t_c']          = Employees.t_c
+        # employee_sort['sign_up_date'] = Employees.sign_up_date
 
-        employees = None
-        try:
-            if ascending:
-                if selected_filter == {}:
-                    employees = Employees.query.order_by(employee_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
-                else:
-                    employees = Employees.query.filter_by(**selected_filter).order_by(employee_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
-            else:
-                if selected_filter == {}:
-                    employees = Employees.query.order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-                else:
-                    employees = Employees.query.filter_by(**selected_filter).order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-        except Exception as e:
-            log_body = f'Admin > Employees > Request Operation > ERROR : {repr(e)}'
-            logging.warning(f'IP: {request.remote_addr} | {log_body}')
-            return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
+        employees = db_filter('employees', selected_filter, selected_sort, is_ascending)
+
+        # try:
+        #     if ascending:
+        #         if selected_filter == {}:
+        #             employees = Employees.query.order_by(employee_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
+        #         else:
+        #             employees = Employees.query.filter_by(**selected_filter).order_by(employee_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
+        #     else:
+        #         if selected_filter == {}:
+        #             employees = Employees.query.order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+        #         else:
+        #             employees = Employees.query.filter_by(**selected_filter).order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+        # except Exception as e:
+        #     log_body = f'Admin > Employees > Request Operation > ERROR : {repr(e)}'
+        #     logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        #     return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
         employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
 
-        page_amount = ceil(Employees.query.count() / entry_amount)
+        page_amount = ceil(len(employees) / entry_amount)
 
         return jsonify({'max_pages': page_amount, 'employees': employees}), 200
     except Exception as e:
@@ -982,38 +983,38 @@ def admin_students(page_no):
         entry_amount    = data['entry_amount']
         selected_filter = data['selected_filter']
         selected_sort   = data['selected_sort']
-        ascending       = data['ascending']
+        is_ascending       = data['ascending']
 
         page_start =  (page_no - 1)*entry_amount + 1
         page_end   = page_start + entry_amount
         
-        student_sort = dict()
-        student_sort['id']               = Students.id
-        student_sort['name']             = Students.name
-        # TODO: Bu olcak ama school_programs JSON'dan çekme falan -> student_sort['program_name']     = Students.program_name
-        student_sort['grad_status']      = Students.grad_status
-        student_sort['profile_complete'] = Students.profile_complete
+        # student_sort = dict()
+        # student_sort['id']               = Students.id
+        # student_sort['name']             = Students.name
+        # # TODO: Bu olcak ama school_programs JSON'dan çekme falan -> student_sort['program_name']     = Students.program_name
+        # student_sort['grad_status']      = Students.grad_status
+        # student_sort['profile_complete'] = Students.profile_complete
 
-        students = None
-        try:
-            if ascending:
-                if selected_filter == {}:
-                    students = Students.query.order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
-                else:
-                    students = Students.query.filter_by(**selected_filter).order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
-            else:
-                if selected_filter == {}:
-                    students = Students.query.order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-                else:
-                    students = Students.query.filter_by(**selected_filter).order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-        except Exception as e:
-            log_body = f'Admin > Students > Request Operation > ERROR : {repr(e)}'
-            logging.warning(f'IP: {request.remote_addr} | {log_body}')
-            return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
+        students = db_filter('students', selected_filter, selected_sort, is_ascending)
+        # try:
+        #     if ascending:
+        #         if selected_filter == {}:
+        #             students = Students.query.order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
+        #         else:
+        #             students = Students.query.filter_by(**selected_filter).order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
+        #     else:
+        #         if selected_filter == {}:
+        #             students = Students.query.order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+        #         else:
+        #             students = Students.query.filter_by(**selected_filter).order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
+        # except Exception as e:
+        #     log_body = f'Admin > Students > Request Operation > ERROR : {repr(e)}'
+        #     logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        #     return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
         students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
 
-        page_amount = ceil(Students.query.count() / entry_amount)
+        page_amount = ceil(len(students) / entry_amount)
         
         return jsonify({'max_pages': page_amount, 'students': students}), 200
     except Exception as e:
