@@ -24,28 +24,28 @@ engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'], engine_opts={'p
 CORS(app)
 
 def db_filter(selected_table_name, selected_filter, to_sort, is_ascending):
-    exec_str = f"select * from {selected_table_name} where "
-
-    for key, value in selected_filter.items():
-        exec_str += "("
-        for i in value:
-            if isinstance(i, str):
-                exec_str += key + " = '" + str(i) + "' or "
-            else:
-                exec_str += key + " = " + str(i) + " or "
-        exec_str = exec_str[:-4] + ") and "
-    exec_str = exec_str[:-5]
+    if selected_filter == {}:
+        exec_str = f"select * from {selected_table_name} where "
+        for key, value in selected_filter.items():
+            exec_str += "("
+            for i in value:
+                if isinstance(i, str):
+                    exec_str += key + " = '" + str(i) + "' or "
+                else:
+                    exec_str += key + " = " + str(i) + " or "
+            exec_str = exec_str[:-4] + ") and "
+        exec_str = exec_str[:-5]
+    else:
+        exec_str = f"select * from {selected_table_name} "
 
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
 
-    print(exec_str)
+    with engine.connect() as con:
+        result = con.execute(text(exec_str))
+        data = result.fetchall()
+        con.close()
 
-    # with engine.connect() as con:
-    #     result = con.execute(text(exec_str))
-    #     data = result.fetchall()
-    #     con.close()
-
-    # return data
+    return data
 
 def json_to_dict(filename):
     with open(filename, 'r') as j:
