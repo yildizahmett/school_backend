@@ -73,15 +73,18 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start
         data = result.fetchall()
         data = [d._asdict() for d in data]
         emails = [d['email'] for d in data]
-        new_data = [data[0]]
-        for user in data:
-            if not user['email'] in [em['email'] for em in new_data]:
-                new_data.append(user)
-
-
+        print(data)
+        if data != []:
+            new_data = [data[0]]
+            for user in data:
+                if not user['email'] in [em['email'] for em in new_data]:
+                    new_data.append(user)
+            new_data = new_data[start-1:end]
+        else:
+            new_data = []
         con.close()
 
-    return new_data[start-1:end]
+        return new_data
 
 def json_to_dict(filename):
     with open(filename, 'r') as j:
