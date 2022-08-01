@@ -27,19 +27,47 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending):
     if selected_filter == {}:
         exec_str = f"select * from {selected_table_name} "
     else:
-        exec_str = f"select * from {selected_table_name} where "
+        print(selected_filter)
+        if selected_table_name == 'students':
+            exec_str = f"select * from {selected_table_name} t, json_array_elements(t.school_programs) as obj where "
+        else:
+            exec_str = f"select * from {selected_table_name} where "
+
+        if list(selected_filter.values()) == [[], []]:
+            exec_str = exec_str[:-6]
+
         for key, value in selected_filter.items():
-            exec_str += "("
-            for i in value:
-                if isinstance(i, str):
-                    exec_str += key + " = '" + str(i) + "' or "
-                else:
-                    exec_str += key + " = " + str(i) + " or "
-            exec_str = exec_str[:-4] + ") and "
-        exec_str = exec_str[:-5]
+            if value != [] and key == 'program_name':
+                exec_str += "obj->> 'program_name' IN ("
+                for v in value:
+                    exec_str += f"'{v}',"
+                exec_str = exec_str[:-1] + ")"
+            elif value != [] and key == 'grad_date':
+                print()
+                # grad_date to come
+            elif value != [] and key == 'company_name':
+                exec_str += "company_name IN ("
+                for v in value:
+                    exec_str += f"'{v}',"
+                exec_str = exec_str[:-1] + ")"
+            elif value != [] and key == 't_c':
+                exec_str += f"t_c = '{value[0]}'"
+                
+        
+        
+
+        # for key, value in selected_filter.items():
+        #     exec_str += "("
+        #     for i in value:
+        #         if isinstance(i, str):
+        #             exec_str += key + " = '" + str(i) + "' or "
+        #         else:
+        #             exec_str += key + " = " + str(i) + " or "
+        #     exec_str = exec_str[:-4] + ") and "
+        # exec_str = exec_str[:-5]
 
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
-
+    print(exec_str)
     with engine.connect() as con:
         result = con.execute(text(exec_str))
         data = result.fetchall()

@@ -326,6 +326,7 @@ def employee_register():
         setattr(employee, "duration", 0)
         setattr(employee, "pool_amount", 0)
         setattr(employee, "fav_amount", 0)
+        setattr(employee, "company_name", company.company_name)
         db.session.add(employee)
         db.session.commit()
 
