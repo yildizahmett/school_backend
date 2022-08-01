@@ -827,7 +827,7 @@ def admin_employees(page_no):
         # employee_sort['t_c']          = Employees.t_c
         # employee_sort['sign_up_date'] = Employees.sign_up_date
 
-        employees = db_filter('employees', selected_filter, selected_sort, is_ascending)
+        employees = db_filter('employees', selected_filter, selected_sort, is_ascending, page_start, page_end)
 
         # try:
         #     if ascending:
@@ -996,7 +996,7 @@ def admin_students(page_no):
         # student_sort['grad_status']      = Students.grad_status
         # student_sort['profile_complete'] = Students.profile_complete
 
-        students = db_filter('students', selected_filter, selected_sort, is_ascending)
+        students = db_filter('students', selected_filter, selected_sort, is_ascending, page_start, page_end)
         # try:
         #     if ascending:
         #         if selected_filter == {}:

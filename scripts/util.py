@@ -23,7 +23,7 @@ db = SQLAlchemy(app)
 engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'], engine_opts={'pool_size': 20, 'pool_recycle': 3600})
 CORS(app)
 
-def db_filter(selected_table_name, selected_filter, to_sort, is_ascending):
+def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start, end):
     if selected_filter == {}:
         exec_str = f"select * from {selected_table_name} "
     else:
@@ -67,14 +67,21 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending):
         # exec_str = exec_str[:-5]
 
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
-    print(exec_str)
+    
     with engine.connect() as con:
         result = con.execute(text(exec_str))
         data = result.fetchall()
         data = [d._asdict() for d in data]
+        emails = [d['email'] for d in data]
+        new_data = [data[0]]
+        for user in data:
+            if not user['email'] in [em['email'] for em in new_data]:
+                new_data.append(user)
+
+
         con.close()
 
-    return data
+    return new_data[start-1:end]
 
 def json_to_dict(filename):
     with open(filename, 'r') as j:
