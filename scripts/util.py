@@ -25,6 +25,8 @@ CORS(app)
 
 def db_filter(selected_table_name, selected_filter, to_sort, is_ascending):
     if selected_filter == {}:
+        exec_str = f"select * from {selected_table_name} "
+    else:
         exec_str = f"select * from {selected_table_name} where "
         for key, value in selected_filter.items():
             exec_str += "("
@@ -35,8 +37,6 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending):
                     exec_str += key + " = " + str(i) + " or "
             exec_str = exec_str[:-4] + ") and "
         exec_str = exec_str[:-5]
-    else:
-        exec_str = f"select * from {selected_table_name} "
 
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
 

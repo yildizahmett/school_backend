@@ -844,7 +844,7 @@ def admin_employees(page_no):
         #     logging.warning(f'IP: {request.remote_addr} | {log_body}')
         #     return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
-        employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
+        # employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
 
         page_amount = ceil(len(employees) / entry_amount)
 
@@ -1012,7 +1012,7 @@ def admin_students(page_no):
         #     logging.warning(f'IP: {request.remote_addr} | {log_body}')
         #     return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
 
-        students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
+        # students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
 
         page_amount = ceil(len(students) / entry_amount)
         
