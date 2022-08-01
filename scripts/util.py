@@ -27,7 +27,6 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start
     if selected_filter == {}:
         exec_str = f"select * from {selected_table_name} "
     else:
-        print(selected_filter)
         if selected_table_name == 'students':
             exec_str = f"select * from {selected_table_name} t, json_array_elements(t.school_programs) as obj where "
         else:
@@ -41,7 +40,7 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start
                 exec_str += "obj->> 'program_name' IN ("
                 for v in value:
                     exec_str += f"'{v}',"
-                exec_str = exec_str[:-1] + ") and "
+                exec_str = exec_str[:-1] + ")"
             elif value != [] and key == 'grad_date':
                 print()
                 # grad_date to come
@@ -52,9 +51,10 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start
                 exec_str = exec_str[:-1] + ") and "
             elif value != [] and key == 't_c':
                 exec_str += f"t_c = '{value[0]}' and "
-        exec_str = exec_str[:-4]
+        if selected_table_name != 'students':
+            exec_str = exec_str[:-4]
                 
-        
+        print(exec_str)
 
         # for key, value in selected_filter.items():
         #     exec_str += "("
