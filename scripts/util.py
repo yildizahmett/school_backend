@@ -43,6 +43,7 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending):
     with engine.connect() as con:
         result = con.execute(text(exec_str))
         data = result.fetchall()
+        data = [d._asdict() for d in data]
         con.close()
 
     return data
