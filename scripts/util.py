@@ -31,7 +31,7 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start
             exec_str = f"select * from {selected_table_name} t, json_array_elements(t.school_programs) as obj where "
         else:
             exec_str = f"select * from {selected_table_name} where "
-
+        print(selected_table_name)
         if list(selected_filter.values()) == [[], []]:
             exec_str = exec_str[:-6]
 
@@ -51,7 +51,7 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start
                 exec_str = exec_str[:-1] + ") and "
             elif value != [] and key == 't_c':
                 exec_str += f"t_c = '{value[0]}' and "
-        if selected_table_name != 'students':
+        if selected_table_name != 'students' and list(selected_filter.values()) != [[], []]:
             exec_str = exec_str[:-4]
                 
         print(exec_str)
