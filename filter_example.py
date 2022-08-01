@@ -1,4 +1,10 @@
-exec_str = "select * from employees where "
+from sqlalchemy import text, engine
+
+selected_filter = {}
+selected_table_name = "employees"
+
+exec_str = f"select * from {selected_table_name} where "
+
 for key, value in selected_filter.items():
     exec_str += "("
     for i in value:
@@ -6,8 +12,9 @@ for key, value in selected_filter.items():
     exec_str = exec_str[:-4] + ") and "
 exec_str = exec_str[:-5]
 
+print()
+
 with engine.connect() as con:
-    result = con.execute(text("select * from employees where name='Kerem'"))
+    result = con.execute(text(exec_str))
     employees = result.fetchall()
 
-print(employees)

@@ -3,7 +3,7 @@ from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 import os
 import json
 from random import randint
@@ -23,6 +23,24 @@ db = SQLAlchemy(app)
 engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'], engine_opts={'pool_size': 20, 'pool_recycle': 3600})
 CORS(app)
 
+def db_filter(selected_table_name, selected_filter):
+    exec_str = f"select * from {selected_table_name} where "
+
+    for key, value in selected_filter.items():
+        exec_str += "("
+        for i in value:
+            exec_str += key + " = \"" + str(i) + "\" or "
+        exec_str = exec_str[:-4] + ") and "
+    exec_str = exec_str[:-5]
+
+    print()
+
+    with engine.connect() as con:
+        result = con.execute(text(exec_str))
+        data = result.fetchall()
+        con.close()
+
+    return data
 
 def json_to_dict(filename):
     with open(filename, 'r') as j:
