@@ -12,7 +12,7 @@ from itsdangerous import URLSafeTimedSerializer
 
 from scripts.util import app, bcrypt, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging, db_filter
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
-from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs, Pools
+from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs
 from scripts.mail_ops import send_mail
 
 
@@ -320,13 +320,8 @@ def employee_register():
             return jsonify({'message': 'Email already exists'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        employee = Employees(name, surname, email, hashed_password, special_id)
+        employee = Employees(name, surname, email, hashed_password, company_id=company)
 
-        setattr(employee, "t_c", False)
-        setattr(employee, "duration", 0)
-        setattr(employee, "pool_amount", 0)
-        setattr(employee, "fav_amount", 0)
-        setattr(employee, "company_name", company.company_name)
         db.session.add(employee)
         db.session.commit()
 
@@ -349,7 +344,7 @@ def employee_login():
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
 
-        token_identity = {'user_type': 'employee', 'email': email}
+        token_identity = {'user_type': 'employee', 'email': email, 't_c': employee.t_c}
 
         if bcrypt.check_password_hash(employee.password, password):
             access_token = create_access_token(identity=token_identity)
