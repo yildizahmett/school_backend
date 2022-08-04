@@ -320,7 +320,7 @@ def employee_register():
             return jsonify({'message': 'Email already exists'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        employee = Employees(name, surname, email, hashed_password, company_id=company)
+        employee = Employees(name, surname, email, hashed_password, company_id=company.id)
 
         db.session.add(employee)
         db.session.commit()
@@ -355,6 +355,20 @@ def employee_login():
         log_body = f'Employee > Login > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
+
+@app.route("/employee/deneme", methods=['GET'])
+@jwt_required()
+def employee_deneme():
+    data = get_jwt_identity()
+    user_type = data['user_type']
+    email = data['email']
+
+    if user_type == 'employee':
+        employee = Employees.query.filter_by(email=email).first()
+        # Bu sekilde kisi üzerinden company ismi alınabiliyor
+        company_name = employee.company_ref.company_name
+        print(company_name)
+        return jsonify({'comapny name': company_name, 'employee': employee.name})
 
 # DENEME
 @app.route('/employee/talent-market', methods=['GET'])

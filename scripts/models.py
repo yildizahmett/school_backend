@@ -79,7 +79,7 @@ class Companies(db.Model):
     company_users = db.Column(db.ARRAY(db.String(100)), nullable=True)
     date = db.Column(db.DateTime, nullable=False)
 
-    employees = db.relationship('Employees', backref='companies', lazy=True)
+    employees = db.relationship('Employees', backref='company_ref', lazy=True)
     favourites = db.relationship('Favourites', backref='companies', lazy=True)
 
     def __init__(self, company_name, special_id, company_users):
@@ -88,7 +88,7 @@ class Companies(db.Model):
         self.company_users = company_users
         self.date = datetime.now()
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f'<Company "{self.company_name}">'
 
     def add_user(self, user):
@@ -108,7 +108,6 @@ class Employees(db.Model):
     password        = db.Column(db.String(255), nullable=False)
     t_c             = db.Column(db.Boolean, nullable=True)
     t_c_date        = db.Column(db.DateTime, nullable=True)
-    sign_up_date    = db.Column(db.DateTime, nullable=True)
     duration        = db.Column(db.String(255), nullable=True)
     fav_amount      = db.Column(db.Integer, nullable=True)
     company_id      = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
