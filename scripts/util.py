@@ -23,14 +23,20 @@ db = SQLAlchemy(app)
 engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'], engine_opts={'pool_size': 20, 'pool_recycle': 3600})
 CORS(app)
 
-def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start, end):
+SAFE_TALENT_COLUMNS = ['job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
+UNSAFE_TALENT_COLUMNS = ['name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
+
+def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start, end, selected_columns="*"):
+    if isinstance(selected_columns, list):
+        selected_columns = ','.join(selected_columns)
+
     if selected_filter == {}:
-        exec_str = f"select * from {selected_table_name} "
+        exec_str = f"select {selected_columns} from {selected_table_name} "
     else:
         if selected_table_name == 'students':
-            exec_str = f"select * from {selected_table_name} t, json_array_elements(t.school_programs) as obj where "
+            exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.school_programs) as obj where "
         else:
-            exec_str = f"select * from {selected_table_name} where "
+            exec_str = f"select {selected_columns} from {selected_table_name} where "
         print(selected_table_name)
         if list(selected_filter.values()) == [[], []]:
             exec_str = exec_str[:-6]
@@ -53,21 +59,10 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start
                 exec_str += f"t_c = '{value[0]}' and "
         if selected_table_name != 'students' and list(selected_filter.values()) != [[], []]:
             exec_str = exec_str[:-4]
-                
-        print(exec_str)
-
-        # for key, value in selected_filter.items():
-        #     exec_str += "("
-        #     for i in value:
-        #         if isinstance(i, str):
-        #             exec_str += key + " = '" + str(i) + "' or "
-        #         else:
-        #             exec_str += key + " = " + str(i) + " or "
-        #     exec_str = exec_str[:-4] + ") and "
-        # exec_str = exec_str[:-5]
 
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
     
+    # Musait zamanda bakkkkkkkkkkkkkkkkk
     with engine.connect() as con:
         result = con.execute(text(exec_str))
         data = result.fetchall()
@@ -147,6 +142,14 @@ def update_table_data(data, member, db):
         for key, value in data.items():
             try:
                 setattr(member, key, value)
+
+                if key == 'educations':
+                    sorted_educations = sort_by_key(value, 'graduation')
+
+                    setattr(member, 'highest_degree', sorted_educations[-1]['degree'])
+                    setattr(member, 'highest_degree_grad_date', sorted_educations[-1]['graduation'])
+                    setattr(member, 'highest_degree_department', sorted_educations[-1]['department'])
+
             except Exception as e:
                 print(e)
                 message += 'But the key ' + key + ' is not in the model. '
@@ -187,3 +190,6 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
         log_body = f'update_profile_data > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
+
+def sort_by_key(data, param):
+    return sorted(data, key=lambda x: x[param])

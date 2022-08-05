@@ -344,7 +344,7 @@ def employee_login():
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
 
-        token_identity = {'user_type': 'employee', 'email': email, 't_c': employee.t_c}
+        token_identity = {'user_type': 'employee', 'email': email}
 
         if bcrypt.check_password_hash(employee.password, password):
             access_token = create_access_token(identity=token_identity)
@@ -387,10 +387,13 @@ def employee_talent_get():
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
 
-        students = Students.query.all()
-        students_list = [student.to_dict() for student in students if student.profile_complete]
+        students_list = list()
+        if employee.t_c:
 
-        print('Sent students:', students_list)
+            pass
+
+        else:
+            pass
 
         return jsonify({'students': students_list}), 200
     except Exception as e:

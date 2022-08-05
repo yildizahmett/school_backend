@@ -56,6 +56,9 @@ class Students(db.Model):
     grad_status     = db.Column(db.String(40), nullable=True)
     grad_date       = db.Column(db.DateTime, nullable=True)
     date            = db.Column(db.DateTime, nullable=False)
+    highest_education = db.Column(db.String(120), nullable=True)
+    highest_education_grad_date = db.Column(db.Integer, nullable=True)
+    highest_education_department = db.Column(db.String(120), nullable=True)
 
     favourites      = db.relationship('Favourites', backref='students', lazy=True)
 
@@ -80,7 +83,7 @@ class Companies(db.Model):
     date = db.Column(db.DateTime, nullable=False)
 
     employees = db.relationship('Employees', backref='company_ref', lazy=True)
-    favourites = db.relationship('Favourites', backref='companies', lazy=True)
+    favourites = db.relationship('Favourites', backref='company_ref', lazy=True)
 
     def __init__(self, company_name, special_id, company_users):
         self.company_name = company_name
@@ -113,7 +116,7 @@ class Employees(db.Model):
     company_id      = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
     date            = db.Column(db.DateTime, nullable=False)
 
-    favourites      = db.relationship('Favourites', backref='employees', lazy=True)
+    favourites      = db.relationship('Favourites', backref='employee_ref', lazy=True)
 
     def __init__(self, name, surname, email, password, company_id):
         self.name = name
