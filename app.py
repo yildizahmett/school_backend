@@ -7,11 +7,11 @@ from sqlalchemy import text
 import random
 import json
 
-
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging, db_filter
+from scripts.util import app, bcrypt, db_filter_employee, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
+from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs
 from scripts.mail_ops import send_mail
 
@@ -356,59 +356,13 @@ def employee_login():
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
-@app.route("/employee/deneme", methods=['GET'])
+@app.route('/employee/talent-market/<int:page_no>', methods=['GET'])
 @jwt_required()
-def employee_deneme():
-    data = get_jwt_identity()
-    user_type = data['user_type']
-    email = data['email']
-
-    if user_type == 'employee':
-        employee = Employees.query.filter_by(email=email).first()
-        # Bu sekilde kisi üzerinden company ismi alınabiliyor
-        company_name = employee.company_ref.company_name
-        print(company_name)
-        return jsonify({'comapny name': company_name, 'employee': employee.name})
-
-# DENEME
-@app.route('/employee/talent-market', methods=['GET'])
-@jwt_required()
-def employee_talent_get():
+def employee_talent_get(page_no):
     try:
-        data = get_jwt_identity()
-        user_type = data['user_type']
-        email = data['email']
-
-        if user_type != 'employee':
-            return jsonify({'message': 'You are not an employee'}), 400
-        
-        employee = Employees.query.filter_by(email=email).first()
-
-        if not employee:
-            return jsonify({'message': 'Employee does not exist'}), 400
-
-        students_list = list()
-        if employee.t_c:
-
-            pass
-
-        else:
-            pass
-
-        return jsonify({'students': students_list}), 200
-    except Exception as e:
-        log_body = f'Employee > Talent Market > ERROR : {repr(e)}'
-        logging.warning(f'IP: {request.remote_addr} | {log_body}')
-        return jsonify({'message': 'Something went wrong'}), 500
-
-# DENEME
-@app.route('/employee/talent-market/<student_email>', methods=['POST'])
-@jwt_required()
-def employee_talent_add(student_email):
-    try:
-        data = get_jwt_identity()
-        user_type = data['user_type']
-        email = data['email']
+        jwt_identitiy = get_jwt_identity()
+        user_type = jwt_identitiy['user_type']
+        email = jwt_identitiy['email']
 
         if user_type != 'employee':
             return jsonify({'message': 'You are not an employee'}), 400
@@ -420,33 +374,29 @@ def employee_talent_add(student_email):
 
         data = request.get_json()
         
-        student = Students.query.filter_by(email=student_email).first()
+        entry_amount    = data['entry_amount']
+        selected_sort   = data['selected_sort']
+        selected_filter = data['selected_filter']
+        is_ascending       = data['ascending']
 
-        if not student:
-            return jsonify({'message': 'Student does not exist'}), 400
+        page_start =  (page_no - 1)*entry_amount + 1
+        page_end   = page_start + entry_amount
 
-        if not student.profile_complete:
-            return jsonify({'message': 'Student has an incomplete profile'}), 400
+        students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, page_start, page_end, selected_columns=SAFE_TALENT_COLUMNS)
 
-        company_name = Companies.query.filter_by(special_id=employee.company).first().company_name
-        talent = Favourites(student.id, company_name, employee.email)
-        db.session.add(talent)
-        db.session.commit()
-
-        return jsonify({'message': 'Student profile updated'}), 200
+        return jsonify({'students': students_list, "t_c": employee.t_c}), 200
     except Exception as e:
-        log_body = f'Employee > Talent Add > ERROR : {repr(e)}'
+        log_body = f'Employee > Talent Market > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
-# DENEME
-@app.route('/employee/company-pool', methods=['GET'])
+@app.route('/employee/add-favourite', methods=['POST'])
 @jwt_required()
-def employee_company_pool_get():
+def employee_add_favourite():
     try:
-        data = get_jwt_identity()
-        user_type = data['user_type']
-        email = data['email']
+        jwt_identitiy = get_jwt_identity()
+        user_type = jwt_identitiy['user_type']
+        email = jwt_identitiy['email']
 
         if user_type != 'employee':
             return jsonify({'message': 'You are not an employee'}), 400
@@ -456,22 +406,182 @@ def employee_company_pool_get():
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
 
-        company_name = Companies.query.filter_by(special_id=employee.company).first().company_name
+        data = request.get_json()
+        student_id = data['id']
+        student = Students.query.filter_by(id=student_id).first()
 
-        talents = [talent for talent in Favourites.query.filter_by(company_name=company_name).all()]
+        if not student:
+            return jsonify({'message': 'Student does not exist'}), 400
 
-        print('Sent talents:', talents) # TODO: Remove later, just for testing
+        employee_id = employee.id
+        company_id = employee.company_ref.id
 
-        return jsonify({'talents': talents}), 200
+        if Favourites.query.filter_by(student_id=student_id, employee_id=employee_id, company_id=company_id).first():
+            return jsonify({'message': 'Student is already in favourites'}), 400
+
+        favourite = Favourites(student_id, employee_id, company_id)
+        db.session.add(favourite)
+        db.session.commit()
+
+        return jsonify({'message': 'Student added to favourites'}), 200
+
     except Exception as e:
-        log_body = f'Employee > Company Pool > ERROR : {repr(e)}'
+        log_body = f'Employee > Add Favourite > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
+@app.route('/employee/remove-favourite', methods=['POST'])
+@jwt_required()
+def employee_remove_favourite():
+    try:
+        jwt_identitiy = get_jwt_identity()
+        user_type = jwt_identitiy['user_type']
+        email = jwt_identitiy['email']
 
-# These are for later
-# /employee/featured_talents
-# /employee/featured_talents/<email>
+        if user_type != 'employee':
+            return jsonify({'message': 'You are not an employee'}), 400
+        
+        employee = Employees.query.filter_by(email=email).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        data = request.get_json()
+        student_id = data['id']
+        student = Students.query.filter_by(id=student_id).first()
+
+        if not student:
+            return jsonify({'message': 'Student does not exist'}), 400
+
+        employee_id = employee.id
+        company_id = employee.company_ref.id
+
+        try:
+            favourite = Favourites.query.filter_by(student_id=student_id, employee_id=employee_id, company_id=company_id).first()
+            db.session.delete(favourite)
+            db.session.commit()
+
+            return jsonify({'message': 'Student removed from favourites'}), 200
+
+        except Exception as e:
+            log_body = f'Employee > Remove Favourite Database > ERROR : {repr(e)}'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            return jsonify({'message': 'Something went wrong'}), 500
+
+    except Exception as e:
+        log_body = f'Employee > Remove Favourite > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+@app.route('/employee/my-favourites', methods=['GET'])
+@jwt_required()
+def employee_my_favourites():
+
+    jwt_identitiy = get_jwt_identity()
+    user_type = jwt_identitiy['user_type']
+    email = jwt_identitiy['email']
+
+    if user_type != 'employee':
+        return jsonify({'message': 'You are not an employee'}), 400
+    
+    employee = Employees.query.filter_by(email=email).first()
+
+    if not employee:
+        return jsonify({'message': 'Employee does not exist'}), 400
+
+    my_favourites = Favourites.query.filter_by(employee_id=employee.id).all()
+    students_list = list()
+    
+    for favourite in my_favourites:
+        student = Students.query.filter_by(id=favourite.student_id).first()
+        student_info = get_specific_data(student, select_fav(employee.t_c), get_raw=True, direct_data=True)
+        students_list.append(student_info)
+
+    return jsonify({'students': students_list, 't_c': employee.t_c}), 200
+
+@app.route('/employee/student-profile/<int:student_id>', methods=['GET'])
+@jwt_required()
+def employee_student_profile(student_id):
+    try:
+        jwt_identitiy = get_jwt_identity()
+        user_type = jwt_identitiy['user_type']
+        email = jwt_identitiy['email']
+
+        if user_type != 'employee':
+            return jsonify({'message': 'You are not an employee'}), 400
+        
+        employee = Employees.query.filter_by(email=email).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        student = Students.query.filter_by(id=student_id).first()
+
+        if not student:
+            return jsonify({'message': 'Student does not exist'}), 400
+
+        student_info = get_specific_data(student, select_std(employee.t_c), get_raw=True, direct_data=True)
+
+        return jsonify({'student': student_info, 't_c': employee.t_c}), 200
+
+    except Exception as e:
+        log_body = f'Employee > Student Profile > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+@app.route('/employee/t-c', methods=['GET'])
+@jwt_required()
+def employee_t_c():
+    try:
+        jwt_identitiy = get_jwt_identity()
+        user_type = jwt_identitiy['user_type']
+        email = jwt_identitiy['email']
+
+        if user_type != 'employee':
+            return jsonify({'message': 'You are not an employee'}), 400
+        
+        employee = Employees.query.filter_by(email=email).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        return jsonify({'t_c': employee.t_c, 't_c_date': employee.t_c_date}), 200
+
+    except Exception as e:
+        log_body = f'Employee > T&C > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+@app.route('/employee/t-c', methods=['POST'])
+@jwt_required()
+def employee_t_c_update():
+    try:
+        jwt_identitiy = get_jwt_identity()
+        user_type = jwt_identitiy['user_type']
+        email = jwt_identitiy['email']
+
+        if user_type != 'employee':
+            return jsonify({'message': 'You are not an employee'}), 400
+        
+        employee = Employees.query.filter_by(email=email).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        if employee.t_c:
+            return jsonify({'message': 'You have already accepted the T&C'}), 400
+
+        setattr(employee, 't_c', True)
+        setattr(employee, 't_c_date', datetime.now())
+
+        db.session.commit()
+
+        return jsonify({'message': 'T&C updated'}), 200
+
+    except Exception as e:
+        log_body = f'Employee > T&C > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
 
 
 # ========================================================================================
@@ -817,7 +927,7 @@ def admin_employees(page_no):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 401
+            return jsonify({'message': 'You are not an administrator'}), 400
 
         if page_no < 1:
             return jsonify({'message': 'Page number must at least be 1'}), 400
@@ -839,7 +949,7 @@ def admin_employees(page_no):
         # employee_sort['t_c']          = Employees.t_c
         # employee_sort['sign_up_date'] = Employees.sign_up_date
 
-        employees = db_filter('employees', selected_filter, selected_sort, is_ascending, page_start, page_end)
+        employees = db_filter_admin('employees', selected_filter, selected_sort, is_ascending, page_start, page_end)
 
         # try:
         #     if ascending:
@@ -1008,7 +1118,7 @@ def admin_students(page_no):
         # student_sort['grad_status']      = Students.grad_status
         # student_sort['profile_complete'] = Students.profile_complete
 
-        students = db_filter('students', selected_filter, selected_sort, is_ascending, page_start, page_end)
+        students = db_filter_admin('students', selected_filter, selected_sort, is_ascending, page_start, page_end)
         # try:
         #     if ascending:
         #         if selected_filter == {}:

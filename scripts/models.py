@@ -144,10 +144,10 @@ class Favourites(db.Model):
     employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
     date = db.Column(db.DateTime)
 
-    def __init__(self, student_id, company_name, employee_email):
+    def __init__(self, student_id, company_id, employee_id):
         self.student_id = student_id
-        self.company_name = company_name
-        self.employee_email = employee_email
+        self.company_id = company_id
+        self.employee_id = employee_id
         self.date = datetime.now()
 
 

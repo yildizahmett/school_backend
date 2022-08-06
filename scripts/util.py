@@ -23,10 +23,20 @@ db = SQLAlchemy(app)
 engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'], engine_opts={'pool_size': 20, 'pool_recycle': 3600})
 CORS(app)
 
-SAFE_TALENT_COLUMNS = ['job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
-UNSAFE_TALENT_COLUMNS = ['name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
+SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
+UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
-def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start, end, selected_columns="*"):
+def select_fav(t_c):
+    if not t_c:
+        return ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
+    return ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
+
+def select_std(t_c):
+    if not t_c:
+        return ['id', 'job_title', 'workplace_type', 'onsite_city', 'comp_skills', 'educations', 'school_programs', 'projects', 'languages', 'certificates']
+    return ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'workplace_type', 'onsite_city', 'summary', 'comp_skills', 'experiences', 'educations', 'school_programs', 'projects', 'languages', 'certificates', 'volunteer', 'linkedin', 'github', 'medium']
+
+def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending, start, end, selected_columns="*"):
     if isinstance(selected_columns, list):
         selected_columns = ','.join(selected_columns)
 
@@ -79,7 +89,48 @@ def db_filter(selected_table_name, selected_filter, to_sort, is_ascending, start
             new_data = []
         con.close()
 
-        return new_data
+    return new_data
+
+def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascending, start, end, selected_columns="*"):
+    if isinstance(selected_columns, list):
+        selected_columns = ','.join(selected_columns)
+
+    if selected_filter == {}:
+        exec_str = f"select {selected_columns} from {selected_table_name} "
+    else:
+        exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.languages) as obj where "
+        for key, value in selected_filter.items():
+            exec_str += "("
+            if value == []:
+                continue
+
+            if key == 'comp_skills':
+                for i in value:
+                    exec_str += "'" + i + "' = ANY(comp_skills) and "
+                exec_str = exec_str[:-5] + ") and "
+
+            elif key == 'languages':
+                continue
+
+            else:
+                for i in value:
+                    if isinstance(i, str):
+                        exec_str += key + " = '" + str(i) + "' or "
+                    else:
+                        exec_str += key + " = " + str(i) + " or "
+                exec_str = exec_str[:-4] + ") and "
+
+        exec_str = exec_str[:-5]
+
+    exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
+    
+    with engine.connect() as con:
+        result = con.execute(text(exec_str))
+        data = result.fetchall()
+        data = [d._asdict() for d in data]
+        con.close()
+
+    return data
 
 def json_to_dict(filename):
     with open(filename, 'r') as j:
@@ -117,11 +168,14 @@ def random_id_generator(size=8, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def get_specific_data(member, needed_data, get_raw=False):
+def get_specific_data(member, needed_data, get_raw=False, direct_data=False):
     try:
         prior_data = member.to_dict()
 
-        final_data = {key: val for key, val in prior_data.items() if (key in data_category[needed_data])}
+        if direct_data:
+            final_data = {key: val for key, val in prior_data.items() if (key in needed_data)}
+        else:
+            final_data = {key: val for key, val in prior_data.items() if (key in data_category[needed_data])}
 
         if get_raw:
             return final_data
@@ -146,9 +200,9 @@ def update_table_data(data, member, db):
                 if key == 'educations':
                     sorted_educations = sort_by_key(value, 'graduation')
 
-                    setattr(member, 'highest_degree', sorted_educations[-1]['degree'])
-                    setattr(member, 'highest_degree_grad_date', sorted_educations[-1]['graduation'])
-                    setattr(member, 'highest_degree_department', sorted_educations[-1]['department'])
+                    setattr(member, 'highest_education', sorted_educations[-1]['degree'])
+                    setattr(member, 'highest_education_grad_date', sorted_educations[-1]['graduation'])
+                    setattr(member, 'highest_education_department', sorted_educations[-1]['department'])
 
             except Exception as e:
                 print(e)
