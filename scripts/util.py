@@ -26,6 +26,9 @@ CORS(app)
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
+def check_t_c_date(employee):
+    pass
+
 def select_fav(t_c):
     if not t_c:
         return ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
@@ -91,7 +94,7 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
 
     return new_data
 
-def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascending, start, end, selected_columns="*"):
+def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascending, limit, offset, selected_columns="*"):
     if isinstance(selected_columns, list):
         selected_columns = ','.join(selected_columns)
 
@@ -123,6 +126,7 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
         exec_str = exec_str[:-5]
 
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
+    exec_str += f" limit {limit} offset {offset}"
     
     with engine.connect() as con:
         result = con.execute(text(exec_str))
@@ -228,6 +232,12 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
         try:
             
             student = Members.query.filter_by(email=email).first()
+
+            # Check student info is completed
+            student_info = student.to_dict()
+            if (not student.profile_complete) and all(student_info.values()) and all(student_info["school_programs"][0].values()):
+                setattr(student, 'profile_complete', True)               
+
             if request.method == 'GET':
                 requested_data = get_specific_data(student, needed_data)
                 return requested_data

@@ -2,9 +2,6 @@ from math import ceil
 from flask import request, jsonify, url_for
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from datetime import datetime, timedelta
-from sqlalchemy import text
-
-import random
 import json
 
 from itsdangerous import URLSafeTimedSerializer
@@ -379,10 +376,10 @@ def employee_talent_get(page_no):
         selected_filter = data['selected_filter']
         is_ascending       = data['ascending']
 
-        page_start =  (page_no - 1)*entry_amount + 1
-        page_end   = page_start + entry_amount
+        limit = entry_amount
+        offset = (page_no - 1) * entry_amount
 
-        students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, page_start, page_end, selected_columns=SAFE_TALENT_COLUMNS)
+        students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS)
 
         return jsonify({'students': students_list, "t_c": employee.t_c}), 200
     except Exception as e:
@@ -545,7 +542,18 @@ def employee_t_c():
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
 
-        return jsonify({'t_c': employee.t_c, 't_c_date': employee.t_c_date}), 200
+        remaining_t_c = employee.t_c_expire_date - datetime.now()
+        
+        remaining_total_seconds = int(remaining_t_c.total_seconds())
+        remaining_months = int(remaining_total_seconds / (30*24*60*60))
+        remaining_days = int((remaining_total_seconds % (30*24*60*60)) / (24*60*60))
+        remaining_hours = int((remaining_total_seconds % (24*60*60)) / (60*60))
+        remaining_minutes = int((remaining_total_seconds % (60*60)) / 60)
+        remaining_seconds = int(remaining_total_seconds % 60)
+
+        remaining = [remaining_months, remaining_days, remaining_hours, remaining_minutes, remaining_seconds]
+
+        return jsonify({'t_c': employee.t_c, 't_c_date': employee.t_c_date, 't_c_expire_date': employee.t_c_expire_date, 'remaining_t_c': remaining}), 200
 
     except Exception as e:
         log_body = f'Employee > T&C > ERROR : {repr(e)}'
@@ -573,6 +581,7 @@ def employee_t_c_update():
 
         setattr(employee, 't_c', True)
         setattr(employee, 't_c_date', datetime.now())
+        setattr(employee, 't_c_expire_date', datetime.now() + timedelta(6*30))
 
         db.session.commit()
 
