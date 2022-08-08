@@ -417,7 +417,7 @@ def employee_add_favourite():
         if Favourites.query.filter_by(student_id=student_id, employee_id=employee_id, company_id=company_id).first():
             return jsonify({'message': 'Student is already in favourites'}), 400
 
-        favourite = Favourites(student_id, employee_id, company_id)
+        favourite = Favourites(student_id, company_id, employee_id)
         db.session.add(favourite)
         db.session.commit()
 

@@ -112,10 +112,9 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
             
             if value == [] or value == '' or value == None or value == [''] or value == [None] or value == 'null':
                 continue
-            
+
             exec_str += "("
 
-            print(key, value)
             if key == 'comp_skills':
                 for i in value:
                     exec_str += "'" + i + "' = ANY(comp_skills) and "
@@ -134,11 +133,12 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
                 exec_str = exec_str[:-1] + ")) and "
 
             elif key == 'salary_max' or key == 'salary_min':
+                exec_str = exec_str[:-1] + "     "
                 print('todo: salary filter')
 
             elif key == "onsite_city":
-                exec_str += key + " = " + value + " and "
-
+                exec_str = exec_str[:-1] + "     "
+                print('todo: onsite_city filter')
             else:
                 for i in value:
                     if isinstance(i, str):
