@@ -543,18 +543,20 @@ def employee_t_c():
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
 
-        remaining_t_c = employee.t_c_expire_date - datetime.now()
-        
-        remaining_total_seconds = int(remaining_t_c.total_seconds())
-        remaining_months = int(remaining_total_seconds / (30*24*60*60))
-        remaining_days = int((remaining_total_seconds % (30*24*60*60)) / (24*60*60))
-        remaining_hours = int((remaining_total_seconds % (24*60*60)) / (60*60))
-        remaining_minutes = int((remaining_total_seconds % (60*60)) / 60)
-        remaining_seconds = int(remaining_total_seconds % 60)
+        if employee.t_c:
+            remaining_t_c = employee.t_c_expire_date - datetime.now()
+            
+            remaining_total_seconds = int(remaining_t_c.total_seconds())
+            remaining_months = int(remaining_total_seconds / (30*24*60*60))
+            remaining_days = int((remaining_total_seconds % (30*24*60*60)) / (24*60*60))
+            remaining_hours = int((remaining_total_seconds % (24*60*60)) / (60*60))
+            remaining_minutes = int((remaining_total_seconds % (60*60)) / 60)
+            remaining_seconds = int(remaining_total_seconds % 60)
 
-        remaining = [remaining_months, remaining_days, remaining_hours, remaining_minutes, remaining_seconds]
+            remaining = [remaining_months, remaining_days, remaining_hours, remaining_minutes, remaining_seconds]
 
-        return jsonify({'t_c': employee.t_c, 't_c_date': employee.t_c_date, 't_c_expire_date': employee.t_c_expire_date, 'remaining_t_c': remaining}), 200
+            return jsonify({'t_c': employee.t_c, 't_c_date': employee.t_c_date, 't_c_expire_date': employee.t_c_expire_date, 'remaining_t_c': remaining}), 200
+        return jsonify({'t_c': employee.t_c}), 200
 
     except Exception as e:
         log_body = f'Employee > T&C > ERROR : {repr(e)}'

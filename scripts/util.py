@@ -97,16 +97,25 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
 def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascending, limit, offset, selected_columns="*"):
     if isinstance(selected_columns, list):
         selected_columns = ','.join(selected_columns)
+    
+    skip_filter = True
+    for s in selected_filter.values():
+        if s not in [[], None, '', [None], 'null', ['\'\''], ['']]:
+            skip_filter = False
+            break
 
-    if selected_filter == {}:
+    if selected_filter == {} or skip_filter:
         exec_str = f"select {selected_columns} from {selected_table_name} "
     else:
         exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.languages) as obj where "
         for key, value in selected_filter.items():
-            exec_str += "("
-            if value == []:
+            
+            if value == [] or value == '' or value == None or value == [''] or value == [None] or value == 'null':
                 continue
+            
+            exec_str += "("
 
+            print(key, value)
             if key == 'comp_skills':
                 for i in value:
                     exec_str += "'" + i + "' = ANY(comp_skills) and "
@@ -123,6 +132,12 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
                 for v in value:
                     exec_str += f"'{v}',"
                 exec_str = exec_str[:-1] + ")) and "
+
+            elif key == 'salary_max' or key == 'salary_min':
+                print('todo: salary filter')
+
+            elif key == "onsite_city":
+                exec_str += key + " = " + value + " and "
 
             else:
                 for i in value:
