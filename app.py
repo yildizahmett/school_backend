@@ -87,11 +87,12 @@ def student_register():
             student = Students(email, hashed_password, name, surname)
 
             programs = []
-            for program_name in temp_student.program_names:
+            for i in range(len(temp_student.program_names)):
 
                 program_to_add = {
                     "github_link": "",
-                    "program_name": program_name,
+                    "program_name": temp_student.program_names[i],
+                    "program_code": temp_student.program_codes[i],
                     "summary": "",
                     "video_link": ""
                 }
@@ -1267,57 +1268,26 @@ def admin_create_program():
 
         data = request.get_json()
         program_name = data['program_name']
-        program_code = random_id_generator(8)
+        program_code = data['program_code']
 
-        if Programs.query.filter_by(program_name=program_name).first():
+        if Programs.query.filter_by(program_code=program_code).filter_by(program_name=program_name).first():
             return jsonify({'message': 'Program already exists'}), 400
-
-        if Programs.query.filter_by(program_code=program_code).first():
-            return jsonify({'message': 'Program code is already in use'}), 400
-
-        """
-        for mail in emails:
-            if Students.query.filter_by(email=mail).first():
-                print(f'Following email is already in Students table: {mail}')
-                continue
-            if Temps.query.filter_by(email=mail).first():
-                print(f'Following email is already in Temps table: {mail}')
-                continue
-            
-            try:
-                # Add Student to Temps table????????????????????????**
-                # Send the mail now
-                # Aşağıdaki kodlar tam çalışmaz
-                register_url = url_for('student_register', _external=True)
-                subj = 'Dear {} Graduate'.format(program_name)
-                msg = 'You can register at {} with this code: {}'.format(register_url, program_code)
-                send_mail(mail, subj, msg)
-                register_url = FRONTEND_LINK + '/employee/register'
-                subj = 'Dear {} Employee'.format(company.company_name.upper())
-                msg = f'You can register at {register_url} with this id: {company.special_id}'
-                send_mail(em, subj, msg)
-            except KeyboardInterrupt:
-                break
-            except Exception as e:
-                print('Error:', e)
-
-        """
 
         program = Programs(program_name, program_code)
         db.session.add(program)
         db.session.commit()
-        
+
         return jsonify({'message': 'Program created succesfully'}), 200
 
     except Exception as e:
-        log_body = f'Admin > Create Program > ERROR : {repr(e)}'
+        log_body = f'Admin > Programs > Create > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/admin/program/edit/<program_code>', methods=['POST'])
+@app.route('/admin/program/edit/<id>', methods=['POST'])
 @jwt_required()
-def admin_program_edit(program_code):
+def admin_program_edit(id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -1327,21 +1297,22 @@ def admin_program_edit(program_code):
 
         data = request.get_json()
 
-        editable_data = ['program_name', 'program_code']
+        new_program_name = data['program_name']
+        new_program_code = data['program_code']
 
-        try:
-            program = Programs.query.filter_by(program_code=program_code).first()
-            if not program:
-                return jsonify({'message': 'Program does not exist'}), 400
+        program = Programs.query.filter_by(id=id).first()
+        if not program:
+            return jsonify({'message': 'Program does not exist'}), 400
 
-            for key, value in data.items():
-                if key in editable_data:
-                    setattr(program, key, value)
-            db.session.commit()
-        except Exception as e:
-            log_body = f'Admin > Program Edit > Request Operation > ERROR : {repr(e)}'
-            logging.warning(f'IP: {request.remote_addr} | {log_body}')
-            return jsonify({'message': 'Something went wrong in request operations'}), 500
+        if program.program_code == new_program_code and program.program_name == new_program_name:
+            return jsonify({'message': 'Same values given.'}), 400
+
+        if Programs.query.filter_by(program_code=new_program_code).filter_by(program_name=new_program_name).first():
+            return jsonify({'message': 'Program already exists'}), 400
+
+        setattr(program, 'program_name', new_program_name)
+        setattr(program, 'program_code', new_program_code)
+        db.session.commit()
 
         return jsonify({'message': 'Program edited succesfully'}), 200
     except Exception as e:
@@ -1362,6 +1333,7 @@ def admin_program_invite_students():
 
         data = request.get_json()
         program_name = data['inviteProgramName']
+        program_code = data['inviteProgramCode']
         students_to_invite = data['emails']
 
         if not students_to_invite:
@@ -1370,7 +1342,7 @@ def admin_program_invite_students():
         students_invited = []
 
         try:
-            program = Programs.query.filter_by(program_name=program_name).first()
+            program = Programs.query.filter_by(program_name=program_name).filter_by(program_code=program_code).first()
             if not program:
                 return jsonify({'message': 'Program does not exist'}), 400
 
@@ -1385,7 +1357,7 @@ def admin_program_invite_students():
 
                         temp_boolean = False
                         for sp in school_programs:
-                            if sp["program_name"] == program_name:
+                            if sp["program_name"] == program_name and sp["program_code"] == program_code:
                                 print(f'Following student is already in this program: {st_mail}')
                                 temp_boolean = True
                         
@@ -1393,6 +1365,7 @@ def admin_program_invite_students():
                             program_to_add = {
                                 "github_link": "",
                                 "program_name": program_name,
+                                "program_code": program_code,
                                 "summary": "",
                                 "video_link": ""
                             }
@@ -1412,9 +1385,19 @@ def admin_program_invite_students():
 
                     try:
                         program_names = temp.program_names
-                        if not program_name in program_names:
+                        program_codes = temp.program_codes
+
+                        temp_boolean = True
+                        for i in range(len(program_names)):
+                            if program_names[i] == program_name and program_codes[i] == program_code:
+                                temp_boolean = False
+                                break
+
+                        if temp_boolean:
                             program_names = program_names + [program_name]
+                            program_codes = program_codes + [program_code]
                             setattr(temp, 'program_names', program_names)
+                            setattr(temp, 'program_codes', program_codes)
                             db.session.commit()
                     except Exception as e:
                         log_body = f'Admin > Program Invite > Invite Students > ERROR : {repr(e)}'
@@ -1423,7 +1406,7 @@ def admin_program_invite_students():
                     continue
                 
                 try:
-                    temp_student = Temps(st_mail, [program_name])
+                    temp_student = Temps(st_mail, [program_name], [program_code])
                     db.session.add(temp_student)
 
                     subj = 'Dear {} Graduate'.format(program_name)
@@ -1462,7 +1445,7 @@ def admin_get_programs():
         programs = Programs.query.all()
         programs_list = []
         for program in programs:
-            programs_list.append(program.to_dict()['program_name'])
+            programs_list.append(program.to_dict())
         
         return jsonify({'programs': programs_list}), 200
     except Exception as e:
@@ -1482,9 +1465,10 @@ def admin_program_remove():
 
         data = request.get_json()
         program_name = data['program_name']
+        program_code = data['program_code']
 
         try:
-            program = Programs.query.filter_by(program_name=program_name).first()
+            program = Programs.query.filter_by(program_name=program_name).filter_by(program_code=program_code).first()
             if not program:
                 return jsonify({'message': 'Program does not exist'}), 400
 

@@ -7,12 +7,14 @@ class Temps(db.Model):
     __table_name__  = 'temps'
     id              = db.Column(db.Integer, primary_key=True)
     email           = db.Column(db.String(120), unique=True, nullable=False)
-    program_names    = db.Column(db.ARRAY(db.String(120)), nullable=True)
+    program_names   = db.Column(db.ARRAY(db.String(120)), nullable=True)
+    program_codes   = db.Column(db.ARRAY(db.Integer), nullable=True)
     date            = db.Column(db.DateTime, nullable=False)
 
-    def __init__(self, email, program_names):
+    def __init__(self, email, program_names, program_codes):
         self.email = email
         self.program_names = program_names
+        self.program_codes = program_codes
         self.date = datetime.now()
 
     def add_program(self, program_name):
@@ -59,6 +61,10 @@ class Students(db.Model):
     highest_education = db.Column(db.String(120), nullable=True)
     highest_education_grad_date = db.Column(db.Integer, nullable=True)
     highest_education_department = db.Column(db.String(120), nullable=True)
+    updated_at = db.Column(db.DateTime, nullable=True)
+    updated_by = db.Column(db.String(120), nullable=True)
+    is_active = db.Column(db.Boolean, nullable=False)
+    passive_date = db.Column(db.DateTime, nullable=True)
 
     favourites      = db.relationship('Favourites', backref='students', lazy=True)
 
@@ -69,6 +75,7 @@ class Students(db.Model):
         self.surname = surname
         self.profile_complete = False
         self.date = datetime.now()
+        self.is_active = True
 
     def to_dict(self):
         return {i.name: getattr(self, i.name) for i in self.__table__.columns if i.name != 'password'}
@@ -81,6 +88,9 @@ class Companies(db.Model):
     special_id = db.Column(db.String(20), unique=True)
     company_users = db.Column(db.ARRAY(db.String(100)), nullable=True)
     date = db.Column(db.DateTime, nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, nullable=False)
+    passive_date = db.Column(db.DateTime, nullable=True)
 
     employees = db.relationship('Employees', backref='company_ref', lazy=True)
     favourites = db.relationship('Favourites', backref='company_ref', lazy=True)
@@ -90,6 +100,7 @@ class Companies(db.Model):
         self.special_id = special_id
         self.company_users = company_users
         self.date = datetime.now()
+        self.is_active = True
 
     def __repr__(self):
         return f'<Company "{self.company_name}">'
@@ -111,11 +122,15 @@ class Employees(db.Model):
     password        = db.Column(db.String(255), nullable=False)
     t_c             = db.Column(db.Boolean, nullable=True)
     t_c_date        = db.Column(db.DateTime, nullable=True)
-    #t_c_expire_date = db.Column(db.DateTime, nullable=True)
+    t_c_expire_date = db.Column(db.DateTime, nullable=True)
     duration        = db.Column(db.String(255), nullable=True)
     fav_amount      = db.Column(db.Integer, nullable=True)
     company_id      = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
     date            = db.Column(db.DateTime, nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=True)
+    updated_by = db.Column(db.String(120), nullable=True)
+    is_active = db.Column(db.Boolean, nullable=False)
+    passive_date = db.Column(db.DateTime, nullable=True)
 
     favourites      = db.relationship('Favourites', backref='employee_ref', lazy=True)
 
@@ -129,6 +144,7 @@ class Employees(db.Model):
         self.duration = 0
         self.fav_amount = 0
         self.date = datetime.now()
+        self.is_active = True
     
     def __repr__(self):
         return f'<Employee "{self.name} {self.surname}">'
@@ -144,41 +160,32 @@ class Favourites(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
     employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
     date = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, nullable=False)
+    passive_date = db.Column(db.DateTime, nullable=True)
 
     def __init__(self, student_id, company_id, employee_id):
         self.student_id = student_id
         self.company_id = company_id
         self.employee_id = employee_id
         self.date = datetime.now()
-
-
-"""# TODO: Poola göre düzenle
-class Pools(db.Model):
-    __tablename__ = 'pools'
-    id=db.Column(db.Integer,primary_key=True)
-    student_id = db.Column(db.ForeignKey('students.id'), nullable=False)
-    company_name = db.Column(db.ForeignKey('companies.company_name'), nullable=False)
-    employee_email = db.Column(db.ForeignKey('employees.email'), nullable=False)
-    date = db.Column(db.DateTime)
-
-    def __init__(self, student_id, company_name, employee_email):
-        self.student_id = student_id
-        self.company_name = company_name
-        self.employee_email = employee_email
-        self.date = datetime.now()
-"""
+        self.is_active = True
 
 class Programs(db.Model):
     __tablename__= 'programs'
     id=db.Column(db.Integer,primary_key=True)
-    program_name = db.Column(db.String(120), nullable=False, unique=True)
-    program_code = db.Column(db.String(255), nullable=False, unique=True)
-    # TODO: Add date column here
+    program_name = db.Column(db.String(120), nullable=False)
+    program_code = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, nullable=False)
+    passive_date = db.Column(db.DateTime, nullable=True)
 
     def __init__(self, program_name, program_code):
         self.program_name = program_name
         self.program_code = program_code
+        self.created_at = datetime.now()
+        self.is_active = True
 
     def to_dict(self):
-        return {i.name: getattr(self, i.name) for i in self.__table__.columns if i.name != 'id'}
+        return {i.name: getattr(self, i.name) for i in self.__table__.columns if i.name == 'program_name' or i.name == 'program_code' or i.name == 'id'}
 

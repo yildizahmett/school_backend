@@ -113,7 +113,16 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
                 exec_str = exec_str[:-5] + ") and "
 
             elif key == 'languages':
-                continue
+                exec_str += "obj->> 'name' IN ("
+                for v in value:
+                    exec_str += f"'{v}',"
+                exec_str = exec_str[:-1] + ")) and "
+
+            elif key == 'proficiency':
+                exec_str += "obj->> 'level' IN ("
+                for v in value:
+                    exec_str += f"'{v}',"
+                exec_str = exec_str[:-1] + ")) and "
 
             else:
                 for i in value:
