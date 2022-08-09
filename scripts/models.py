@@ -126,6 +126,7 @@ class Employees(db.Model):
     duration        = db.Column(db.String(255), nullable=True)
     fav_amount      = db.Column(db.Integer, nullable=True)
     company_id      = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    company_name    = db.Column(db.String(100), nullable=False)
     date            = db.Column(db.DateTime, nullable=False)
     updated_at = db.Column(db.DateTime, nullable=True)
     updated_by = db.Column(db.String(120), nullable=True)
@@ -134,12 +135,13 @@ class Employees(db.Model):
 
     favourites      = db.relationship('Favourites', backref='employee_ref', lazy=True)
 
-    def __init__(self, name, surname, email, password, company_id):
+    def __init__(self, name, surname, email, password, company_id, company_name):
         self.name = name
         self.surname = surname
         self.email = email
         self.password = password
         self.company_id = company_id
+        self.company_name = company_name
         self.t_c = False
         self.duration = 0
         self.fav_amount = 0

@@ -318,7 +318,7 @@ def employee_register():
             return jsonify({'message': 'Email already exists'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        employee = Employees(name, surname, email, hashed_password, company_id=company.id)
+        employee = Employees(name, surname, email, hashed_password, company_id=company.id, company_name=company.company_name)
 
         db.session.add(employee)
         db.session.commit()
