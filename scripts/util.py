@@ -132,13 +132,15 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
                     exec_str += f"'{v}',"
                 exec_str = exec_str[:-1] + ")) and "
 
-            elif key == 'salary_max' or key == 'salary_min':
-                exec_str = exec_str[:-1] + "     "
-                print('todo: salary filter')
+            elif key == 'salary_min':
+                exec_str += "salary_min > " + value + ") and "
+            
+            elif key == 'salary_max':
+                exec_str += "salary_min < " + value + ") and "
 
             elif key == "onsite_city":
-                exec_str = exec_str[:-1] + "     "
-                print('todo: onsite_city filter')
+                exec_str += "onsite_city = '" + value + "') and "
+
             else:
                 for i in value:
                     if isinstance(i, str):
@@ -151,7 +153,7 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
 
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
     exec_str += f" limit {limit} offset {offset}"
-    
+    print(exec_str)
     with engine.connect() as con:
         result = con.execute(text(exec_str))
         data = result.fetchall()
