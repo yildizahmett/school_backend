@@ -1,4 +1,4 @@
-from math import ceil
+import math
 from flask import request, jsonify, url_for
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from datetime import datetime, timedelta
@@ -385,8 +385,9 @@ def employee_talent_get(page_no):
 
         students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS, favourite_students=favourite_students)
         number_of_students = db_filter_student_count("students", selected_filter)
+        number_of_pages = math.ceil(number_of_students / entry_amount)
 
-        return jsonify({'students': students_list, 'number_of_students':number_of_students, "t_c": employee.t_c}), 200
+        return jsonify({'students': students_list, 'number_of_pages':number_of_pages, "t_c": employee.t_c}), 200
     except Exception as e:
         log_body = f'Employee > Talent Market > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
