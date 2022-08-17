@@ -97,21 +97,12 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
 def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascending, limit, offset, selected_columns="*"):
     if isinstance(selected_columns, list):
         selected_columns = ','.join(selected_columns)
-    
-    skip_filter = True
-    for s in selected_filter.values():
-        if s not in [[], None, '', [None], 'null', ['\'\''], ['']]:
-            skip_filter = False
-            break
 
-    if selected_filter == {} or skip_filter:
+    if selected_filter == {}:
         exec_str = f"select {selected_columns} from {selected_table_name} "
     else:
         exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.languages) as obj where "
         for key, value in selected_filter.items():
-            
-            if value == [] or value == '' or value == None or value == [''] or value == [None] or value == 'null':
-                continue
 
             exec_str += "("
 

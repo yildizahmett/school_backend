@@ -381,8 +381,9 @@ def employee_talent_get(page_no):
         offset = (page_no - 1) * entry_amount
 
         students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS)
+        number_of_students = len(students_list)
 
-        return jsonify({'students': students_list, "t_c": employee.t_c}), 200
+        return jsonify({'students': students_list, 'number_of_students':number_of_students, "t_c": employee.t_c}), 200
     except Exception as e:
         log_body = f'Employee > Talent Market > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
