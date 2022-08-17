@@ -346,9 +346,9 @@ def employee_login():
 
         if bcrypt.check_password_hash(employee.password, password):
             access_token = create_access_token(identity=token_identity)
-            return jsonify({'access_token': access_token}), 200
+            return jsonify({'name': employee.name, 'surname': employee.surname, 'access_token': access_token}), 200
         else:
-            return jsonify({'name': employee.name, 'surname': employee.surname, 'message': 'Incorrect password or email'}), 400
+            return jsonify({'message': 'Incorrect password or email'}), 400
     except Exception as e:
         log_body = f'Employee > Login > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
