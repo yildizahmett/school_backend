@@ -100,6 +100,13 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
 
     if selected_filter == {}:
         exec_str = f"select {selected_columns} from {selected_table_name} "
+        # Cant take favourite students
+        if not favourite_students == []:
+            exec_str += " where students.id NOT IN ("
+            for i in favourite_students:
+                exec_str += str(i) + ","
+            exec_str = exec_str[:-1] + ") "
+
     else:
         exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.languages) as obj where "
         for key, value in selected_filter.items():
@@ -151,7 +158,7 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
 
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
     exec_str += f" limit {limit} offset {offset}"
-    print(exec_str)
+    
     with engine.connect() as con:
         result = con.execute(text(exec_str))
         data = result.fetchall()
