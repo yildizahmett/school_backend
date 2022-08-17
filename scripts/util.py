@@ -81,7 +81,7 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
         data = result.fetchall()
         data = [d._asdict() for d in data]
         emails = [d['email'] for d in data]
-        print(data)
+        
         if data != []:
             new_data = [data[0]]
             for user in data:
