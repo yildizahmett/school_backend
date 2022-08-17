@@ -94,7 +94,7 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
 
     return new_data
 
-def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascending, limit, offset, selected_columns="*"):
+def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascending, limit, offset, selected_columns="*", favourite_students=[]):
     if isinstance(selected_columns, list):
         selected_columns = ','.join(selected_columns)
 
@@ -139,6 +139,13 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
                     else:
                         exec_str += key + " = " + str(i) + " or "
                 exec_str = exec_str[:-4] + ") and "
+
+        # Can't take favourite students
+        if not favourite_students == []:
+            exec_str += "t.id NOT IN ("
+            for i in favourite_students:
+                exec_str += str(i) + ","
+            exec_str = exec_str[:-1] + ") and "
 
         exec_str = exec_str[:-5]
 

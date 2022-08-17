@@ -380,7 +380,10 @@ def employee_talent_get(page_no):
         limit = entry_amount
         offset = (page_no - 1) * entry_amount
 
-        students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS)
+        favourites = Favourites.query.filter_by(employee_id=employee.id).all()
+        favourite_students = [favourite.student_id for favourite in favourites]
+
+        students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS, favourite_students=favourite_students)
         number_of_students = db_filter_student_count("students", selected_filter)
 
         return jsonify({'students': students_list, 'number_of_students':number_of_students, "t_c": employee.t_c}), 200
