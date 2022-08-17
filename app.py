@@ -375,7 +375,7 @@ def employee_talent_get(page_no):
         entry_amount    = data['entry_amount']
         selected_sort   = data['selected_sort']
         selected_filter = data['selected_filter']
-        is_ascending       = data['ascending']
+        is_ascending    = data['ascending']
 
         limit = entry_amount
         offset = (page_no - 1) * entry_amount
@@ -384,7 +384,7 @@ def employee_talent_get(page_no):
         favourite_students = [favourite.student_id for favourite in favourites]
 
         students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS, favourite_students=favourite_students)
-        number_of_students = db_filter_student_count("students", selected_filter)
+        number_of_students = db_filter_student_count("students", selected_filter, favourite_students=favourite_students)
         number_of_pages = math.ceil(number_of_students / entry_amount)
 
         return jsonify({'students': students_list, 'number_of_pages':number_of_pages, "t_c": employee.t_c}), 200
@@ -986,7 +986,7 @@ def admin_employees(page_no):
 
         # employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
 
-        page_amount = ceil(len(employees) / entry_amount)
+        page_amount = math.ceil(len(employees) / entry_amount)
 
         return jsonify({'max_pages': page_amount, 'employees': employees}), 200
     except Exception as e:
@@ -1154,7 +1154,7 @@ def admin_students(page_no):
 
         # students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
 
-        page_amount = ceil(len(students) / entry_amount)
+        page_amount = math.ceil(len(students) / entry_amount)
         
         return jsonify({'max_pages': page_amount, 'students': students}), 200
     except Exception as e:

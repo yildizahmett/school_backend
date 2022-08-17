@@ -167,9 +167,14 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
 
     return data
 
-def db_filter_student_count(selected_table_name, selected_filter):
+def db_filter_student_count(selected_table_name, selected_filter, favourite_students=[]):
     if selected_filter == {}:
         exec_str = f"select count(*) from {selected_table_name} "
+        if not favourite_students == []:
+            exec_str += " where id NOT IN ("
+            for i in favourite_students:
+                exec_str += str(i) + ","
+            exec_str = exec_str[:-1] + ") "
     else:
         exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where "
         for key, value in selected_filter.items():
@@ -209,6 +214,12 @@ def db_filter_student_count(selected_table_name, selected_filter):
                     else:
                         exec_str += key + " = " + str(i) + " or "
                 exec_str = exec_str[:-4] + ") and "
+
+        if not favourite_students == []:
+            exec_str += "t.id NOT IN ("
+            for i in favourite_students:
+                exec_str += str(i) + ","
+            exec_str = exec_str[:-1] + ") and "
 
         exec_str = exec_str[:-5]
     with engine.connect() as con:
