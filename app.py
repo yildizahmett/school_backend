@@ -6,7 +6,7 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, db_filter_employee, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import app, bcrypt, db_filter_employee, db_filter_student_count, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs
@@ -381,7 +381,7 @@ def employee_talent_get(page_no):
         offset = (page_no - 1) * entry_amount
 
         students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS)
-        number_of_students = len(students_list)
+        number_of_students = db_filter_student_count("students", selected_filter)
 
         return jsonify({'students': students_list, 'number_of_students':number_of_students, "t_c": employee.t_c}), 200
     except Exception as e:

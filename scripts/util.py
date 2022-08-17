@@ -153,6 +153,57 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
 
     return data
 
+def db_filter_student_count(selected_table_name, selected_filter):
+    if selected_filter == {}:
+        exec_str = f"select count(*) from {selected_table_name} "
+    else:
+        exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where "
+        for key, value in selected_filter.items():
+
+            exec_str += "("
+
+            if key == 'comp_skills':
+                for i in value:
+                    exec_str += "'" + i + "' = ANY(comp_skills) and "
+                exec_str = exec_str[:-5] + ") and "
+
+            elif key == 'languages':
+                exec_str += "obj->> 'name' IN ("
+                for v in value:
+                    exec_str += f"'{v}',"
+                exec_str = exec_str[:-1] + ")) and "
+
+            elif key == 'proficiency':
+                exec_str += "obj->> 'level' IN ("
+                for v in value:
+                    exec_str += f"'{v}',"
+                exec_str = exec_str[:-1] + ")) and "
+
+            elif key == 'salary_min':
+                exec_str += "salary_min > " + value + ") and "
+            
+            elif key == 'salary_max':
+                exec_str += "salary_min < " + value + ") and "
+
+            elif key == "onsite_city":
+                exec_str += "onsite_city = '" + value + "') and "
+
+            else:
+                for i in value:
+                    if isinstance(i, str):
+                        exec_str += key + " = '" + str(i) + "' or "
+                    else:
+                        exec_str += key + " = " + str(i) + " or "
+                exec_str = exec_str[:-4] + ") and "
+
+        exec_str = exec_str[:-5]
+    with engine.connect() as con:
+        result = con.execute(text(exec_str))
+        data = result.fetchone()
+        con.close()
+
+    return data[0]
+
 def json_to_dict(filename):
     with open(filename, 'r') as j:
         data = json.load(j)
