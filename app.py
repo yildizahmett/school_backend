@@ -383,11 +383,15 @@ def employee_talent_get(page_no):
         favourites = Favourites.query.filter_by(employee_id=employee.id).all()
         favourite_students = [favourite.student_id for favourite in favourites]
 
-        students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS, favourite_students=favourite_students)
         number_of_students = db_filter_student_count("students", selected_filter, favourite_students=favourite_students)
         number_of_pages = math.ceil(number_of_students / entry_amount)
 
+        if page_no > number_of_pages:
+            return jsonify({'message': 'Page does not exist'}), 400
+
+        students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS, favourite_students=favourite_students)
         return jsonify({'students': students_list, 'number_of_pages':number_of_pages, "t_c": employee.t_c}), 200
+        
     except Exception as e:
         log_body = f'Employee > Talent Market > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
