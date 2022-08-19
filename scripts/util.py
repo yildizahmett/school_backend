@@ -28,6 +28,17 @@ REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@m
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
+def update_is_active_company(company_id):
+    fav_query = text(f"update favourites set is_active = false where company_id = {company_id}")
+    employee_query = text("update employees set is_active = false where company_id = {company_id}")
+    company_query = text(f"update companies set is_active = false where id = {company_id}")
+
+    with engine.connect() as con:
+        con.execute(fav_query)
+        con.execute(employee_query)
+        con.execute(company_query)
+        con.close()
+
 def get_fav_amount(is_student=False, is_employee=False):
     if is_student:
         exec_str = 'student_id'
@@ -266,16 +277,6 @@ FRONTEND_LINK = 'http://localhost:3000'
 format = '| %(asctime)s | %(funcName)s: %(lineno)d | %(message)s | %(levelname)s'
 logging.basicConfig(format=format, level=logging.INFO, datefmt='%d/%b/%Y | %H:%M:%S')
 # filename='current.log', filemode='a', # add this code to the inside of basicConfig to store logs in a file instead of printing to the terminal
-
-"""
-def random_id_generator(length):
-    # Primitive Version
-    code = ''
-    for x in range(length):
-        code += str(randint(0, 9))
-        code += chr(randint(65, 90))
-    return code
-"""
 
 def random_id_generator(size=8, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))

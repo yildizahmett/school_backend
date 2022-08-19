@@ -966,37 +966,12 @@ def admin_employees(page_no):
 
         page_start =  (page_no - 1)*entry_amount + 1
         page_end   = page_start + entry_amount
-        
-        # employee_sort = dict()
-        # employee_sort['id']           = Employees.id
-        # employee_sort['name']         = Employees.name
-        # employee_sort['company_name'] = Employees.company_name
-        # employee_sort['t_c']          = Employees.t_c
-        # employee_sort['sign_up_date'] = Employees.sign_up_date
 
         employees = db_filter_admin('employees', selected_filter, selected_sort, is_ascending, page_start, page_end)
-
-        # try:
-        #     if ascending:
-        #         if selected_filter == {}:
-        #             employees = Employees.query.order_by(employee_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
-        #         else:
-        #             employees = Employees.query.filter_by(**selected_filter).order_by(employee_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
-        #     else:
-        #         if selected_filter == {}:
-        #             employees = Employees.query.order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-        #         else:
-        #             employees = Employees.query.filter_by(**selected_filter).order_by(employee_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-        # except Exception as e:
-        #     log_body = f'Admin > Employees > Request Operation > ERROR : {repr(e)}'
-        #     logging.warning(f'IP: {request.remote_addr} | {log_body}')
-        #     return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
-
-        # employees = [get_specific_data(employee, DC_AD_EMPLOYEES, get_raw=True) for employee in employees]
-
+        fav_amounts = get_fav_amount(is_employee=True)
         page_amount = math.ceil(len(employees) / entry_amount)
 
-        return jsonify({'max_pages': page_amount, 'employees': employees}), 200
+        return jsonify({'max_pages': page_amount, 'employees': employees, 'fav_amounts': fav_amounts}), 200
     except Exception as e:
         log_body = f'Admin > Employees > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
