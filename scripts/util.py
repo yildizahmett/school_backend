@@ -40,7 +40,7 @@ def get_fav_amount(is_student=False, is_employee=False):
     with engine.connect() as con:
         result = con.execute(query)
         con.close()
-    return result.fetchall()
+    return dict(result.fetchall())
     
 def check_t_c_date(employee):
     pass
