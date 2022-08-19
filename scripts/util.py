@@ -30,7 +30,7 @@ UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title',
 
 def update_is_active_company(company_id):
     fav_query = text(f"update favourites set is_active = false where company_id = {company_id}")
-    employee_query = text("update employees set is_active = false where company_id = {company_id}")
+    employee_query = text(f"update employees set is_active = false where company_id = {company_id}")
     company_query = text(f"update companies set is_active = false where id = {company_id}")
 
     with engine.connect() as con:

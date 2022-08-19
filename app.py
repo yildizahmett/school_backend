@@ -6,7 +6,7 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, db_filter_employee, db_filter_student_count, get_fav_amount, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import app, bcrypt, db_filter_employee, db_filter_student_count, get_fav_amount, jwt, db, engine, get_specific_data, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs
@@ -745,19 +745,14 @@ def company_remove():
 
         try:
             data = request.get_json()
-            company_id = data['company_id'].lower()
+            company_id = data['company_id']
 
             company = Companies.query.filter_by(id=company_id).first()
 
             if not company:
                 return jsonify({'message': 'Company does not exist'}), 400
 
-            
-            # Set is_active to false for all favourites
-            
-
-
-
+            update_is_active_company(company_id)
             
             return jsonify({'message': 'Company removed successfully'}), 201
         except Exception as e:
