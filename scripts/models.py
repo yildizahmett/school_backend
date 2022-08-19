@@ -125,7 +125,7 @@ class Employees(db.Model):
     duration        = db.Column(db.String(255), nullable=True)
     company_id      = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
     company_name    = db.Column(db.String(100), nullable=False)
-    is_company_admin= db.Column(db.Boolean, nullable=False)
+    is_company_admin= db.Column(db.Boolean, nullable=True)
     date            = db.Column(db.DateTime, nullable=False)
     updated_at = db.Column(db.DateTime, nullable=True)
     updated_by = db.Column(db.String(120), nullable=True)
