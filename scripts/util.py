@@ -23,9 +23,25 @@ db = SQLAlchemy(app)
 engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'], engine_opts={'pool_size': 20, 'pool_recycle': 3600})
 CORS(app)
 
+REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@mef.edu.tr", "kaya.kerrem@gmail.com", "alperensayar@gmail.com"]
+
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
+def get_fav_amount(is_student=False, is_employee=False):
+    if is_student:
+        exec_str = 'student_id'
+    elif is_employee:
+        exec_str = 'employee_id'
+    else:
+        return None
+
+    query = text(f'select {exec_str}, count({exec_str}) from favourites group by {exec_str}')
+    with engine.connect() as con:
+        result = con.execute(query)
+        con.close()
+    return result.fetchall()
+    
 def check_t_c_date(employee):
     pass
 

@@ -6,12 +6,11 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, db_filter_employee, db_filter_student_count, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import app, bcrypt, db_filter_employee, db_filter_student_count, get_fav_amount, jwt, db, engine, get_specific_data, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs
 from scripts.mail_ops import send_mail
-
 
 def generate_confirmation_token(email):
     try:
@@ -746,15 +745,20 @@ def company_remove():
 
         try:
             data = request.get_json()
-            company_name = data['company_name'].lower()
+            company_id = data['company_id'].lower()
 
-            company = Companies.query.filter_by(company_name=company_name).first()
+            company = Companies.query.filter_by(id=company_id).first()
 
             if not company:
                 return jsonify({'message': 'Company does not exist'}), 400
 
-            db.session.delete(company)
-            db.session.commit()
+            
+            # Set is_active to false for all favourites
+            
+
+
+
+            
             return jsonify({'message': 'Company removed successfully'}), 201
         except Exception as e:
             log_body = f'Admin > Remove Company > Request Operation > ERROR : {repr(e)}'
@@ -1131,36 +1135,12 @@ def admin_students(page_no):
 
         page_start =  (page_no - 1)*entry_amount + 1
         page_end   = page_start + entry_amount
-        
-        # student_sort = dict()
-        # student_sort['id']               = Students.id
-        # student_sort['name']             = Students.name
-        # # TODO: Bu olcak ama school_programs JSON'dan çekme falan -> student_sort['program_name']     = Students.program_name
-        # student_sort['grad_status']      = Students.grad_status
-        # student_sort['profile_complete'] = Students.profile_complete
 
         students = db_filter_admin('students', selected_filter, selected_sort, is_ascending, page_start, page_end)
-        # try:
-        #     if ascending:
-        #         if selected_filter == {}:
-        #             students = Students.query.order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
-        #         else:
-        #             students = Students.query.filter_by(**selected_filter).order_by(student_sort[selected_sort].asc()).slice(page_start - 1, page_end - 1).all()
-        #     else:
-        #         if selected_filter == {}:
-        #             students = Students.query.order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-        #         else:
-        #             students = Students.query.filter_by(**selected_filter).order_by(student_sort[selected_sort].desc()).slice(page_start - 1, page_end - 1).all()
-        # except Exception as e:
-        #     log_body = f'Admin > Students > Request Operation > ERROR : {repr(e)}'
-        #     logging.warning(f'IP: {request.remote_addr} | {log_body}')
-        #     return jsonify({'message': 'Selected sortable or filter does not exist'}), 400
-
-        # students = [get_specific_data(student, DC_AD_STUDENT, get_raw=True) for student in students]
-
+        fav_amounts = get_fav_amount(is_student=True)
         page_amount = math.ceil(len(students) / entry_amount)
         
-        return jsonify({'max_pages': page_amount, 'students': students}), 200
+        return jsonify({'max_pages': page_amount, 'students': students, 'fav_amounts': fav_amounts}), 200
     except Exception as e:
         log_body = f'Admin > Students > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
