@@ -83,7 +83,7 @@ class Students(db.Model):
 class Companies(db.Model):
     __tablename__ = 'companies'
     id=db.Column(db.Integer,primary_key=True)
-    company_name = db.Column(db.String(100), nullable=False, unique=True)
+    company_name = db.Column(db.String(100), nullable=False)
     special_id = db.Column(db.String(20), unique=True)
     company_users = db.Column(db.ARRAY(db.String(100)), nullable=True)
     date = db.Column(db.DateTime, nullable=False)
@@ -116,7 +116,7 @@ class Employees(db.Model):
     id              = db.Column(db.Integer, primary_key=True)
     name            = db.Column(db.String(80), nullable=False)
     surname         = db.Column(db.String(80), nullable=False)
-    email           = db.Column(db.String(120), unique=True, nullable=False)
+    email           = db.Column(db.String(120), nullable=False)
     phone           = db.Column(db.String(25), nullable=True) # the length may be shortened
     password        = db.Column(db.String(255), nullable=False)
     t_c             = db.Column(db.Boolean, nullable=True)

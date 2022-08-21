@@ -29,14 +29,32 @@ SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_educatio
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
 def update_is_active_company(company_id):
-    fav_query = text(f"update favourites set is_active = false where company_id = {company_id}")
-    employee_query = text(f"update employees set is_active = false where company_id = {company_id}")
-    company_query = text(f"update companies set is_active = false where id = {company_id}")
+    fav_query = text(f"update favourites set is_active = false, passive_date = NOW() where company_id = {company_id}")
+    employee_query = text(f"update employees set is_active = false, passive_date = NOW() where company_id = {company_id}")
+    company_query = text(f"update companies set is_active = false, passive_date = NOW() where id = {company_id}")
 
     with engine.connect() as con:
         con.execute(fav_query)
         con.execute(employee_query)
         con.execute(company_query)
+        con.close()
+
+def update_is_activate_employees(employee_ids):
+    fav_query = text(f"update favourites set is_active = false, passive_date = NOW() where employee_id in {str(employee_ids).replace('[', '(').replace(']', ')')}")
+    employee_query = text(f"update employees set is_active = false, passive_date = NOW() where id in {str(employee_ids).replace('[', '(').replace(']', ')')}")
+
+    with engine.connect() as con:
+        con.execute(fav_query)
+        con.execute(employee_query)
+        con.close()
+
+def update_is_activate_students(student_ids):
+    fav_query = text(f"update favourites set is_active = false, passive_date = NOW() where student_id in {str(student_ids).replace('[', '(').replace(']', ')')}")
+    student_query = text(f"update students set is_active = false, passive_date = NOW() where id in {str(student_ids).replace('[', '(').replace(']', ')')}")
+
+    with engine.connect() as con:
+        con.execute(fav_query)
+        con.execute(student_query)
         con.close()
 
 def get_fav_amount(is_student=False, is_employee=False):
@@ -47,7 +65,7 @@ def get_fav_amount(is_student=False, is_employee=False):
     else:
         return None
 
-    query = text(f'select {exec_str}, count({exec_str}) from favourites group by {exec_str}')
+    query = text(f'select {exec_str}, count({exec_str}) from favourites where is_active = true group by {exec_str}')
     with engine.connect() as con:
         result = con.execute(query)
         con.close()
@@ -66,122 +84,35 @@ def select_std(t_c):
         return ['id', 'job_title', 'workplace_type', 'onsite_city', 'comp_skills', 'educations', 'school_programs', 'projects', 'languages', 'certificates']
     return ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'workplace_type', 'onsite_city', 'summary', 'comp_skills', 'experiences', 'educations', 'school_programs', 'projects', 'languages', 'certificates', 'volunteer', 'linkedin', 'github', 'medium']
 
-def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending, start, end, selected_columns="*"):
+def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending, limit, offset, selected_columns="*"):
     if isinstance(selected_columns, list):
         selected_columns = ','.join(selected_columns)
 
-    if selected_filter == {}:
-        exec_str = f"select {selected_columns} from {selected_table_name} "
+    if selected_table_name == 'students':
+        exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
     else:
-        if selected_table_name == 'students':
-            exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.school_programs) as obj where "
-        else:
-            exec_str = f"select {selected_columns} from {selected_table_name} where "
-        print(selected_table_name)
-        if list(selected_filter.values()) == [[], []]:
-            exec_str = exec_str[:-6]
+        exec_str = f"select {selected_columns} from {selected_table_name} where is_active = true and "
 
-        for key, value in selected_filter.items():
-            if value != [] and key == 'program_name':
-                exec_str += "obj->> 'program_name' IN ("
-                for v in value:
-                    exec_str += f"'{v}',"
-                exec_str = exec_str[:-1] + ")"
-            elif value != [] and key == 'grad_date':
-                print()
-                # grad_date to come
-            elif value != [] and key == 'company_name':
-                exec_str += "company_name IN ("
-                for v in value:
-                    exec_str += f"'{v}',"
-                exec_str = exec_str[:-1] + ") and "
-            elif value != [] and key == 't_c':
-                exec_str += f"t_c = '{value[0]}' and "
-        if selected_table_name != 'students' and list(selected_filter.values()) != [[], []]:
-            exec_str = exec_str[:-4]
-
-    exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
-    
-    # Musait zamanda bakkkkkkkkkkkkkkkkk
-    with engine.connect() as con:
-        result = con.execute(text(exec_str))
-        data = result.fetchall()
-        data = [d._asdict() for d in data]
-        emails = [d['email'] for d in data]
-        
-        if data != []:
-            new_data = [data[0]]
-            for user in data:
-                if not user['email'] in [em['email'] for em in new_data]:
-                    new_data.append(user)
-            new_data = new_data[start-1:end]
-        else:
-            new_data = []
-        con.close()
-
-    return new_data
-
-def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascending, limit, offset, selected_columns="*", favourite_students=[]):
-    if isinstance(selected_columns, list):
-        selected_columns = ','.join(selected_columns)
-
-    if selected_filter == {}:
-        exec_str = f"select {selected_columns} from {selected_table_name} "
-        # Cant take favourite students
-        if not favourite_students == []:
-            exec_str += " where students.id NOT IN ("
-            for i in favourite_students:
-                exec_str += str(i) + ","
-            exec_str = exec_str[:-1] + ") "
-
-    else:
-        exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.languages) as obj where "
-        for key, value in selected_filter.items():
-
-            exec_str += "("
-
-            if key == 'comp_skills':
-                for i in value:
-                    exec_str += "'" + i + "' = ANY(comp_skills) and "
-                exec_str = exec_str[:-5] + ") and "
-
-            elif key == 'languages':
-                exec_str += "obj->> 'name' IN ("
-                for v in value:
-                    exec_str += f"'{v}',"
-                exec_str = exec_str[:-1] + ")) and "
-
-            elif key == 'proficiency':
-                exec_str += "obj->> 'level' IN ("
-                for v in value:
-                    exec_str += f"'{v}',"
-                exec_str = exec_str[:-1] + ")) and "
-
-            elif key == 'salary_min':
-                exec_str += "salary_min > " + value + ") and "
-            
-            elif key == 'salary_max':
-                exec_str += "salary_min < " + value + ") and "
-
-            elif key == "onsite_city":
-                exec_str += "onsite_city = '" + value + "') and "
-
-            else:
-                for i in value:
-                    if isinstance(i, str):
-                        exec_str += key + " = '" + str(i) + "' or "
-                    else:
-                        exec_str += key + " = " + str(i) + " or "
-                exec_str = exec_str[:-4] + ") and "
-
-        # Can't take favourite students
-        if not favourite_students == []:
-            exec_str += "t.id NOT IN ("
-            for i in favourite_students:
-                exec_str += str(i) + ","
+    for key, value in selected_filter.items():
+        if key == 'program_name':
+            exec_str += "obj->> 'program_name' IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ")"
+        elif key == 'grad_date':
+            exec_str += "highest_education_grad_date IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ")"
+        elif key == 'company_name':
+            exec_str += "company_name IN ("
+            for v in value:
+                exec_str += f"'{v}',"
             exec_str = exec_str[:-1] + ") and "
+        elif key == 't_c':
+            exec_str += f"t_c = '{value[0]}' and "
 
-        exec_str = exec_str[:-5]
+    exec_str = exec_str[:-5]
 
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
     exec_str += f" limit {limit} offset {offset}"
@@ -194,61 +125,140 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
 
     return data
 
-def db_filter_student_count(selected_table_name, selected_filter, favourite_students=[]):
-    if selected_filter == {}:
-        exec_str = f"select count(*) from {selected_table_name} "
-        if not favourite_students == []:
-            exec_str += " where id NOT IN ("
-            for i in favourite_students:
-                exec_str += str(i) + ","
-            exec_str = exec_str[:-1] + ") "
+def db_filter_admin_count(selected_table_name, selected_filter):
+    if selected_table_name == 'students':
+        exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
     else:
-        exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where "
-        for key, value in selected_filter.items():
+        exec_str = f"select count(*) from {selected_table_name} where is_active = true and "
 
-            exec_str += "("
+    for key, value in selected_filter.items():
+        if key == 'program_name':
+            exec_str += "obj->> 'program_name' IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ")"
+        elif key == 'grad_date':
+            exec_str += "highest_education_grad_date IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ")"
+        elif key == 'company_name':
+            exec_str += "company_name IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ") and "
+        elif key == 't_c':
+            exec_str += f"t_c = '{value[0]}' and "
 
-            if key == 'comp_skills':
-                for i in value:
-                    exec_str += "'" + i + "' = ANY(comp_skills) and "
-                exec_str = exec_str[:-5] + ") and "
+    exec_str = exec_str[:-5]
 
-            elif key == 'languages':
-                exec_str += "obj->> 'name' IN ("
-                for v in value:
-                    exec_str += f"'{v}',"
-                exec_str = exec_str[:-1] + ")) and "
+    with engine.connect() as con:
+        result = con.execute(text(exec_str))
+        data = result.fetchone()
+        con.close()
 
-            elif key == 'proficiency':
-                exec_str += "obj->> 'level' IN ("
-                for v in value:
-                    exec_str += f"'{v}',"
-                exec_str = exec_str[:-1] + ")) and "
+    return data[0]
 
-            elif key == 'salary_min':
-                exec_str += "salary_min > " + value + ") and "
-            
-            elif key == 'salary_max':
-                exec_str += "salary_min < " + value + ") and "
+def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascending, limit, offset, selected_columns="*"):
+    if isinstance(selected_columns, list):
+        selected_columns = ','.join(selected_columns)
 
-            elif key == "onsite_city":
-                exec_str += "onsite_city = '" + value + "') and "
+    exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.languages) as obj where is_active = true and "
+    for key, value in selected_filter.items():
 
-            else:
-                for i in value:
-                    if isinstance(i, str):
-                        exec_str += key + " = '" + str(i) + "' or "
-                    else:
-                        exec_str += key + " = " + str(i) + " or "
-                exec_str = exec_str[:-4] + ") and "
+        exec_str += "("
+        if key == 'comp_skills':
+            for i in value:
+                exec_str += "'" + i + "' = ANY(comp_skills) and "
+            exec_str = exec_str[:-5] + ") and "
 
-        if not favourite_students == []:
-            exec_str += "t.id NOT IN ("
-            for i in favourite_students:
-                exec_str += str(i) + ","
+        elif key == 'languages':
+            exec_str += "obj->> 'name' IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ")) and "
+
+        elif key == 'proficiency':
+            exec_str += "obj->> 'level' IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ")) and "
+
+        elif key == 'salary_min':
+            exec_str += "salary_min > " + value + ") and "
+        
+        elif key == 'salary_max':
+            exec_str += "salary_min < " + value + ") and "
+
+        elif key == "onsite_city":
+            exec_str += "onsite_city IN ("
+            for v in value:
+                exec_str += f"'{v}',"
             exec_str = exec_str[:-1] + ") and "
 
-        exec_str = exec_str[:-5]
+        else:
+            for i in value:
+                if isinstance(i, str):
+                    exec_str += key + " = '" + str(i) + "' or "
+                else:
+                    exec_str += key + " = " + str(i) + " or "
+            exec_str = exec_str[:-4] + ") and "
+
+    exec_str = exec_str[:-5]
+    exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
+    exec_str += f" limit {limit} offset {offset}"
+    
+    with engine.connect() as con:
+        result = con.execute(text(exec_str))
+        data = result.fetchall()
+        data = [d._asdict() for d in data]
+        con.close()
+
+    return data
+
+def db_filter_student_count(selected_table_name, selected_filter):
+    exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
+    for key, value in selected_filter.items():
+
+        exec_str += "("
+        if key == 'comp_skills':
+            for i in value:
+                exec_str += "'" + i + "' = ANY(comp_skills) and "
+            exec_str = exec_str[:-5] + ") and "
+
+        elif key == 'languages':
+            exec_str += "obj->> 'name' IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ")) and "
+
+        elif key == 'proficiency':
+            exec_str += "obj->> 'level' IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ")) and "
+
+        elif key == 'salary_min':
+            exec_str += "salary_min > " + value + ") and "
+        
+        elif key == 'salary_max':
+            exec_str += "salary_min < " + value + ") and "
+
+        elif key == "onsite_city":
+            exec_str += "onsite_city IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ") and "
+
+        else:
+            for i in value:
+                if isinstance(i, str):
+                    exec_str += key + " = '" + str(i) + "' or "
+                else:
+                    exec_str += key + " = " + str(i) + " or "
+            exec_str = exec_str[:-4] + ") and "
+
+    exec_str = exec_str[:-5]
     with engine.connect() as con:
         result = con.execute(text(exec_str))
         data = result.fetchone()
@@ -342,6 +352,11 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
         try:
             
             student = Members.query.filter_by(email=email).first()
+            if not student:
+                return jsonify({'message': 'You are not a student'}), 400
+
+            if student and not student.is_active:
+                return jsonify({'message': 'Account is deleted. Please contact with admin.'}), 400
 
             # Check student info is completed
             student_info = student.to_dict()
