@@ -783,7 +783,7 @@ def company_remove():
 
         try:
             data = request.get_json()
-            company_id = data['company_id']
+            company_id = data['id']
 
             company = Companies.query.filter_by(id=company_id, is_active=True).first()
 
