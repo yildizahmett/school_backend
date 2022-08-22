@@ -1009,9 +1009,9 @@ def admin_employees(page_no):
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
-@app.route('/admin/employee/get/<email>', methods=['GET'])
+@app.route('/admin/employee/get/<int:employee_id>', methods=['GET'])
 @jwt_required()
-def admin_employee_get(email):
+def admin_employee_get(employee_id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -1019,18 +1019,12 @@ def admin_employee_get(email):
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        employee = Employees.query.filter_by(email=email, is_activate=True).first()
+        employee = Employees.query.filter_by(id=employee_id, is_activate=True).first()
 
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
 
         employee = employee.to_dict()
-
-        remove_info = ['sign_up_date', 'id']
-        for info in remove_info:
-            if info in employee.keys():
-                del employee[info]
-
         fav_amount = db_count_student_fav(employee['id'])
 
         return jsonify({**employee, "fav_amount": fav_amount}), 200
@@ -1040,9 +1034,9 @@ def admin_employee_get(email):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/admin/employee/edit/<email>', methods=['POST'])
+@app.route('/admin/employee/edit/<int:employee_id>', methods=['POST'])
 @jwt_required()
-def admin_employee_edit(email):
+def admin_employee_edit(employee_id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -1062,7 +1056,7 @@ def admin_employee_edit(email):
             del data['company_name']
 
         try:
-            employee = Employees.query.filter_by(email=email, is_activate=True).first()
+            employee = Employees.query.filter_by(id=employee_id, is_activate=True).first()
             if not employee:
                 return jsonify({'message': 'Employee does not exist'}), 400
 
@@ -1082,9 +1076,9 @@ def admin_employee_edit(email):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/admin/employee/favourites/<email>', methods=['GET'])
+@app.route('/admin/employee/favourites/<int:employee_id>', methods=['GET'])
 @jwt_required()
-def admin_employee_favourites(email):
+def admin_employee_favourites(employee_id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -1092,7 +1086,7 @@ def admin_employee_favourites(email):
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        employee = Employees.query.filter_by(email=email, is_activate=True).first()
+        employee = Employees.query.filter_by(id=employee_id, is_activate=True).first()
 
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
@@ -1161,6 +1155,9 @@ def admin_students(page_no):
         number_of_students = db_filter_admin_count("students", selected_filter)
         number_of_pages = math.ceil(number_of_students / entry_amount)
 
+        if page_no > number_of_pages:
+            return jsonify({'message': 'Page number is too high'}), 400
+
         students = db_filter_admin('students', selected_filter, selected_sort, is_ascending, limit, offset)
         fav_amounts = get_fav_amount(is_student=True)
         
@@ -1171,9 +1168,9 @@ def admin_students(page_no):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/admin/student/get/<email>', methods=['GET'])
+@app.route('/admin/student/get/<int:student_id>', methods=['GET'])
 @jwt_required()
-def admin_student_get(email):
+def admin_student_get(student_id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -1181,7 +1178,7 @@ def admin_student_get(email):
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        student = Students.query.filter_by(email=email, is_active=True).first()
+        student = Students.query.filter_by(id=student_id, is_active=True).first()
 
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
@@ -1196,9 +1193,9 @@ def admin_student_get(email):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/admin/student/edit/<email>', methods=['POST'])
+@app.route('/admin/student/edit/<int:student_id>', methods=['POST'])
 @jwt_required()
-def admin_student_edit(email):
+def admin_student_edit(student_id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -1215,7 +1212,7 @@ def admin_student_edit(email):
             del data['password']
 
         try:
-            student = Students.query.filter_by(email=email, is_active=True).first()
+            student = Students.query.filter_by(id=student_id, is_active=True).first()
             if not student:
                 return jsonify({'message': 'Student does not exist'}), 400
 
@@ -1234,9 +1231,9 @@ def admin_student_edit(email):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('/admin/student/favourites/<email>', methods=['GET'])
+@app.route('/admin/student/favourites/<int:student_id>', methods=['GET'])
 @jwt_required()
-def admin_student_favorite(email):
+def admin_student_favorite(student_id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -1244,7 +1241,7 @@ def admin_student_favorite(email):
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        student = Students.query.filter_by(email=email, is_active=True).first()
+        student = Students.query.filter_by(id=student_id, is_active=True).first()
 
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
