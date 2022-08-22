@@ -94,6 +94,8 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
         exec_str = f"select {selected_columns} from {selected_table_name} where is_active = true and "
 
     for key, value in selected_filter.items():
+        if value == []:
+            continue
         if key == 'program_name':
             exec_str += "obj->> 'program_name' IN ("
             for v in value:
@@ -132,6 +134,8 @@ def db_filter_admin_count(selected_table_name, selected_filter):
         exec_str = f"select count(*) from {selected_table_name} where is_active = true and "
 
     for key, value in selected_filter.items():
+        if value == []:
+            continue
         if key == 'program_name':
             exec_str += "obj->> 'program_name' IN ("
             for v in value:
@@ -165,7 +169,8 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
 
     exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.languages) as obj where is_active = true and "
     for key, value in selected_filter.items():
-
+        if value == []:
+            continue
         exec_str += "("
         if key == 'comp_skills':
             for i in value:
@@ -219,7 +224,8 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
 def db_filter_student_count(selected_table_name, selected_filter):
     exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
     for key, value in selected_filter.items():
-
+        if value == []:
+            continue
         exec_str += "("
         if key == 'comp_skills':
             for i in value:
