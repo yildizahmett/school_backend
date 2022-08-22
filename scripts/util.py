@@ -289,7 +289,7 @@ def db_get_student_for_fav(employee_id):
     exec_str = f"""select students.id, students.name, students.surname, students.email, students.phone, students.school_programs
                   from students
                   inner join favourites on students.id = favourites.student_id 
-                  where favourites.employee_id = {employee_id}"""
+                  where favourites.employee_id = {employee_id} and students.is_active = true and favourites.is_active = true"""
 
     with engine.connect() as con:
         result = con.execute(text(exec_str))
@@ -303,7 +303,7 @@ def db_count_student_fav(employee_id):
     exec_str = f"""select count(*)
                   from students
                   inner join favourites on students.id = favourites.student_id 
-                  where favourites.employee_id = {employee_id}"""
+                  where favourites.employee_id = {employee_id} and favourites.is_active = true and students.is_active = true"""
 
     with engine.connect() as con:
         result = con.execute(text(exec_str))
@@ -316,7 +316,7 @@ def db_get_employee_for_fav(student_id):
     exec_str = f"""select employees.id, employees.name, employees.surname, employees.email, employees.phone, employees.company_name
                    from employees
                    inner join favourites on employees.id = favourites.employee_id 
-                   where favourites.student_id = {student_id}"""
+                   where favourites.student_id = {student_id} and favourites.is_active = true and employees.is_active = true"""
 
     with engine.connect() as con:
         result = con.execute(text(exec_str))
@@ -330,7 +330,7 @@ def db_count_employee_fav(student_id):
     exec_str = f"""select count(*)
                    from employees
                    inner join favourites on employees.id = favourites.employee_id 
-                   where favourites.student_id = {student_id}"""
+                   where favourites.student_id = {student_id} and favourites.is_active = true and employees.is_active = true"""
 
     with engine.connect() as con:
         result = con.execute(text(exec_str))

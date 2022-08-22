@@ -1157,7 +1157,7 @@ def admin_students(page_no):
 
         students = db_filter_admin('students', selected_filter, selected_sort, is_ascending, limit, offset)
         fav_amounts = get_fav_amount(is_student=True)
-        
+        print(fav_amounts)
         return jsonify({'max_pages': number_of_pages, 'students': students, 'fav_amounts': fav_amounts}), 200
     except Exception as e:
         log_body = f'Admin > Students > ERROR : {repr(e)}'
