@@ -416,7 +416,7 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
                 return jsonify({'message': 'You are not a student'}), 400
 
             if student and not student.is_active:
-                return jsonify({'message': 'Account is deleted. Please contact with admin.'}), 400
+                return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
             # Check student info is completed
             student_info = student.to_dict()

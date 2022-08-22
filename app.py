@@ -75,7 +75,7 @@ def student_register():
 
         old_student = Students.query.filter_by(email=email).first()
         if old_student and not old_student.is_active:
-            return jsonify({'message': 'Student registered before. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         if old_student:
             return jsonify({'message': 'Student already registered'}), 400
@@ -130,7 +130,7 @@ def student_login():
             return jsonify({'message': 'Student does not exist'}), 400
 
         if student and not student.is_active:
-            return jsonify({'message': 'Student deleted. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         token_identity = {'user_type': 'student', 'email': email, 'profile_complete': student.profile_complete}
 
@@ -233,7 +233,7 @@ def student_confirm_new_password(token):
             return jsonify({'message': 'Student does not exist'}), 400
 
         if student and not student.is_active:
-            return jsonify({'message': 'Student deleted. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         setattr(student, 'password', hashed_password)
         db.session.commit()
@@ -257,7 +257,7 @@ def student_forgot_password():
             return jsonify({'message': 'Student does not exist'}), 400
 
         if student and not student.is_active:
-            return jsonify({'message': 'Student deleted. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
         
         token = generate_confirmation_token(email)
 
@@ -292,7 +292,7 @@ def student_reset_password(token):
             return jsonify({'message': 'Student does not exist'}), 400
 
         if student and not student.is_active:
-            return jsonify({'message': 'Student deleted. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
 
@@ -361,7 +361,7 @@ def employee_login():
             return jsonify({'message': 'Employee does not exist'}), 400
 
         if employee and not employee.is_active:
-            return jsonify({'message': 'Employee deleted. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         token_identity = {'user_type': 'employee', 'email': email}
 
@@ -392,7 +392,7 @@ def employee_talent_get(page_no):
             return jsonify({'message': 'Employee does not exist'}), 400
 
         if employee and not employee.is_active:
-            return jsonify({'message': 'Employee deleted. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         data = request.get_json()
         
@@ -404,12 +404,11 @@ def employee_talent_get(page_no):
         limit = entry_amount
         offset = (page_no - 1) * entry_amount
 
-        favourites = Favourites.query.filter_by(employee_id=employee.id).filter_by(is_active=True).all()
-        favourite_students = [favourite.student_id for favourite in favourites]
+        favourites = Favourites.query.filter_by(employee_id=employee.id, is_active=True).all()
+        favourite_students = [favourite.student_id for favourite in favourites] # Forsuz yol ara
 
         number_of_students = db_filter_student_count("students", selected_filter)
         number_of_pages = math.ceil(number_of_students / entry_amount)
-        print(number_of_students)
 
         if page_no > number_of_pages:
             return jsonify({'message': 'Page does not exist'}), 400
@@ -443,7 +442,7 @@ def employee_add_favourite():
 
         data = request.get_json()
         student_id = data['id']
-        student = Students.query.filter_by(id=student_id).filter_by(is_active=True).first()
+        student = Students.query.filter_by(id=student_id, is_active=True).first()
 
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
@@ -486,7 +485,7 @@ def employee_remove_favourite():
             return jsonify({'message': 'Employee does not exist'}), 400
 
         if employee and not employee.is_active:
-            return jsonify({'message': 'Employee deleted. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         data = request.get_json()
         student_id = data['id']
@@ -529,11 +528,12 @@ def employee_my_favourites():
         return jsonify({'message': 'Employee does not exist'}), 400
 
     if employee and not employee.is_active:
-        return jsonify({'message': 'Employee deleted. Please contact with admin.'}), 400
+        return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
     my_favourites = Favourites.query.filter_by(employee_id=employee.id, is_active=True).all()
     students_list = list()
     
+    # Kontrol et forsuz dene
     for favourite in my_favourites:
         student = Students.query.filter_by(id=favourite.student_id, is_active=True).first()
         student_info = get_specific_data(student, select_fav(employee.t_c), get_raw=True, direct_data=True)
@@ -558,7 +558,7 @@ def employee_student_profile(student_id):
             return jsonify({'message': 'Employee does not exist'}), 400
 
         if employee and not employee.is_active:
-            return jsonify({'message': 'Employee deleted. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         student = Students.query.filter_by(id=student_id, is_active=True).first()
 
@@ -591,7 +591,7 @@ def employee_t_c():
             return jsonify({'message': 'Employee does not exist'}), 400
 
         if employee and not employee.is_active:
-            return jsonify({'message': 'Employee deleted. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         if employee.t_c:
             remaining_t_c = employee.t_c_expire_date - datetime.now()
@@ -630,7 +630,7 @@ def employee_t_c_update():
             return jsonify({'message': 'Employee does not exist'}), 400
 
         if employee and not employee.is_active:
-            return jsonify({'message': 'Employee deleted. Please contact with admin.'}), 400
+            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         if employee.t_c:
             return jsonify({'message': 'You have already accepted the T&C'}), 400
@@ -728,7 +728,7 @@ def company_register():
 
         try:
             data = request.get_json()
-            company_name = data['company_name'].lower()
+            company_name = data['company_name']
             special_id = random_id_generator(8)
             company_users = data['company_users']
 
@@ -771,7 +771,7 @@ def company_register():
         return jsonify({'message': 'Something went wrong'}), 500
 
 # Admin removes a company from DB
-@app.route('/admin/company/remove-company', methods=['POST'])
+@app.route('/admin/company/remove', methods=['POST'])
 @jwt_required()
 def company_remove():
     try:
@@ -804,9 +804,9 @@ def company_remove():
         return jsonify({'message': 'Something went wrong'}), 500
 
 # Admin gets specific company's data
-@app.route('/admin/company/<company_name>', methods=['GET'])
+@app.route('/admin/company/<int:company_id>', methods=['GET'])
 @jwt_required()
-def get_company(company_name):
+def get_company(company_id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -815,7 +815,7 @@ def get_company(company_name):
             return jsonify({'message': 'You are not an administrator'}), 400
 
         try:
-            company = Companies.query.filter_by(company_name=company_name, is_active=True).first()
+            company = Companies.query.filter_by(id=company_id, is_active=True).first()
             if not company:
                 return jsonify({'message': 'Company does not exist'}), 400
 
@@ -833,9 +833,9 @@ def get_company(company_name):
 
 
 # Admin changes specific company's data (CANNOT ADD NEW EMPLOYEE MAILS HERE)
-@app.route('/admin/company/<company_name>/edit', methods=['POST'])
+@app.route('/admin/company/<int:company_id>/edit', methods=['POST'])
 @jwt_required()
-def edit_company(company_name):
+def edit_company(company_id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -844,7 +844,7 @@ def edit_company(company_name):
             return jsonify({'message': 'You are not an administrator'}), 400
 
         try:
-            company = Companies.query.filter_by(company_name=company_name, is_active=True).first()
+            company = Companies.query.filter_by(id=company_id, is_active=True).first()
             if not company:
                 return jsonify({'message': 'Company does not exist'}), 400
 
@@ -852,9 +852,6 @@ def edit_company(company_name):
 
             if "company_users" in data.keys():
                 del data["company_users"]
-
-            if "company_name" in data.keys():
-                data["company_name"] = data["company_name"].lower()
 
             for key, value in data.items():
                 try:
@@ -879,9 +876,9 @@ def edit_company(company_name):
 
 # Admin adds new employee mails to a company
 # TODO: SEND EMAIL TO EMPLOYEES ADDED HERE!!!!!!
-@app.route('/admin/company/<company_name>/add-employee', methods=['POST'])
+@app.route('/admin/company/<int:company_id>/add-employee', methods=['POST'])
 @jwt_required()
-def company_add_user(company_name):
+def company_add_user(company_id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -893,16 +890,11 @@ def company_add_user(company_name):
         new_employees = data['company_users']
         
         try:
-            company = Companies.query.filter_by(company_name=company_name, is_active=True).first()
+            company = Companies.query.filter_by(id=company_id, is_active=True).first()
             if not company:
                 return jsonify({'message': 'Company does not exist'}), 400
 
             current_employees = company.company_users
-            if not current_employees:
-                setattr(company, 'company_users', new_employees)
-                db.session.commit()
-                return jsonify({'message': 'Employees updated succesfully. Added: ' + str(new_employees)}), 200
-
             employees_to_add = []
             for em in new_employees:
                 if Employees.query.filter_by(email=em, is_active=True).first():
@@ -939,9 +931,9 @@ def company_add_user(company_name):
 
 
 # Admin removes an employee of a company
-@app.route('/admin/company/<company_name>/remove-employee', methods=['POST'])
+@app.route('/admin/company/<int:company_id>/remove-employee', methods=['POST'])
 @jwt_required()
-def company_remove_user(company_name):
+def company_remove_user(company_id):
     try:
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
@@ -953,7 +945,7 @@ def company_remove_user(company_name):
         employee_to_remove = data['employee_mail']
         
         try:
-            company = Companies.query.filter_by(company_name=company_name, is_active=True).first()
+            company = Companies.query.filter_by(id=company_id, is_active=True).first()
             current_employees = company.company_users[:]
 
             if not current_employees:
@@ -1004,6 +996,9 @@ def admin_employees(page_no):
 
         number_of_employees = db_filter_admin_count("employees", selected_filter)
         number_of_pages = math.ceil(number_of_employees / entry_amount)
+
+        if number_of_pages < page_no:
+            return jsonify({'message': 'Page number does not exist'}), 400
 
         employees = db_filter_admin('employees', selected_filter, selected_sort, is_ascending, limit, offset)
         fav_amounts = get_fav_amount(is_employee=True)
@@ -1239,7 +1234,7 @@ def admin_student_edit(email):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-@app.route('admin/student/favourites/<email>', methods=['GET'])
+@app.route('/admin/student/favourites/<email>', methods=['GET'])
 @jwt_required()
 def admin_student_favorite(email):
     try:
