@@ -1377,6 +1377,9 @@ def admin_program_invite_students():
 
             for st_mail in students_to_invite:
                 student = Students.query.filter_by(email=st_mail).first()
+
+                if student and not student.is_active:
+                    continue
                 if student:
                     print(f'Following email is already in Students table: {st_mail}')
                     try:
@@ -1495,7 +1498,7 @@ def admin_program_remove():
         program_code = data['program_code']
 
         try:
-            program = Programs.query.filter_by(program_name=program_name).filter_by(program_code=program_code).first()
+            program = Programs.query.filter_by(program_name=program_name, program_code=program_code).first()
             if not program:
                 return jsonify({'message': 'Program does not exist'}), 400
 
