@@ -6,7 +6,7 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, db_filter_admin_count, db_filter_employee, db_filter_student_count, get_fav_amount, jwt, db, engine, get_specific_data, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import app, bcrypt, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_fav_amount, jwt, db, engine, get_specific_data, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs
@@ -1036,7 +1036,9 @@ def admin_employee_get(email):
             if info in employee.keys():
                 del employee[info]
 
-        return jsonify({**employee}), 200
+        fav_amount = db_count_student_fav(employee['id'])
+
+        return jsonify({**employee, "fav_amount": fav_amount}), 200
     except Exception as e:
         log_body = f'Admin > Employee Get > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
@@ -1081,6 +1083,30 @@ def admin_employee_edit(email):
         return jsonify({'message': 'Employee edited succesfully'}), 200
     except Exception as e:
         log_body = f'Admin > Employee Edit > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
+@app.route('/admin/employee/favourites/<email>', methods=['GET'])
+@jwt_required()
+def admin_employee_favourites(email):
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        employee = Employees.query.filter_by(email=email, is_activate=True).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        favourited_students = db_get_student_for_fav(employee.id)
+
+        return jsonify({'favourites': favourited_students}), 200
+    except Exception as e:
+        log_body = f'Admin > Employee Favourites > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
@@ -1166,8 +1192,9 @@ def admin_student_get(email):
             return jsonify({'message': 'Student does not exist'}), 400
 
         student = student.to_dict()
+        fav_amount = db_count_employee_fav(student['id'])
 
-        return jsonify({**student}), 200
+        return jsonify({**student, "fav_amount": fav_amount}), 200
     except Exception as e:
         log_body = f'Admin > Student Get > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
@@ -1211,6 +1238,29 @@ def admin_student_edit(email):
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
+
+@app.route('admin/student/favourites/<email>', methods=['GET'])
+@jwt_required()
+def admin_student_favorite(email):
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'admin':
+            return jsonify({'message': 'You are not an administrator'}), 400
+
+        student = Students.query.filter_by(email=email, is_active=True).first()
+
+        if not student:
+            return jsonify({'message': 'Student does not exist'}), 400
+
+        favourited_employees = db_get_employee_for_fav(student.id)
+        
+        return jsonify({'favourites': favourited_employees}), 200
+    except Exception as e:
+        log_body = f'Admin > Student Favorite > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
 
 # Admin - Multiple remove students
 @app.route('/admin/student/multiple-remove', methods=['POST'])
