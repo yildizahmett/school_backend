@@ -1086,7 +1086,7 @@ def admin_employee_favourites(employee_id):
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        employee = Employees.query.filter_by(id=employee_id, is_activate=True).first()
+        employee = Employees.query.filter_by(id=employee_id, is_active=True).first()
 
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
