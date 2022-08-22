@@ -116,6 +116,11 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
             for v in value:
                 exec_str += f"'{v}',"
             exec_str = exec_str[:-1] + ") and "
+        elif key == 'grad_status':
+            exec_str += "grad_status IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ") and "
         elif key == 'company_name':
             exec_str += "company_name IN ("
             for v in value:
@@ -156,6 +161,11 @@ def db_filter_admin_count(selected_table_name, selected_filter):
             exec_str = exec_str[:-1] + ") and "
         elif key == 'grad_date':
             exec_str += "highest_education_grad_date IN ("
+            for v in value:
+                exec_str += f"'{v}',"
+            exec_str = exec_str[:-1] + ") and "
+        elif key == 'grad_status':
+            exec_str += "grad_status IN ("
             for v in value:
                 exec_str += f"'{v}',"
             exec_str = exec_str[:-1] + ") and "
