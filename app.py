@@ -850,17 +850,12 @@ def edit_company(company_id):
 
             data = request.get_json()
 
-            if "company_users" in data.keys():
-                del data["company_users"]
-
-            for key, value in data.items():
-                try:
-                    if key == 'company_name':
-                        update_company_name(value, company.company_name)
-                    setattr(company, key, value)
-                except Exception as e:
-                    log_body = f'Admin > Company Edit > setattr > ERROR : {repr(e)}'
-                    logging.warning(f'IP: {request.remote_addr} | {log_body}')
+            try:
+                new_company_name = data['company_name']
+                update_company_name(new_company_name, company.company_name)
+                setattr(company, 'company_name', new_company_name)
+            except:
+                return jsonify({'message': 'Company name is required'}), 400
             
             db.session.commit()
             return jsonify({'message': 'Company updated successfully. '}), 200
