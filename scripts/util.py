@@ -136,6 +136,8 @@ def db_filter_admin_count(selected_table_name, selected_filter):
             exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
         else:
             exec_str = f"select count(*) from {selected_table_name} where is_active = true and "
+    else:
+        exec_str = f"select count(*) from {selected_table_name} where is_active = true and "
 
     for key, value in selected_filter.items():
         if value == []:
