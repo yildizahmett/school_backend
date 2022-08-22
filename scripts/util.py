@@ -89,7 +89,10 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
         selected_columns = ','.join(selected_columns)
 
     if selected_table_name == 'students':
-        exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
+        if "program_name" in selected_filter.keys() and len(selected_filter["program_name"]) > 0:
+            exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
+        else:
+            exec_str = f"select {selected_columns} from {selected_table_name} t where is_active = true and "
     else:
         exec_str = f"select {selected_columns} from {selected_table_name} where is_active = true and "
 
@@ -100,12 +103,12 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
             exec_str += "obj->> 'program_name' IN ("
             for v in value:
                 exec_str += f"'{v}',"
-            exec_str = exec_str[:-1] + ")"
+            exec_str = exec_str[:-1] + ") and "
         elif key == 'grad_date':
             exec_str += "highest_education_grad_date IN ("
             for v in value:
                 exec_str += f"'{v}',"
-            exec_str = exec_str[:-1] + ")"
+            exec_str = exec_str[:-1] + ") and "
         elif key == 'company_name':
             exec_str += "company_name IN ("
             for v in value:
@@ -129,9 +132,10 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
 
 def db_filter_admin_count(selected_table_name, selected_filter):
     if selected_table_name == 'students':
-        exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
-    else:
-        exec_str = f"select count(*) from {selected_table_name} where is_active = true and "
+        if "program_name" in selected_filter.keys() and len(selected_filter["program_name"]) > 0:
+            exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
+        else:
+            exec_str = f"select count(*) from {selected_table_name} where is_active = true and "
 
     for key, value in selected_filter.items():
         if value == []:
@@ -140,12 +144,12 @@ def db_filter_admin_count(selected_table_name, selected_filter):
             exec_str += "obj->> 'program_name' IN ("
             for v in value:
                 exec_str += f"'{v}',"
-            exec_str = exec_str[:-1] + ")"
+            exec_str = exec_str[:-1] + ") and "
         elif key == 'grad_date':
             exec_str += "highest_education_grad_date IN ("
             for v in value:
                 exec_str += f"'{v}',"
-            exec_str = exec_str[:-1] + ")"
+            exec_str = exec_str[:-1] + ") and "
         elif key == 'company_name':
             exec_str += "company_name IN ("
             for v in value:
