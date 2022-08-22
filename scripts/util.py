@@ -28,6 +28,13 @@ REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@m
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
+def update_company_name(new_company_name, old_company_name):
+    query = f'update employees set company_name = {new_company_name} where company_name = {old_company_name}'
+
+    with engine.connect() as con:
+        con.execute(query)
+        con.close()
+
 def update_is_active_company(company_id):
     fav_query = text(f"update favourites set is_active = false, passive_date = NOW() where company_id = {company_id}")
     employee_query = text(f"update employees set is_active = false, passive_date = NOW() where company_id = {company_id}")
