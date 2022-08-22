@@ -180,7 +180,10 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
     if isinstance(selected_columns, list):
         selected_columns = ','.join(selected_columns)
 
-    exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.languages) as obj where is_active = true and "
+    if 'languages' in selected_filter.keys() and len(selected_filter["languages"]) > 0:
+        exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.languages) as obj where is_active = true and "
+    else:
+        exec_str = f"select {selected_columns} from {selected_table_name} t where is_active = true and "
     for key, value in selected_filter.items():
         if value == []:
             continue

@@ -413,7 +413,7 @@ def employee_talent_get(page_no):
         if page_no > number_of_pages:
             return jsonify({'message': 'Page does not exist'}), 400
 
-        students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS, favourite_students=favourite_students)
+        students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS)
         return jsonify({'students': students_list, 'number_of_pages':number_of_pages, "t_c": employee.t_c}), 200
         
     except Exception as e:
