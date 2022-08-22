@@ -1053,7 +1053,7 @@ def admin_employee_edit(employee_id):
             del data['company_name']
 
         try:
-            employee = Employees.query.filter_by(id=employee_id, is_activate=True).first()
+            employee = Employees.query.filter_by(id=employee_id, is_active=True).first()
             if not employee:
                 return jsonify({'message': 'Employee does not exist'}), 400
 
