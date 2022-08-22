@@ -273,7 +273,7 @@ def db_filter_student_count(selected_table_name, selected_filter):
     return data[0]
 
 def db_get_student_for_fav(employee_id):
-    exec_str = f"""select students.name, students.surname, students.email, students.phone, students.school_programs
+    exec_str = f"""select students.id, students.name, students.surname, students.email, students.phone, students.school_programs
                   from students
                   inner join favourites on students.id = favourites.student_id 
                   where favourites.employee_id = {employee_id}"""
@@ -300,7 +300,7 @@ def db_count_student_fav(employee_id):
     return data[0]
 
 def db_get_employee_for_fav(student_id):
-    exec_str = f"""select employees.name, employees.surname, employees.email, employees.phone, employees.company_name
+    exec_str = f"""select employees.id, employees.name, employees.surname, employees.email, employees.phone, employees.company_name
                    from employees
                    inner join favourites on employees.id = favourites.employee_id 
                    where favourites.student_id = {student_id}"""
