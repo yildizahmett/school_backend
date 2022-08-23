@@ -29,7 +29,7 @@ SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_educatio
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
 def get_my_favourites(employee_id, t_c):
-    query = text(f'''select {select_fav(t_c)} from students
+    query = text(f'''select {str(select_fav(t_c)).replace('[', '(').replace(']', ')')} from students
                      where students.id in (select student_id from favourites where employee_id = {employee_id}) 
                      and students.is_active = True''')
 
