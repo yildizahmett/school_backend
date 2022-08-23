@@ -29,9 +29,11 @@ SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_educatio
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
 def update_company_name(new_company_name, old_company_name):
+    company_name_query = text(f"update companies set company_name = '{new_company_name}' where company_name = '{old_company_name}'")
     query = f'update employees set company_name = \'{new_company_name}\' where company_name = \'{old_company_name}\''
 
     with engine.connect() as con:
+        con.execute(company_name_query)
         con.execute(query)
         con.close()
 
@@ -248,7 +250,10 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
     return data
 
 def db_filter_student_count(selected_table_name, selected_filter):
-    exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
+    if 'school_programs' in selected_filter.keys() and len(selected_filter["school_programs"]) > 0:
+        exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
+    else:
+        exec_str = f"select count(*) from {selected_table_name} t where is_active = true and "
     for key, value in selected_filter.items():
         if value == []:
             continue

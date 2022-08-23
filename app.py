@@ -404,9 +404,6 @@ def employee_talent_get(page_no):
         limit = entry_amount
         offset = (page_no - 1) * entry_amount
 
-        favourites = Favourites.query.filter_by(employee_id=employee.id, is_active=True).all()
-        favourite_students = [favourite.student_id for favourite in favourites] # Forsuz yol ara
-
         number_of_students = db_filter_student_count("students", selected_filter)
         number_of_pages = math.ceil(number_of_students / entry_amount)
 
@@ -832,7 +829,6 @@ def get_company(company_id):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-# Admin changes specific company's data (CANNOT ADD NEW EMPLOYEE MAILS HERE)
 @app.route('/admin/company/<int:company_id>/edit', methods=['POST'])
 @jwt_required()
 def edit_company(company_id):
@@ -850,14 +846,9 @@ def edit_company(company_id):
 
             data = request.get_json()
 
-            try:
-                new_company_name = data['company_name']
-                update_company_name(new_company_name, company.company_name)
-                setattr(company, 'company_name', new_company_name)
-            except:
-                return jsonify({'message': 'Company name is required'}), 400
+            new_company_name = data['company_name']
+            update_company_name(new_company_name, company.company_name)
             
-            db.session.commit()
             return jsonify({'message': 'Company updated successfully. '}), 200
 
         except Exception as e:
