@@ -7,7 +7,7 @@ from sqlalchemy import create_engine, text
 import os
 import json
 from random import randint
-from datetime import timedelta
+from datetime import datetime, timedelta
 import logging
 import random
 import string
@@ -27,6 +27,15 @@ REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@m
 
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
+
+def post_search_talent(selected_filter, filtered_by):
+    date = datetime.now()
+    query = text(f'insert into search(filter_content, filter_type, filtered_by, filter_date) values ')
+    for key, value in selected_filter.items():
+        for v in value:
+            query += text(f'(\'{v}\', \'{key}\', {filtered_by}, {date}),')
+    query = query[:-1]
+
 
 def get_programs():
     query = text(f'select * from programs')

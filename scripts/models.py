@@ -212,3 +212,17 @@ class Reports(db.Model):
         self.report_message = report_message
         self.report_date = datetime.now()
         self.is_solved = False
+
+class Search(db.Model):
+    __tablename__ = 'search'
+    id = db.Column(db.Integer, primary_key=True)
+    filter_content = db.Column(db.String(100), nullable=False)
+    filter_type = db.Column(db.String(100), nullable=False)
+    filtered_by = db.Column(db.Integer, nullable=False)
+    filter_date = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, filter_content, filter_type, filtered_by, filter_date):
+        self.filter_content = filter_content
+        self.filter_type = filter_type
+        self.filtered_by = filtered_by
+        self.filter_date = filter_date
