@@ -28,6 +28,13 @@ REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@m
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
+def get_favourited_student_ids(employee_id):
+    query = text(f'select student_id from favourites where employee_id = {employee_id}')
+    with engine.connect() as con:
+        result = con.execute(query)
+        con.close()
+    return [row[0] for row in result.fetchall()]
+
 def update_company_name(new_company_name, old_company_name):
     company_name_query = text(f"update companies set company_name = '{new_company_name}' where company_name = '{old_company_name}'")
     query = f'update employees set company_name = \'{new_company_name}\' where company_name = \'{old_company_name}\''
