@@ -35,11 +35,12 @@ def post_search_talent(selected_filter, filtered_by):
         selected_filter.remove('salary_max')
 
     date = datetime.now()
-    query = text(f'insert into search(filter_content, filter_type, filtered_by, filter_date) values ')
+    query = f'insert into search(filter_content, filter_type, filtered_by, filter_date) values '
     for key, value in selected_filter.items():
         for v in value:
-            query += text(f'(\'{v}\', \'{key}\', {filtered_by}, {date}),')
+            query += f'(\'{v}\', \'{key}\', {filtered_by}, {date}),'
     query = query[:-1]
+    query += ";"
 
     print(query)
 
@@ -289,7 +290,7 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
     exec_str = exec_str[:-5]
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
     exec_str += f" limit {limit} offset {offset}"
-    print(exec_str)
+    
     with engine.connect() as con:
         result = con.execute(text(exec_str))
         data = result.fetchall()
