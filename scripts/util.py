@@ -28,6 +28,13 @@ REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@m
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
+def get_programs():
+    query = text(f'select * from programs')
+    with engine.connect() as con:
+        result = con.execute(query)
+        con.close()
+    return [dict(row) for row in result.fetchall()]
+
 def get_companies():
     query = text(f'select id, company_name, company_users, special_id from companies where is_active = true')
     with engine.connect() as con:

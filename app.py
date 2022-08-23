@@ -6,7 +6,7 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, jwt, db, engine, get_specific_data, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import app, bcrypt, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
@@ -684,7 +684,7 @@ def admin_test_companies():
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         try:
             companies = get_companies()
@@ -700,7 +700,7 @@ def admin_test_companies():
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
-# Admin registers a new company into DB
+
 @app.route('/admin/company/register', methods=['POST'])
 @jwt_required()
 def company_register():
@@ -709,7 +709,7 @@ def company_register():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         try:
             data = request.get_json()
@@ -717,8 +717,8 @@ def company_register():
             special_id = random_id_generator(8)
             company_users = data['company_users']
 
-            old_company = Companies.query.filter_by(company_name=company_name).first()
-            if old_company and old_company.is_active:
+            old_company = Companies.query.filter_by(company_name=company_name, is_active=True).first()
+            if old_company:
                 return jsonify({'message': 'Company already exists'}), 400
 
             # Try for a few times to generate a special id
@@ -764,7 +764,7 @@ def company_remove():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         try:
             data = request.get_json()
@@ -797,7 +797,7 @@ def get_company(company_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         try:
             company = Companies.query.filter_by(id=company_id, is_active=True).first()
@@ -825,7 +825,7 @@ def edit_company(company_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         try:
             company = Companies.query.filter_by(id=company_id, is_active=True).first()
@@ -850,8 +850,6 @@ def edit_company(company_id):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
-# Admin adds new employee mails to a company
-# TODO: SEND EMAIL TO EMPLOYEES ADDED HERE!!!!!!
 @app.route('/admin/company/<int:company_id>/add-employee', methods=['POST'])
 @jwt_required()
 def company_add_user(company_id):
@@ -860,7 +858,7 @@ def company_add_user(company_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
         new_employees = data['company_users']
@@ -915,7 +913,7 @@ def company_remove_user(company_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
         employee_to_remove = data['employee_mail']
@@ -955,7 +953,7 @@ def admin_employees(page_no):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         if page_no < 1:
             return jsonify({'message': 'Page number must at least be 1'}), 400
@@ -990,7 +988,7 @@ def admin_employee_get(employee_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         employee = Employees.query.filter_by(id=employee_id, is_active=True).first()
 
@@ -1015,7 +1013,7 @@ def admin_employee_edit(employee_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()['values']
 
@@ -1057,7 +1055,7 @@ def admin_employee_favourites(employee_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         employee = Employees.query.filter_by(id=employee_id, is_active=True).first()
 
@@ -1081,7 +1079,7 @@ def admin_employees_multiple_remove():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
         employees_to_remove = data['removed_users']
@@ -1110,7 +1108,7 @@ def admin_students(page_no):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         if page_no < 1:
             return jsonify({'message': 'Page number must at least be 1'}), 400
@@ -1146,7 +1144,7 @@ def admin_student_get(student_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         student = Students.query.filter_by(id=student_id, is_active=True).first()
 
@@ -1171,7 +1169,7 @@ def admin_student_edit(student_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
 
@@ -1209,7 +1207,7 @@ def admin_student_favorite(student_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         student = Students.query.filter_by(id=student_id, is_active=True).first()
 
@@ -1233,7 +1231,7 @@ def admin_students_multiple_remove():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
         students_to_remove = data['removed_users']
@@ -1261,13 +1259,13 @@ def admin_create_program():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
         program_name = data['program_name']
         program_code = data['program_code']
 
-        if Programs.query.filter_by(program_code=program_code).filter_by(program_name=program_name).first():
+        if Programs.query.filter_by(program_code=program_code, program_name=program_name).first():
             return jsonify({'message': 'Program already exists'}), 400
 
         program = Programs(program_name, program_code)
@@ -1290,7 +1288,7 @@ def admin_program_edit(id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
 
@@ -1326,7 +1324,7 @@ def admin_program_invite_students():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
         program_name = data['inviteProgramName']
@@ -1339,17 +1337,15 @@ def admin_program_invite_students():
         students_invited = []
 
         try:
-            program = Programs.query.filter_by(program_name=program_name).filter_by(program_code=program_code).first()
+            program = Programs.query.filter_by(program_name=program_name, program_code=program_code).first()
             if not program:
                 return jsonify({'message': 'Program does not exist'}), 400
 
             register_url = FRONTEND_LINK + '/student/register'
 
             for st_mail in students_to_invite:
-                student = Students.query.filter_by(email=st_mail).first()
+                student = Students.query.filter_by(email=st_mail, is_active=True).first()
 
-                if student and not student.is_active:
-                    continue
                 if student:
                     print(f'Following email is already in Students table: {st_mail}')
                     try:
@@ -1372,7 +1368,12 @@ def admin_program_invite_students():
                             school_programs = school_programs + [program_to_add]
                             setattr(student, 'school_programs', school_programs)
                             db.session.commit()
-                            print(student.school_programs)
+
+                            subj = 'New UP School Program'
+                            msg = f'You are added to new UP School Program: {program_name} \nPlease update your profile informations.'
+                            send_mail(student.email, subj, msg)
+
+
                     except Exception as e:
                         log_body = f'Admin > Program Invite > Student > ERROR : {repr(e)}'
                         logging.warning(f'IP: {request.remote_addr} | {log_body}')
@@ -1399,6 +1400,10 @@ def admin_program_invite_students():
                             setattr(temp, 'program_names', program_names)
                             setattr(temp, 'program_codes', program_codes)
                             db.session.commit()
+
+                            subj = 'Dear {} Graduate'.format(program_name)
+                            msg = 'You can register with the following link: {} .'.format(register_url)
+                            send_mail(st_mail, subj, msg)
                     except Exception as e:
                         log_body = f'Admin > Program Invite > Invite Students > ERROR : {repr(e)}'
                         logging.warning(f'IP: {request.remote_addr} | {log_body}')
@@ -1442,10 +1447,7 @@ def admin_get_programs():
         if user_type != 'admin':
             return jsonify({'message': 'You are not an administrator'}), 400
 
-        programs = Programs.query.all()
-        programs_list = []
-        for program in programs:
-            programs_list.append(program.to_dict())
+        programs_list = get_programs()
         
         return jsonify({'programs': programs_list}), 200
     except Exception as e:
