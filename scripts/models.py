@@ -127,10 +127,10 @@ class Employees(db.Model):
     company_name    = db.Column(db.String(100), nullable=False)
     is_company_admin= db.Column(db.Boolean, nullable=True)
     date            = db.Column(db.DateTime, nullable=False)
-    updated_at = db.Column(db.DateTime, nullable=True)
-    updated_by = db.Column(db.String(120), nullable=True)
-    is_active = db.Column(db.Boolean, nullable=False)
-    passive_date = db.Column(db.DateTime, nullable=True)
+    updated_at      = db.Column(db.DateTime, nullable=True)
+    updated_by      = db.Column(db.String(120), nullable=True)
+    is_active       = db.Column(db.Boolean, nullable=False)
+    passive_date    = db.Column(db.DateTime, nullable=True)
 
     favourites      = db.relationship('Favourites', backref='employee_ref', lazy=True)
 
@@ -191,3 +191,24 @@ class Programs(db.Model):
 
     def to_dict(self):
         return {i.name: getattr(self, i.name) for i in self.__table__.columns if i.name == 'program_name' or i.name == 'program_code' or i.name == 'id'}
+
+
+class Reports(db.Model):
+    __tablename__  = 'reports'
+    id             = db.Column(db.Integer,primary_key=True)
+    report_email   = db.Column(db.String(120), nullable=True)
+    report_user    = db.Column(db.String(120), nullable=True)
+    report_route   = db.Column(db.String(500), nullable=True)
+    report_message = db.Column(db.String(3000), nullable=True)
+    report_date    = db.Column(db.DateTime, nullable=True)
+    is_solved      = db.Column(db.Boolean, nullable=True)
+    solve_time     = db.Column(db.DateTime, nullable=True)
+    solve_by       = db.Column(db.String(120), nullable=True)
+    
+    def __init__(self, report_email, report_user, report_route, report_message):
+        self.report_email = report_email
+        self.report_user = report_user
+        self.report_route = report_route
+        self.report_message = report_message
+        self.report_date = datetime.now()
+        self.is_solved = False

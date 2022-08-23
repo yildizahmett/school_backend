@@ -8,8 +8,8 @@ from itsdangerous import URLSafeTimedSerializer
 
 from scripts.util import app, bcrypt, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_fav_amount, jwt, db, engine, get_specific_data, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
-from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, select_fav, select_std
-from scripts.models import Companies, Employees, Favourites, Students, Temps, Programs
+from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
+from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
 from scripts.mail_ops import send_mail
 
 def generate_confirmation_token(email):
@@ -61,6 +61,37 @@ def email_verify(token):
         return jsonify({'message': 'Something went wrong'}), 500
 
 
+@app.route('/report', methods=['POST'])
+@jwt_required()
+def report():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if not (user_type == 'student' or user_type == 'employee' or user_type == 'admin'):
+            return jsonify({'message': 'You are not authorized to perform this action'}), 401
+
+        data = request.get_json()
+
+        if not user_type == 'admin':
+            report_email = jwt_identity['email']
+
+        report_user = user_type
+        report_route = data['route']
+        report_message = data['message']
+        
+        report = Reports(report_email, report_user, report_route, report_message)
+        db.session.add(report)
+        db.session.commit()
+
+        # TODO: Send email to REPORTING_MAILS
+
+    except Exception as e:
+        log_body = f'report > ERROR > {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+
 # ========================================================================================
 #   STUDENT Routes
 # ========================================================================================
@@ -103,6 +134,9 @@ def student_register():
                 programs.append(program_to_add)
 
             setattr(student, 'school_programs', programs)
+
+            # Delete temp student from Temps
+            db.session.delete(temp_student)
 
             db.session.add(student)
             db.session.commit()
@@ -406,9 +440,6 @@ def employee_talent_get(page_no):
 
         number_of_students = db_filter_student_count("students", selected_filter)
         number_of_pages = math.ceil(number_of_students / entry_amount)
-
-        if page_no > number_of_pages:
-            return jsonify({'message': 'Page does not exist'}), 400
 
         students_list = db_filter_employee("students", selected_filter, selected_sort, is_ascending, limit, offset, selected_columns=SAFE_TALENT_COLUMNS)
         return jsonify({'students': students_list, 'number_of_pages':number_of_pages, "t_c": employee.t_c}), 200
@@ -985,9 +1016,6 @@ def admin_employees(page_no):
         number_of_employees = db_filter_admin_count("employees", selected_filter)
         number_of_pages = math.ceil(number_of_employees / entry_amount)
 
-        if number_of_pages < page_no:
-            return jsonify({'message': 'Page number does not exist'}), 400
-
         employees = db_filter_admin('employees', selected_filter, selected_sort, is_ascending, limit, offset)
         fav_amounts = get_fav_amount(is_employee=True)
 
@@ -1142,9 +1170,6 @@ def admin_students(page_no):
 
         number_of_students = db_filter_admin_count("students", selected_filter)
         number_of_pages = math.ceil(number_of_students / entry_amount)
-
-        if page_no > number_of_pages:
-            return jsonify({'message': 'Page number is too high'}), 400
 
         students = db_filter_admin('students', selected_filter, selected_sort, is_ascending, limit, offset)
         fav_amounts = get_fav_amount(is_student=True)

@@ -93,6 +93,7 @@ def select_std(t_c):
         return ['id', 'job_title', 'workplace_type', 'onsite_city', 'comp_skills', 'educations', 'school_programs', 'projects', 'languages', 'certificates']
     return ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'workplace_type', 'onsite_city', 'summary', 'comp_skills', 'experiences', 'educations', 'school_programs', 'projects', 'languages', 'certificates', 'volunteer', 'linkedin', 'github', 'medium']
 
+
 def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending, limit, offset, selected_columns="*"):
     if isinstance(selected_columns, list):
         selected_columns = ','.join(selected_columns)
@@ -188,11 +189,12 @@ def db_filter_admin_count(selected_table_name, selected_filter):
 
     return data[0]
 
+
 def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascending, limit, offset, selected_columns="*"):
     if isinstance(selected_columns, list):
         selected_columns = ','.join(selected_columns)
 
-    if 'languages' in selected_filter.keys() and len(selected_filter["languages"]) > 0:
+    if ('languages' in selected_filter.keys() and len(selected_filter["languages"]) > 0) or ('proficiency' in selected_filter.keys() and len(selected_filter["proficiency"]) > 0):
         exec_str = f"select {selected_columns} from {selected_table_name} t, json_array_elements(t.languages) as obj where is_active = true and "
     else:
         exec_str = f"select {selected_columns} from {selected_table_name} t where is_active = true and "
@@ -224,10 +226,14 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
             exec_str += "salary_min < " + value + ") and "
 
         elif key == "onsite_city":
-            exec_str += "onsite_city IN ("
-            for v in value:
-                exec_str += f"'{v}',"
-            exec_str = exec_str[:-1] + ") and "
+            for i in value:
+                exec_str += "'" + i + "' = ANY(onsite_city) or "
+            exec_str = exec_str[:-4] + ") and "
+
+        elif key == "workplace_type":
+            for i in value:
+                exec_str += "'" + i + "' = ANY(workplace_type) or "
+            exec_str = exec_str[:-4] + ") and "
 
         else:
             for i in value:
@@ -240,7 +246,7 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
     exec_str = exec_str[:-5]
     exec_str += f" order by {to_sort} {'asc' if is_ascending else 'desc' }"
     exec_str += f" limit {limit} offset {offset}"
-    
+    print(exec_str)
     with engine.connect() as con:
         result = con.execute(text(exec_str))
         data = result.fetchall()
@@ -250,8 +256,9 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
     return data
 
 def db_filter_student_count(selected_table_name, selected_filter):
-    if 'school_programs' in selected_filter.keys() and len(selected_filter["school_programs"]) > 0:
-        exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.school_programs) as obj where is_active = true and "
+
+    if ('languages' in selected_filter.keys() and len(selected_filter["languages"]) > 0) or ('proficiency' in selected_filter.keys() and len(selected_filter["proficiency"]) > 0):
+        exec_str = f"select count(*) from {selected_table_name} t, json_array_elements(t.languages) as obj where is_active = true and "
     else:
         exec_str = f"select count(*) from {selected_table_name} t where is_active = true and "
     for key, value in selected_filter.items():
@@ -282,11 +289,15 @@ def db_filter_student_count(selected_table_name, selected_filter):
             exec_str += "salary_min < " + value + ") and "
 
         elif key == "onsite_city":
-            exec_str += "onsite_city IN ("
-            for v in value:
-                exec_str += f"'{v}',"
-            exec_str = exec_str[:-1] + ") and "
+            for i in value:
+                exec_str += "'" + i + "' = ANY(onsite_city) or "
+            exec_str = exec_str[:-4] + ") and "
 
+        elif key == "workplace_type":
+            for i in value:
+                exec_str += "'" + i + "' = ANY(workplace_type) or "
+            exec_str = exec_str[:-4] + ") and "
+        
         else:
             for i in value:
                 if isinstance(i, str):
@@ -296,12 +307,14 @@ def db_filter_student_count(selected_table_name, selected_filter):
             exec_str = exec_str[:-4] + ") and "
 
     exec_str = exec_str[:-5]
+
     with engine.connect() as con:
         result = con.execute(text(exec_str))
         data = result.fetchone()
         con.close()
 
     return data[0]
+
 
 def db_get_student_for_fav(employee_id):
     exec_str = f"""select students.id, students.name, students.surname, students.email, students.phone, students.school_programs
@@ -357,6 +370,7 @@ def db_count_employee_fav(student_id):
 
     return data[0]
 
+
 def json_to_dict(filename):
     with open(filename, 'r') as j:
         data = json.load(j)
@@ -381,7 +395,6 @@ logging.basicConfig(format=format, level=logging.INFO, datefmt='%d/%b/%Y | %H:%M
 
 def random_id_generator(size=8, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
-
 
 def get_specific_data(member, needed_data, get_raw=False, direct_data=False):
     try:
