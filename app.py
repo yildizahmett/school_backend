@@ -518,21 +518,21 @@ def employee_remove_favourite():
 @app.route('/employee/my-favourites', methods=['GET'])
 @jwt_required()
 def employee_my_favourites():
-
-    jwt_identitiy = get_jwt_identity()
-    user_type = jwt_identitiy['user_type']
-    email = jwt_identitiy['email']
-
-    if user_type != 'employee':
-        return jsonify({'message': 'You are not an employee'}), 401
     
-    employee = Employees.query.filter_by(email=email, is_active=True).first()
+        jwt_identitiy = get_jwt_identity()
+        user_type = jwt_identitiy['user_type']
+        email = jwt_identitiy['email']
 
-    if not employee:
-        return jsonify({'message': 'Employee does not exist'}), 400
+        if user_type != 'employee':
+            return jsonify({'message': 'You are not an employee'}), 401
 
-    students_list = get_my_favourites(employee.id, employee.t_c)
-    return jsonify({'students': students_list, 't_c': employee.t_c}), 200
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        students_list = get_my_favourites(employee.id, employee.t_c)
+        return jsonify({'students': students_list, 't_c': employee.t_c}), 200
 
 # I AM HERE
 @app.route('/employee/student-profile/<int:student_id>', methods=['GET'])
