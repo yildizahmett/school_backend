@@ -28,6 +28,17 @@ REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@m
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
+def get_my_favourites(employee_id, t_c):
+    query = text(f'''select {select_fav(t_c)} from students
+                     where students.id in (select student_id from favourites where employee_id = {employee_id}) 
+                     and students.is_active = True''')
+
+    with engine.connect() as con:
+        result = con.execute(query)
+        con.close()
+
+    return [dict(row) for row in result.fetchall()]
+
 def get_favourited_student_ids(employee_id):
     query = text(f'select student_id from favourites where employee_id = {employee_id}')
     with engine.connect() as con:
@@ -458,16 +469,13 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
         message = ''
 
         if user_type != 'student':
-            return jsonify({'message': 'You are not a student'}), 400
+            return jsonify({'message': 'You are not a student'}), 401
 
         try:
             
-            student = Members.query.filter_by(email=email).first()
+            student = Members.query.filter_by(email=email, is_active=True).first()
             if not student:
-                return jsonify({'message': 'You are not a student'}), 400
-
-            if student and not student.is_active:
-                return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
+                return jsonify({'message': 'Student does not exist'}), 400
 
             # Check student info is completed
             student_info = student.to_dict()

@@ -6,7 +6,7 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_fav_amount, get_favourited_student_ids, jwt, db, engine, get_specific_data, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import app, bcrypt, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_fav_amount, get_favourited_student_ids, get_my_favourites, jwt, db, engine, get_specific_data, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
@@ -104,9 +104,7 @@ def student_register():
         name = data['name']
         surname = data['surname']
 
-        old_student = Students.query.filter_by(email=email).first()
-        if old_student and not old_student.is_active:
-            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
+        old_student = Students.query.filter_by(email=email, is_active=True).first()
 
         if old_student:
             return jsonify({'message': 'Student already registered'}), 400
@@ -159,12 +157,9 @@ def student_login():
         email = data['email']
         password = data['password']
 
-        student = Students.query.filter_by(email=email).first()
+        student = Students.query.filter_by(email=email, is_active=True).first()
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
-
-        if student and not student.is_active:
-            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         token_identity = {'user_type': 'student', 'email': email, 'profile_complete': student.profile_complete}
 
@@ -217,20 +212,17 @@ def profile_update_settings():
         user_type = jwt_data['user_type']
         email = jwt_data['email']
 
+        if user_type != 'student':
+            return jsonify({'message': 'You are not a student'}), 401
+
         data = request.get_json()
         new_password = data['new_password']
         password = data['password']
 
-        if user_type != 'student':
-            return jsonify({'message': 'You are not a student'}), 400
-
-        student = Students.query.filter_by(email=email).first()
+        student = Students.query.filter_by(email=email, is_active=True).first()
         
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
-
-        if student and not student.is_active:
-            return jsonify({'message': 'Student deleted. Please contact with admin.'}), 400
 
         if not bcrypt.check_password_hash(student.password, password):
             return jsonify({'message': 'Incorrect password'}), 400
@@ -285,13 +277,10 @@ def student_forgot_password():
         data = request.get_json()
         email = data['email']
 
-        student = Students.query.filter_by(email=email).first()
+        student = Students.query.filter_by(email=email, is_active=True).first()
 
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
-
-        if student and not student.is_active:
-            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
         
         token = generate_confirmation_token(email)
 
@@ -367,7 +356,7 @@ def employee_register():
             return jsonify({'message': 'Email is not approved'}), 400
 
         old_employee = Employees.query.filter_by(email=email, is_active=True).first()
-        if old_employee and old_employee.is_active:
+        if old_employee:
             return jsonify({'message': 'Email already exists'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -389,13 +378,10 @@ def employee_login():
         email = data['email']
         password = data['password']
 
-        employee = Employees.query.filter_by(email=email).first()
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
-
-        if employee and not employee.is_active:
-            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         token_identity = {'user_type': 'employee', 'email': email}
 
@@ -418,15 +404,12 @@ def employee_talent_get(page_no):
         email = jwt_identitiy['email']
 
         if user_type != 'employee':
-            return jsonify({'message': 'You are not an employee'}), 400
+            return jsonify({'message': 'You are not an employee'}), 401
         
-        employee = Employees.query.filter_by(email=email).first()
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
-
-        if employee and not employee.is_active:
-            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         data = request.get_json()
         
@@ -459,15 +442,12 @@ def employee_add_favourite():
         email = jwt_identitiy['email']
 
         if user_type != 'employee':
-            return jsonify({'message': 'You are not an employee'}), 400
+            return jsonify({'message': 'You are not an employee'}), 401
         
-        employee = Employees.query.filter_by(email=email).first()
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
-
-        if employee and not employee.is_active:
-            return jsonify({'message': 'Employee deleted. Please contact with admin.'}), 400
 
         data = request.get_json()
         student_id = data['id']
@@ -479,9 +459,7 @@ def employee_add_favourite():
         employee_id = employee.id
         company_id = employee.company_ref.id
 
-        old_fav = Favourites.query.filter_by(student_id=student_id, employee_id=employee_id, company_id=company_id).first()
-        if old_fav and not old_fav.is_active:
-            return jsonify({'message': 'Favourite deleted. Please contact with admin.'}), 400
+        old_fav = Favourites.query.filter_by(student_id=student_id, employee_id=employee_id, company_id=company_id, is_active=True).first()
 
         if old_fav:
             return jsonify({'message': 'Student is already in favourites'}), 400
@@ -506,15 +484,12 @@ def employee_remove_favourite():
         email = jwt_identitiy['email']
 
         if user_type != 'employee':
-            return jsonify({'message': 'You are not an employee'}), 400
+            return jsonify({'message': 'You are not an employee'}), 401
         
-        employee = Employees.query.filter_by(email=email).first()
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
             return jsonify({'message': 'Employee does not exist'}), 400
-
-        if employee and not employee.is_active:
-            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         data = request.get_json()
         student_id = data['id']
@@ -549,27 +524,17 @@ def employee_my_favourites():
     email = jwt_identitiy['email']
 
     if user_type != 'employee':
-        return jsonify({'message': 'You are not an employee'}), 400
+        return jsonify({'message': 'You are not an employee'}), 401
     
-    employee = Employees.query.filter_by(email=email).first()
+    employee = Employees.query.filter_by(email=email, is_active=True).first()
 
     if not employee:
         return jsonify({'message': 'Employee does not exist'}), 400
 
-    if employee and not employee.is_active:
-        return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
-
-    my_favourites = Favourites.query.filter_by(employee_id=employee.id, is_active=True).all()
-    students_list = list()
-    
-    # Kontrol et forsuz dene
-    for favourite in my_favourites:
-        student = Students.query.filter_by(id=favourite.student_id, is_active=True).first()
-        student_info = get_specific_data(student, select_fav(employee.t_c), get_raw=True, direct_data=True)
-        students_list.append(student_info)
-
+    students_list = get_my_favourites(employee.id, employee.t_c)
     return jsonify({'students': students_list, 't_c': employee.t_c}), 200
 
+# I AM HERE
 @app.route('/employee/student-profile/<int:student_id>', methods=['GET'])
 @jwt_required()
 def employee_student_profile(student_id):
