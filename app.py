@@ -1033,6 +1033,13 @@ def admin_employee_edit(employee_id):
 
             for key, value in data.items():
                 setattr(employee, key, value)
+                if key == 't_c':
+                    if value:
+                        setattr(employee, 't_c_date', datetime.now())
+                        setattr(employee, 't_c_expire_date', datetime.now() + timedelta(6*30))
+                    else:
+                        setattr(employee, 't_c_date', None)
+                        setattr(employee, 't_c_expire_date', None)
             db.session.commit()
             
         except Exception as e:

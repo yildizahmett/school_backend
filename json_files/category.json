@@ -1,8 +1,8 @@
 {
-    "general": ["name", "surname", "phone", "birth_date", "city", "country", "job_title", "starting_date", "summary"],
-    "activities": ["school_programs"],
-    "hardskills": ["educations", "experiences", "projects", "languages", "certificates", "volunteer", "comp_skills", "hobbies", "linkedin", "github", "medium"],
-    "job": ["workplace_type", "salary_min", "salary_currency", "onsite_city"],
+    "general": ["profile_complete", "name", "surname", "phone", "birth_date", "city", "country", "job_title", "starting_date", "summary"],
+    "activities": ["profile_complete", "school_programs"],
+    "hardskills": ["profile_complete", "educations", "experiences", "projects", "languages", "certificates", "volunteer", "comp_skills", "hobbies", "linkedin", "github", "medium"],
+    "job": ["profile_complete", "workplace_type", "salary_min", "salary_currency", "onsite_city"],
     "admin-students": ["id", "program_name", "name", "surname", "email", "phone", "grad_status", "profile_complete", "grad_date", "job_find_time", "pool_amount"],
     "admin-companies": ["id", "company_name", "special_id", "company_users"],
     "admin-employees": ["id", "company_name", "name", "surname", "email", "phone", "t_c", "sign_up_date", "duration", "pool_amount"]
