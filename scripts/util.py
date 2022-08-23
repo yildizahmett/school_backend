@@ -42,7 +42,9 @@ def post_search_talent(selected_filter, filtered_by):
     query = query[:-1]
     query += ";"
 
-    print(query)
+    with engine.connect() as con:
+        con.execute(query)
+        con.close()
 
 
 def get_programs():
