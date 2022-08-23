@@ -29,12 +29,19 @@ SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_educatio
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
 def post_search_talent(selected_filter, filtered_by):
+    if 'salary_min' in selected_filter:
+        selected_filter.remove('salary_min')
+    if 'salary_max' in selected_filter:
+        selected_filter.remove('salary_max')
+
     date = datetime.now()
     query = text(f'insert into search(filter_content, filter_type, filtered_by, filter_date) values ')
     for key, value in selected_filter.items():
         for v in value:
             query += text(f'(\'{v}\', \'{key}\', {filtered_by}, {date}),')
     query = query[:-1]
+
+    print(query)
 
 
 def get_programs():
@@ -271,11 +278,6 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
                 exec_str += "'" + i + "' = ANY(onsite_city) or "
             exec_str = exec_str[:-4] + ") and "
 
-        elif key == "workplace_type":
-            for i in value:
-                exec_str += "'" + i + "' = ANY(workplace_type) or "
-            exec_str = exec_str[:-4] + ") and "
-
         else:
             for i in value:
                 if isinstance(i, str):
@@ -332,11 +334,6 @@ def db_filter_student_count(selected_table_name, selected_filter):
         elif key == "onsite_city":
             for i in value:
                 exec_str += "'" + i + "' = ANY(onsite_city) or "
-            exec_str = exec_str[:-4] + ") and "
-
-        elif key == "workplace_type":
-            for i in value:
-                exec_str += "'" + i + "' = ANY(workplace_type) or "
             exec_str = exec_str[:-4] + ") and "
         
         else:
