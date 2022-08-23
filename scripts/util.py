@@ -29,6 +29,8 @@ SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_educatio
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
 def post_search_talent(selected_filter, filtered_by):
+    if len(selected_filter.keys()) < 1:
+        return
     if 'salary_min' in selected_filter:
         selected_filter.remove('salary_min')
     if 'salary_max' in selected_filter:
