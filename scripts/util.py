@@ -11,11 +11,19 @@ from datetime import datetime, timedelta
 import logging
 import random
 import string
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 TOKEN_EXPIRE_TIME = 2 # HOURS
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=TOKEN_EXPIRE_TIME)
+
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
