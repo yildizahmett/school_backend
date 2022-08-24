@@ -22,7 +22,7 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=TOKEN_EXPIRE_TIME)
 limiter = Limiter(
     app,
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=["5000 per day", "1000 per hour", "30 per minute", "3 per second"]
 )
 
 bcrypt = Bcrypt(app)
@@ -30,6 +30,15 @@ jwt = JWTManager(app)
 db = SQLAlchemy(app)
 engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'], engine_opts={'pool_size': 20, 'pool_recycle': 3600})
 CORS(app)
+
+format = '| %(asctime)s | %(funcName)s: %(lineno)d | %(message)s | %(levelname)s'
+logging.basicConfig(format=format, 
+                    level=logging.INFO, 
+                    datefmt='%d/%b/%Y | %H:%M:%S',
+                    handlers=[
+                        logging.FileHandler("debug.log"),
+                        logging.StreamHandler()
+                    ])
 
 REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@mef.edu.tr", "kaya.kerrem@gmail.com", "alperensayar@gmail.com"]
 
@@ -440,10 +449,6 @@ DC_ST_HARDSKILLS    = 'hardskills'
 DC_ST_JOB           = 'job'
 
 FRONTEND_LINK = 'http://localhost:3000'
-
-format = '| %(asctime)s | %(funcName)s: %(lineno)d | %(message)s | %(levelname)s'
-logging.basicConfig(format=format, level=logging.INFO, datefmt='%d/%b/%Y | %H:%M:%S')
-# filename='current.log', filemode='a', # add this code to the inside of basicConfig to store logs in a file instead of printing to the terminal
 
 def random_id_generator(size=8, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
