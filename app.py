@@ -1553,8 +1553,6 @@ def admin_data():
 
         students_table_count  = general_select_count('students')
         temps_table_count     = general_select_count('temps')
-        # programs_table_count  = general_select_count('programs')
-        # companies_table_count = general_select_count('companies')
         employees_table_count = general_select_count('employees')
         
         # Ortalama İş Bulma Süresi Grafiği
@@ -1563,12 +1561,12 @@ def admin_data():
         # Student data
         student_grad_total      = students_table_count + temps_table_count
         student_signup_total    = students_table_count
-        student_completed_total = general_select_count('students', {'profile_complete': True})
+        student_completed_total = general_select_count('students', {'profile_complete': "True"})
 
         # Employee data
-        employee_invite_total   = company_invite_total
+        employee_invite_total   = company_invite_total()
         employee_signup_total   = employees_table_count
-        employee_tc_total       = general_select_count('employees', {'t_c': True})
+        employee_tc_total       = general_select_count('employees', {'t_c': "True"})
 
         grad_profile = {
             'grad_total': student_grad_total,
@@ -1643,12 +1641,11 @@ def admin_data():
         }
 
         return jsonify(**data), 200
-
     except Exception as e:
         log_body = f'Admin > Data > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
-
+    
 
 # ========================================================================================
 #   End of ADMINISTRATOR Routes

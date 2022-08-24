@@ -72,11 +72,10 @@ def get_employment_rate():
 
 def general_select_count(table_name, selected_filter = None):
     where_query = ''
-    if len(selected_filter.keys()) > 0 or not selected_filter == None:
+    if selected_filter:
         where_query = ' where '
         for key, value in selected_filter.items():
-            for v in value:
-                where_query += f'{key} = {v} and '
+            where_query += f'{key} = {value} and '
         where_query = where_query[:-4]
 
     query = text(f'select count(*) from {table_name} {where_query}')
