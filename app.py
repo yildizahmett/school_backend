@@ -74,7 +74,7 @@ def report():
             return jsonify({'message': 'You are not authorized to perform this action'}), 401
 
         data = request.get_json()
-
+        report_email = None
         if not user_type == 'admin':
             report_email = jwt_identity['email']
 
