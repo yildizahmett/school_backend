@@ -32,9 +32,9 @@ def post_search_talent(selected_filter, filtered_by):
     if len(selected_filter.keys()) < 1:
         return
     if 'salary_min' in selected_filter:
-        selected_filter.remove('salary_min')
+        del selected_filter['salary_min']
     if 'salary_max' in selected_filter:
-        selected_filter.remove('salary_max')
+        del selected_filter['salary_max']
 
     date = datetime.now()
     date = date.strftime('%Y-%m-%d %H:%M:%S')
