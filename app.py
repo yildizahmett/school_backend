@@ -37,6 +37,7 @@ def confirm_token(token, expiration=18000):
 
 
 @app.route('/email-verification/<token>')
+@limiter.limit()
 def email_verify(token):
     try:
         email = confirm_token(token)
@@ -62,6 +63,7 @@ def email_verify(token):
 
 
 @app.route('/report', methods=['POST'])
+@limiter.limit()
 @jwt_required()
 def report():
     try:
@@ -396,6 +398,7 @@ def employee_login():
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/talent-market/<int:page_no>', methods=['GET'])
+@limiter.limit()
 @jwt_required()
 def employee_talent_get(page_no):
     try:
