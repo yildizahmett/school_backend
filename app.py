@@ -6,7 +6,7 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import app, bcrypt, company_invite_total, general_select_count, get_employment_rate, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, search_statistics, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
@@ -1496,7 +1496,7 @@ def admin_get_programs():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         programs_list = get_programs()
         
@@ -1515,7 +1515,7 @@ def admin_program_remove():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
         program_name = data['program_name']
@@ -1549,38 +1549,26 @@ def admin_data():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
-            return jsonify({'message': 'You are not an administrator'}), 400
+            return jsonify({'message': 'You are not an administrator'}), 401
 
-        all_students  = Students.query.all()
-        all_temps     = Temps.query.all()
-        all_programs  = Programs.query.all()
-        all_companies = Companies.query.all()
-        all_employees = Employees.query.all()
-
-        students_table_count  = len(all_students)
-        temps_table_count     = len(all_temps)
-        programs_table_count  = len(all_programs)
-        companies_table_count = len(all_companies)
-        employees_table_count = len(all_employees)
-
+        students_table_count  = general_select_count('students')
+        temps_table_count     = general_select_count('temps')
+        # programs_table_count  = general_select_count('programs')
+        # companies_table_count = general_select_count('companies')
+        employees_table_count = general_select_count('employees')
+        
         # Ortalama İş Bulma Süresi Grafiği
-        if students_table_count != 0:
-            avg_job_find_time = sum([student.job_find_time for student in all_students if student.job_find_time ]) / students_table_count
-        else:
-            avg_job_find_time = 0
-
-        # Geçici
         avg_job_find_time = 158.91
 
-        # Öğrenci Veri Grafiği
+        # Student data
         student_grad_total      = students_table_count + temps_table_count
         student_signup_total    = students_table_count
-        student_completed_total = Students.query.filter_by(profile_complete=True).count()
+        student_completed_total = general_select_count('students', {'profile_complete': True})
 
-        # Employee Veri Grafiği
-        employee_invite_total   = sum([len(company.company_users) for company in all_companies])
-        employee_signup_total   = 1
-        employee_tc_total       = 1
+        # Employee data
+        employee_invite_total   = company_invite_total
+        employee_signup_total   = employees_table_count
+        employee_tc_total       = general_select_count('employees', {'t_c': True})
 
         grad_profile = {
             'grad_total': student_grad_total,
@@ -1600,11 +1588,7 @@ def admin_data():
             'total_tc' : employee_tc_total
         }
 
-        employment_rate = {
-            'employed' : 253,
-            'self_employed' : 51,
-            'unemployed' : 215
-        }
+        employment_rate = get_employment_rate()
 
         grad_profile_programs = {
             'data-science' : {
@@ -1629,44 +1613,23 @@ def admin_data():
             }
         }
 
-        # This is going to be more complex than the others...
-        # God have mercy.
-        filter_top5 = {
-            'location' : {
-                'Remote' : 1,
-                'Istanbul' : 2,
-                'Bursa' : 3,
-                'Ankara' : 4,
-                'Van' : 5
-            },
-            'inner_peace' : {
-                'remote' : 6,
-                'Istanbul' : 7,
-                'Bursa' : 8,
-                'Ankara' : 9,
-                'Van' : 10
-            },
-            'wrath' : {
-                'remote' : 11,
-                'Istanbul' : 12,
-                'Bursa' : 13,
-                'Ankara' : 14,
-                'Van' : 15
-            },
-            'solitude' : {
-                'remote' : 16,
-                'Istanbul' : 17,
-                'Bursa' : 18,
-                'Ankara' : 19,
-                'Van' : 20
-            },
-            'honesty' : {
-                'remote' : 21,
-                'Istanbul' : 22,
-                'Bursa' : 23,
-                'Ankara' : 24,
-                'Van' : 25
-            }
+        
+        job_title_search = search_statistics('job_title')
+        highest_education_grad_date_search = search_statistics('highest_education_grad_date')
+        highest_education_search = search_statistics('highest_education')
+        comp_skills_search = search_statistics('comp_skills')
+        languages_search = search_statistics('languages')
+        workplace_type_search = search_statistics('workplace_type')
+        onsite_city_search = search_statistics('onsite_city')
+
+        filter_top = {
+            'job_title' : job_title_search,
+            'highest_education_grad_date' : highest_education_grad_date_search,
+            'highest_education' : highest_education_search,
+            'comp_skills' : comp_skills_search,
+            'languages' : languages_search,
+            'workplace_type' : workplace_type_search,
+            'onsite_city' : onsite_city_search
         }
 
         data = {
@@ -1676,7 +1639,7 @@ def admin_data():
             'employment_rate' : employment_rate,
             'grad_profile_programs' : grad_profile_programs,
             'avg_job_find_time' : avg_job_find_time,
-            'filter_top5' : filter_top5
+            'filter_top5' : filter_top
         }
 
         return jsonify(**data), 200

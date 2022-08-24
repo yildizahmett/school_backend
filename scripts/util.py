@@ -45,6 +45,53 @@ REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@m
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
+def search_statistics(filter_type):
+    additional_str = ''
+    if filter_type == 'onsite_city':
+        additional_str = ' and not filter_content = \'All\' '
+
+    query = f'''select filter_content, count(filter_content) from search
+                where filter_type = '{filter_type}' {additional_str} group by filter_content
+                order by 2 desc limit 5'''
+
+    with engine.connect() as con:
+        result = con.execute(query)
+        con.close()
+    return [dict(row) for row in result.fetchall()]
+
+def get_employment_rate():
+    query = text(f'''select grad_status, count(grad_status) from students
+                     where grad_status is not null
+                     group by grad_status''')
+
+    with engine.connect() as con:
+        result = con.execute(query)
+        con.close()
+
+    return [dict(row) for row in result.fetchall()]
+
+def general_select_count(table_name, selected_filter = None):
+    where_query = ''
+    if len(selected_filter.keys()) > 0 or not selected_filter == None:
+        where_query = ' where '
+        for key, value in selected_filter.items():
+            for v in value:
+                where_query += f'{key} = {v} and '
+        where_query = where_query[:-4]
+
+    query = text(f'select count(*) from {table_name} {where_query}')
+    with engine.connect() as con:
+        result = con.execute(query)
+        con.close()
+    return result.fetchone()[0]
+
+def company_invite_total():
+    query = text('select sum(array_length(company_users, 1)) from companies')
+    with engine.connect() as con:
+        result = con.execute(query)
+        con.close()
+    return result.fetchone()[0]
+
 def post_search_talent(selected_filter, filtered_by):
     if len(selected_filter.keys()) < 1:
         return
