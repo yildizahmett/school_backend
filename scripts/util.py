@@ -550,6 +550,7 @@ def get_specific_data(member, needed_data, get_raw=False, direct_data=False):
 
         if get_raw:
             return final_data
+
         return jsonify(final_data), 200
     except Exception as e:
         log_body = f'get_specific_data > ERROR : {repr(e)}'
@@ -594,12 +595,16 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
         message = ''
 
         if user_type != 'student':
+            log_body = f'update_profile_data > ERROR : User type is not student'
+            logging.warning(f'User: {email} | {log_body}')
             return jsonify({'message': 'You are not a student'}), 401
 
         try:
             
             student = Members.query.filter_by(email=email, is_active=True).first()
             if not student:
+                log_body = f'update_profile_data > ERROR : Student not found'
+                logging.warning(f'User: {email} | {log_body}')
                 return jsonify({'message': 'Student does not exist'}), 400
 
             # Check student info is completed
@@ -613,6 +618,8 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
 
             elif request.method == 'POST':
                 message += update_table_data(request.get_json(), student, db)
+                log_body = f'update_profile_data > SUCCESS : {message}'
+                logging.info(f'User: {email} | {log_body}')
                 return jsonify({'message': 'User updated successfully. ' + message}), 200
 
         except Exception as e:

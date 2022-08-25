@@ -44,11 +44,15 @@ def email_verify(token):
         email = confirm_token(token)
 
         if not email:
+            log_body = f'The confirmation link is invalid or has expired.'
+            logging.warning(f'User: {email} | {log_body}')
             return jsonify({'message': 'The confirmation link is invalid or has expired.'}), 400
 
         temp_student = Temps.query.filter_by(email=email).first()
 
         if Students.query.filter_by(email=email).first():
+            log_body = f'Email already verified'
+            logging.warning(f'User: {email} | {log_body}')
             return jsonify({'message': 'Email already verified'}), 400
 
         # Transfer from Temps to Students Table
@@ -56,6 +60,9 @@ def email_verify(token):
         db.session.add(student)
         db.session.delete(temp_student) # Remove temp student from Temps
         db.session.commit()
+
+        log_body = f'User: {email} | Email verified'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Email verified successfully'}), 200
     except Exception as e:
         log_body = f'Student > Email Verification > ERROR > {repr(e)}'
@@ -72,6 +79,8 @@ def report():
         user_type = jwt_identity['user_type']
 
         if not (user_type == 'student' or user_type == 'employee' or user_type == 'admin'):
+            log_body = f'You are not authorized to perform this action'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not authorized to perform this action'}), 401
 
         data = request.get_json()
@@ -111,10 +120,14 @@ def student_register():
         old_student = Students.query.filter_by(email=email, is_active=True).first()
 
         if old_student:
+            log_body = f'Student already exists'
+            logging.warning(f'User: {email} | {log_body}')
             return jsonify({'message': 'Student already registered'}), 400
 
         temp_student = Temps.query.filter_by(email=email).first()
         if not temp_student:
+            log_body = f'Student not found'
+            logging.warning(f'User: {email} | {log_body}')
             return jsonify({'message': 'This email is not invited'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -142,12 +155,15 @@ def student_register():
 
             db.session.add(student)
             db.session.commit()
+
+            log_body = f'User: {email} | Student registered'
+            logging.info(f'{log_body}')
+            return jsonify({'message': 'Student created successfully'}), 200
         except Exception as e:
             log_body = f'Student > Register > Request Operation > ERROR > {repr(e)}'
             logging.warning(f'User: {email} | {log_body}')
             return jsonify({'message': 'Something went wrong'}), 500
 
-        return jsonify({'message': 'Student created successfully'}), 200
     except Exception as e:
         log_body = f'Student > Register > ERROR : {repr(e)}'
         logging.warning(f'User: {email} | {log_body}')
@@ -164,14 +180,20 @@ def student_login():
 
         student = Students.query.filter_by(email=email, is_active=True).first()
         if not student:
+            log_body = f'Student not found'
+            logging.warning(f'User: {email} | {log_body}')
             return jsonify({'message': 'Student does not exist'}), 400
 
         token_identity = {'user_type': 'student', 'email': email, 'profile_complete': student.profile_complete}
 
         if bcrypt.check_password_hash(student.password, password):
             access_token = create_access_token(identity=token_identity)
+            log_body = f'User: {email} | Student logged in'
+            logging.info(f'{log_body}')
             return jsonify({'name': student.name, 'surname': student.surname, 'access_token': access_token}), 200
         else:
+            log_body = f'User: {email} | Wrong password'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Incorrect password or email'}), 400
         
     except Exception as e:
@@ -223,6 +245,8 @@ def profile_update_settings():
         email = jwt_data['email']
 
         if user_type != 'student':
+            log_body = f'User: {email} | Wrong user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not a student'}), 401
 
         data = request.get_json()
@@ -232,14 +256,20 @@ def profile_update_settings():
         student = Students.query.filter_by(email=email, is_active=True).first()
         
         if not student:
+            log_body = f'Student not found'
+            logging.warning(f'User: {email} | {log_body}')
             return jsonify({'message': 'Student does not exist'}), 400
 
         if not bcrypt.check_password_hash(student.password, password):
+            log_body = f'User: {email} | Wrong password'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Incorrect password'}), 400
         
         token = generate_confirmation_token([email, new_password])
 
         if token == -1:
+            log_body = f'User: {email} | Token generation failed'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'An error has occured while trying to send email'}), 400
 
         confirm_url = FRONTEND_LINK + '/student/confirm-new-password/' + token
@@ -247,6 +277,8 @@ def profile_update_settings():
         subj = 'Confirm new password'
         student_mail_queue([email], msg, subj)
 
+        log_body = f'User: {email} | Password change email sent'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Verification email sent'}), 200
     except Exception as e:
         log_body = f'Student > Profile Update Settings > ERROR : {repr(e)}'
@@ -261,6 +293,8 @@ def student_confirm_new_password(token):
         email, new_password = confirm_token(token)
 
         if not email:
+            log_body = f'User: {email} | Token expired'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'The confirmation link is invalid or has expired.'}), 400
 
         hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
@@ -268,11 +302,15 @@ def student_confirm_new_password(token):
         student = Students.query.filter_by(email=email, is_active=True).first()
 
         if not student:
+            log_body = f'User: {email} | Student not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Student does not exist'}), 400
 
         setattr(student, 'password', hashed_password)
         db.session.commit()
         
+        log_body = f'User: {email} | Password changed'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Password changed successfully'}), 200
     except Exception as e:
         log_body = f'Student > Confirm New Password > ERROR : {repr(e)}'
@@ -290,11 +328,15 @@ def student_forgot_password():
         student = Students.query.filter_by(email=email, is_active=True).first()
 
         if not student:
+            log_body = f'User: {email} | Student not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Student does not exist'}), 400
         
         token = generate_confirmation_token(email)
 
         if token == -1:
+            log_body = f'User: {email} | Token generation failed'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'An error has occured while trying to send email.'}), 400
 
         confirm_url = FRONTEND_LINK + '/student/reset-password/' + token
@@ -302,6 +344,8 @@ def student_forgot_password():
         subj = 'Reset password'
         student_mail_queue([email], msg, subj)
 
+        log_body = f'User: {email} | Password reset email sent'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Verification email sent'}), 200
     except Exception as e:
         log_body = f'Student > Forgot Password > ERROR : {repr(e)}'
@@ -319,11 +363,15 @@ def student_reset_password(token):
         email = confirm_token(token)
 
         if not email:
+            log_body = f'User: {email} | Token expired'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'The confirmation link is invalid or has expired.'}), 400
 
         student = Students.query.filter_by(email=email, is_active=True).first()
 
         if not student:
+            log_body = f'User: {email} | Student not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Student does not exist'}), 400
 
         hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
@@ -331,6 +379,8 @@ def student_reset_password(token):
         setattr(student, 'password', hashed_password)
         db.session.commit()
         
+        log_body = f'User: {email} | Password changed'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Password reset successfully'}), 200
     except Exception as e:
         log_body = f'Student > Reset Password > ERROR : {repr(e)}'
@@ -359,14 +409,20 @@ def employee_register():
 
         company = Companies.query.filter_by(special_id=special_id, is_active=True).first()
         if not company:
+            log_body = f'User: {email} | Company not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Special ID does not exist'}), 400
 
         company_users = company.company_users
         if not email in company_users:
+            log_body = f'User: {email} | Not authorized to register'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Email is not approved'}), 400
 
         old_employee = Employees.query.filter_by(email=email, is_active=True).first()
         if old_employee:
+            log_body = f'User: {email} | Employee already exists'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Email already exists'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -375,6 +431,8 @@ def employee_register():
         db.session.add(employee)
         db.session.commit()
 
+        log_body = f'User: {email} | Employee registered'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'User created successfully'}), 200
     except Exception as e:
         log_body = f'Employee > Register > ERROR : {repr(e)}'
@@ -392,14 +450,21 @@ def employee_login():
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         token_identity = {'user_type': 'employee', 'email': email}
 
         if bcrypt.check_password_hash(employee.password, password):
             access_token = create_access_token(identity=token_identity)
+
+            log_body = f'User: {email} | Employee logged in'
+            logging.info(f'{log_body}')
             return jsonify({'name': employee.name, 'surname': employee.surname, 'access_token': access_token}), 200
         else:
+            log_body = f'User: {email} | Invalid password'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Incorrect password or email'}), 400
     except Exception as e:
         log_body = f'Employee > Login > ERROR : {repr(e)}'
@@ -416,6 +481,8 @@ def employee_change_password():
         email = jwt_data['email']
 
         if user_type != 'employee':
+            log_body = f'User: {email} | Not authorized to change password'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not authorized to perform this action'}), 401
 
         data = request.get_json()
@@ -425,20 +492,30 @@ def employee_change_password():
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         if not bcrypt.check_password_hash(employee.password, password):
+            log_body = f'User: {email} | Invalid password'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Incorrect password'}), 400
 
         token = generate_confirmation_token([email, new_password])
 
         if token == -1:
+            log_body = f'User: {email} | Password reset token failed'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'An error occured while trying to send email.'}), 400
 
         confirm_url = FRONTEND_LINK + '/employee/confirm-new-password/' + token
         msg = f'Please click on the link to reset your password: {confirm_url}'
         subj = 'Confirm new password'
         employee_mail_queue([email], msg, subj)
+
+        log_body = f'User: {email} | Password reset token sent'
+        logging.info(f'{log_body}')
+        return jsonify({'message': 'Password reset token sent'}), 200
 
     except Exception as e:
         log_body = f'Employee > Change Password > ERROR : {repr(e)}'
@@ -452,6 +529,8 @@ def employee_confirm_new_password(token):
         email, new_password = confirm_token(token)
 
         if not email:
+            log_body = f'User: {email} | Invalid token'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'The confirmation link is invalid or has expired.'}), 400
 
         hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
@@ -459,11 +538,15 @@ def employee_confirm_new_password(token):
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         setattr(employee, 'password', hashed_password)
         db.session.commit()
 
+        log_body = f'User: {email} | Password changed'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Password reset successfully'}), 200
 
     except Exception as e:
@@ -481,11 +564,15 @@ def employee_forgot_password():
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         token = generate_confirmation_token(email)
 
         if token == -1:
+            log_body = f'User: {email} | Password reset token failed'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'An error occured while trying to send email.'}), 400
 
         confirm_url = FRONTEND_LINK + '/employee/reset-password/' + token
@@ -493,6 +580,8 @@ def employee_forgot_password():
         subj = 'Reset password'
         employee_mail_queue([email], msg, subj)
 
+        log_body = f'User: {email} | Password reset token sent'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Email sent successfully'}), 200
 
     except Exception as e:
@@ -510,11 +599,15 @@ def employee_reset_password(token):
         email = confirm_token(token)
 
         if not email:
+            log_body = f'User: {email} | Invalid token'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'The confirmation link is invalid or has expired.'}), 400
 
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
@@ -522,6 +615,8 @@ def employee_reset_password(token):
         setattr(employee, 'password', hashed_password)
         db.session.commit()
 
+        log_body = f'User: {email} | Password changed'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Password reset successfully'}), 200
 
     except Exception as e:
@@ -539,11 +634,15 @@ def employee_talent_get(page_no):
         email = jwt_identitiy['email']
 
         if user_type != 'employee':
+            log_body = f'User: {email} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an employee'}), 401
         
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         data = request.get_json()
@@ -563,6 +662,8 @@ def employee_talent_get(page_no):
         favourited_students = get_favourited_student_ids(employee.id)
         post_search_talent(selected_filter, employee.id)
 
+        log_body = f'User: {email} | Talent market retrieved'
+        logging.info(f'{log_body}')
         return jsonify({'students': students_list, 'number_of_pages':number_of_pages, "t_c": employee.t_c, "favourited_students": favourited_students}), 200
         
     except Exception as e:
@@ -580,11 +681,15 @@ def employee_add_favourite():
         email = jwt_identitiy['email']
 
         if user_type != 'employee':
+            log_body = f'User: {email} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an employee'}), 401
         
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         data = request.get_json()
@@ -592,6 +697,8 @@ def employee_add_favourite():
         student = Students.query.filter_by(id=student_id, is_active=True).first()
 
         if not student:
+            log_body = f'User: {email} | Student not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Student does not exist'}), 400
 
         employee_id = employee.id
@@ -600,12 +707,16 @@ def employee_add_favourite():
         old_fav = Favourites.query.filter_by(student_id=student_id, employee_id=employee_id, company_id=company_id, is_active=True).first()
 
         if old_fav:
+            log_body = f'User: {email} | Student already favourited'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Student is already in favourites'}), 400
 
         favourite = Favourites(student_id, company_id, employee_id)
         db.session.add(favourite)
         db.session.commit()
 
+        log_body = f'User: {email} | Student favourited'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Student added to favourites'}), 200
 
     except Exception as e:
@@ -623,11 +734,15 @@ def employee_remove_favourite():
         email = jwt_identitiy['email']
 
         if user_type != 'employee':
+            log_body = f'User: {email} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an employee'}), 401
         
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         data = request.get_json()
@@ -635,6 +750,8 @@ def employee_remove_favourite():
         student = Students.query.filter_by(id=student_id, is_active=True).first()
 
         if not student:
+            log_body = f'User: {email} | Student not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Student does not exist'}), 400
 
         employee_id = employee.id
@@ -642,11 +759,15 @@ def employee_remove_favourite():
 
         favourite = Favourites.query.filter_by(student_id=student_id, employee_id=employee_id, company_id=company_id, is_active=True).first()
         if not favourite:
+            log_body = f'User: {email} | Student not favourited'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Student is not in favourites'}), 400
 
         db.session.delete(favourite)
         db.session.commit()
 
+        log_body = f'User: {email} | Student removed from favourites'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Student removed from favourites'}), 200
 
     except Exception as e:
@@ -664,14 +785,21 @@ def employee_my_favourites():
         email = jwt_identitiy['email']
 
         if user_type != 'employee':
+            log_body = f'User: {email} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an employee'}), 401
 
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         students_list = get_my_favourites(employee.id, employee.t_c)
+
+        log_body = f'User: {email} | My favourites'
+        logging.info(f'{log_body}')
         return jsonify({'students': students_list, 't_c': employee.t_c}), 200
     except Exception as e:
         log_body = f'Employee > My Favourites > ERROR : {repr(e)}'
@@ -689,19 +817,27 @@ def employee_student_profile(student_id):
         email = jwt_identitiy['email']
 
         if user_type != 'employee':
+            log_body = f'User: {email} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an employee'}), 401
         
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         student = Students.query.filter_by(id=student_id, is_active=True).first()
         if not student:
+            log_body = f'User: {email} | Student not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Student does not exist'}), 400
 
         student_info = get_specific_data(student, select_std(employee.t_c), get_raw=True, direct_data=True)
 
+        log_body = f'User: {email} | Student profile'
+        logging.info(f'{log_body}')
         return jsonify({'student': student_info, 't_c': employee.t_c}), 200
 
     except Exception as e:
@@ -719,10 +855,14 @@ def employee_t_c():
         email = jwt_identitiy['email']
 
         if user_type != 'employee':
+            log_body = f'User: {email} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an employee'}), 401
         
         employee = Employees.query.filter_by(email=email, is_active=True).first()
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         if employee.t_c:
@@ -737,7 +877,12 @@ def employee_t_c():
 
             remaining = [remaining_months, remaining_days, remaining_hours, remaining_minutes, remaining_seconds]
 
+            log_body = f'User: {email} | T-C'
+            logging.info(f'{log_body}')
             return jsonify({'t_c': employee.t_c, 't_c_date': employee.t_c_date, 't_c_expire_date': employee.t_c_expire_date, 'remaining_t_c': remaining}), 200
+        
+        log_body = f'User: {email} | T-C'
+        logging.info(f'{log_body}')
         return jsonify({'t_c': employee.t_c}), 200
 
     except Exception as e:
@@ -755,14 +900,20 @@ def employee_t_c_update():
         email = jwt_identitiy['email']
 
         if user_type != 'employee':
+            log_body = f'User: {email} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an employee'}), 401
         
         employee = Employees.query.filter_by(email=email, is_active=True).first()
 
         if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         if employee.t_c:
+            log_body = f'User: {email} | T-C already exists'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You have already accepted the T&C'}), 400
 
         setattr(employee, 't_c', True)
@@ -771,6 +922,8 @@ def employee_t_c_update():
 
         db.session.commit()
 
+        log_body = f'User: {email} | T-C'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'T&C updated'}), 200
 
     except Exception as e:
@@ -808,6 +961,8 @@ def administrator_login():
         admin = dict(admin)
 
         if email != admin['email'] or admin['password'] != password:
+            log_body = f'Admin > Login > ERROR : Invalid credentials'
+            logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Incorrect password or email'}), 400
 
         token_identity = {'user_type': 'admin', 'login_date': datetime.now().timestamp()}
@@ -829,10 +984,14 @@ def admin_test_companies():
         jwt_identity = get_jwt_identity()
         user_type = jwt_identity['user_type']
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         try:
             companies = get_companies()
+            log_body = f'IP: {request.remote_addr} | Companies'
+            logging.info(f'{log_body}')
             return jsonify({'companies': companies}), 200
 
         except Exception as e:
@@ -855,6 +1014,8 @@ def company_register():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         try:
@@ -865,6 +1026,8 @@ def company_register():
 
             old_company = Companies.query.filter_by(company_name=company_name, is_active=True).first()
             if old_company:
+                log_body = f'IP: {request.remote_addr} | Company already exists'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'Company already exists'}), 400
 
             # Try for a few times to generate a special id
@@ -888,7 +1051,9 @@ def company_register():
                 subj = 'Dear {} Employee'.format(company.company_name.upper())
                 msg = 'You can register at {} with this id: {}'.format(register_url, company.special_id)
                 employee_mail_queue(company_users, msg, subj)
-
+            
+            log_body = f'IP: {request.remote_addr} | Company registered'
+            logging.info(f'{log_body}')
             return jsonify({'message': 'Company created successfully'}), 201
         except Exception as e:
             log_body = f'Admin > Company Register > Request Operation > ERROR : {repr(e)}'
@@ -910,6 +1075,8 @@ def company_remove():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         try:
@@ -919,10 +1086,14 @@ def company_remove():
             company = Companies.query.filter_by(id=company_id, is_active=True).first()
 
             if not company:
+                log_body = f'IP: {request.remote_addr} | Company does not exist'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'Company does not exist'}), 400
 
             update_is_active_company(company_id)
             
+            log_body = f'IP: {request.remote_addr} | Company removed'
+            logging.info(f'{log_body}')
             return jsonify({'message': 'Company removed successfully'}), 200
         except Exception as e:
             log_body = f'Admin > Remove Company > Request Operation > ERROR : {repr(e)}'
@@ -944,13 +1115,19 @@ def get_company(company_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         try:
             company = Companies.query.filter_by(id=company_id, is_active=True).first()
             if not company:
+                log_body = f'IP: {request.remote_addr} | Company does not exist'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'Company does not exist'}), 400
 
+            log_body = f'IP: {request.remote_addr} | Company data retrieved'
+            logging.info(f'{log_body}')
             return jsonify(get_specific_data(company, DC_AD_COMPANIES, get_raw=True)), 200
 
         except Exception as e:
@@ -973,11 +1150,15 @@ def edit_company(company_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         try:
             company = Companies.query.filter_by(id=company_id, is_active=True).first()
             if not company:
+                log_body = f'IP: {request.remote_addr} | Company does not exist'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'Company does not exist'}), 400
 
             data = request.get_json()
@@ -985,6 +1166,8 @@ def edit_company(company_id):
             new_company_name = data['company_name']
             update_company_name(new_company_name, company.company_name)
             
+            log_body = f'IP: {request.remote_addr} | Company data updated'
+            logging.info(f'{log_body}')
             return jsonify({'message': 'Company updated successfully. '}), 200
 
         except Exception as e:
@@ -1007,6 +1190,8 @@ def company_add_user(company_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
@@ -1015,6 +1200,8 @@ def company_add_user(company_id):
         try:
             company = Companies.query.filter_by(id=company_id, is_active=True).first()
             if not company:
+                log_body = f'IP: {request.remote_addr} | Company does not exist'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'Company does not exist'}), 400
 
             current_employees = company.company_users
@@ -1027,6 +1214,8 @@ def company_add_user(company_id):
                     employees_to_add.append(em)
             
             if not employees_to_add:
+                log_body = f'IP: {request.remote_addr} | No new employees to add'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'No new employees to add'}), 400
 
             final_employees = company.company_users + employees_to_add
@@ -1040,6 +1229,8 @@ def company_add_user(company_id):
             msg = f'You can register at {register_url} with this id: {company.special_id}'
             employee_mail_queue(employees_to_add, subj, msg)
 
+            log_body = f'IP: {request.remote_addr} | Employees added to company'
+            logging.info(f'{log_body}')
             return jsonify({'message': 'Employees updated succesfully. Added: ' + str(final_employees)}), 200
         except Exception as e:
             log_body = f'Admin > Company Add Employee > Request Operation > ERROR : {repr(e)}'
@@ -1062,6 +1253,8 @@ def company_remove_user(company_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
@@ -1072,6 +1265,8 @@ def company_remove_user(company_id):
             current_employees = company.company_users[:]
 
             if not current_employees:
+                log_body = f'IP: {request.remote_addr} | Company does not have employees'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'Company does not have any employees'}), 400
 
             if employee_to_remove in current_employees:
@@ -1082,6 +1277,9 @@ def company_remove_user(company_id):
                 
             setattr(company, 'company_users', current_employees)
             db.session.commit()
+
+            log_body = f'IP: {request.remote_addr} | Employee removed from company'
+            logging.info(f'{log_body}')
             return jsonify({'message': 'Employee removed succesfully'}), 200
         except Exception as e:
             log_body = f'Admin > Company Remove Employee > Request Operation > ERROR : {repr(e)}'
@@ -1103,9 +1301,13 @@ def admin_employees(page_no):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         if page_no < 1:
+            log_body = f'IP: {request.remote_addr} | Invalid page number'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Page number must at least be 1'}), 400
 
         data = request.get_json()
@@ -1124,6 +1326,8 @@ def admin_employees(page_no):
         employees = db_filter_admin('employees', selected_filter, selected_sort, is_ascending, limit, offset)
         fav_amounts = get_fav_amount(is_employee=True)
 
+        log_body = f'IP: {request.remote_addr} | Employees retrieved'
+        logging.info(f'{log_body}')
         return jsonify({'max_pages': number_of_pages, 'employees': employees, 'fav_amounts': fav_amounts}), 200
     except Exception as e:
         log_body = f'Admin > Employees > ERROR : {repr(e)}'
@@ -1139,16 +1343,22 @@ def admin_employee_get(employee_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         employee = Employees.query.filter_by(id=employee_id, is_active=True).first()
 
         if not employee:
+            log_body = f'IP: {request.remote_addr} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         employee = employee.to_dict()
         fav_amount = db_count_student_fav(employee['id'])
 
+        log_body = f'IP: {request.remote_addr} | Employee retrieved'
+        logging.info(f'{log_body}')
         return jsonify({**employee, "fav_amount": fav_amount}), 200
     except Exception as e:
         log_body = f'Admin > Employee Get > ERROR : {repr(e)}'
@@ -1165,6 +1375,8 @@ def admin_employee_edit(employee_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()['values']
@@ -1181,6 +1393,8 @@ def admin_employee_edit(employee_id):
         try:
             employee = Employees.query.filter_by(id=employee_id, is_active=True).first()
             if not employee:
+                log_body = f'IP: {request.remote_addr} | Employee not found'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'Employee does not exist'}), 400
 
             for key, value in data.items():
@@ -1199,6 +1413,8 @@ def admin_employee_edit(employee_id):
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong in request operations'}), 500
 
+        log_body = f'IP: {request.remote_addr} | Employee edited'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Employee edited succesfully'}), 200
     except Exception as e:
         log_body = f'Admin > Employee Edit > ERROR : {repr(e)}'
@@ -1215,15 +1431,21 @@ def admin_employee_favourites(employee_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         employee = Employees.query.filter_by(id=employee_id, is_active=True).first()
 
         if not employee:
+            log_body = f'IP: {request.remote_addr} | Employee not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Employee does not exist'}), 400
 
         favourited_students = db_get_student_for_fav(employee.id)
 
+        log_body = f'IP: {request.remote_addr} | Employee favourites retrieved'
+        logging.info(f'{log_body}')
         return jsonify({'favourites': favourited_students}), 200
     except Exception as e:
         log_body = f'Admin > Employee Favourites > ERROR : {repr(e)}'
@@ -1240,6 +1462,8 @@ def admin_employees_multiple_remove():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
@@ -1247,6 +1471,8 @@ def admin_employees_multiple_remove():
 
         try:
             update_is_activate_employees(employees_to_remove)
+            log_body = f'IP: {request.remote_addr} | Employees removed'
+            logging.info(f'{log_body}')
             return jsonify({'message': 'Employees removed succesfully.'}), 200
 
         except Exception as e:
@@ -1269,9 +1495,13 @@ def admin_students(page_no):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         if page_no < 1:
+            log_body = f'IP: {request.remote_addr} | Invalid page number'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Page number must at least be 1'}), 400
 
         data = request.get_json()
@@ -1289,7 +1519,9 @@ def admin_students(page_no):
 
         students = db_filter_admin('students', selected_filter, selected_sort, is_ascending, limit, offset)
         fav_amounts = get_fav_amount(is_student=True)
-        print(fav_amounts)
+
+        log_body = f'IP: {request.remote_addr} | Students retrieved'
+        logging.info(f'{log_body}')
         return jsonify({'max_pages': number_of_pages, 'students': students, 'fav_amounts': fav_amounts}), 200
     except Exception as e:
         log_body = f'Admin > Students > ERROR : {repr(e)}'
@@ -1306,16 +1538,22 @@ def admin_student_get(student_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         student = Students.query.filter_by(id=student_id, is_active=True).first()
 
         if not student:
+            log_body = f'IP: {request.remote_addr} | Student not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Student does not exist'}), 400
 
         student = student.to_dict()
         fav_amount = db_count_employee_fav(student['id'])
 
+        log_body = f'IP: {request.remote_addr} | Student retrieved'
+        logging.info(f'{log_body}')
         return jsonify({**student, "fav_amount": fav_amount}), 200
     except Exception as e:
         log_body = f'Admin > Student Get > ERROR : {repr(e)}'
@@ -1332,6 +1570,8 @@ def admin_student_edit(student_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
@@ -1345,6 +1585,8 @@ def admin_student_edit(student_id):
         try:
             student = Students.query.filter_by(id=student_id, is_active=True).first()
             if not student:
+                log_body = f'IP: {request.remote_addr} | Student not found'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'Student does not exist'}), 400
 
             for key, value in data.items():
@@ -1355,6 +1597,8 @@ def admin_student_edit(student_id):
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong in request operations'}), 500
 
+        log_body = f'IP: {request.remote_addr} | Student edited'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Student edited succesfully'}), 200
     except Exception as e:
         log_body = f'Admin > Student Edit > ERROR : {repr(e)}'
@@ -1371,15 +1615,21 @@ def admin_student_favorite(student_id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         student = Students.query.filter_by(id=student_id, is_active=True).first()
 
         if not student:
+            log_body = f'IP: {request.remote_addr} | Student not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Student does not exist'}), 400
 
         favourited_employees = db_get_employee_for_fav(student.id)
         
+        log_body = f'IP: {request.remote_addr} | Student favourites retrieved'
+        logging.info(f'{log_body}')
         return jsonify({'favourites': favourited_employees}), 200
     except Exception as e:
         log_body = f'Admin > Student Favorite > ERROR : {repr(e)}'
@@ -1396,6 +1646,8 @@ def admin_students_multiple_remove():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
@@ -1403,6 +1655,8 @@ def admin_students_multiple_remove():
 
         try:
             update_is_activate_students(students_to_remove)
+            log_body = f'IP: {request.remote_addr} | Students removed'
+            logging.info(f'{log_body}')
             return jsonify({'message': 'Students removed succesfully.'}), 200
 
         except Exception as e:
@@ -1425,6 +1679,8 @@ def admin_create_program():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
@@ -1432,12 +1688,16 @@ def admin_create_program():
         program_code = data['program_code']
 
         if Programs.query.filter_by(program_code=program_code, program_name=program_name).first():
+            log_body = f'IP: {request.remote_addr} | Program already exists'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Program already exists'}), 400
 
         program = Programs(program_name, program_code)
         db.session.add(program)
         db.session.commit()
 
+        log_body = f'IP: {request.remote_addr} | Program created'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Program created succesfully'}), 200
 
     except Exception as e:
@@ -1455,6 +1715,8 @@ def admin_program_edit(id):
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
@@ -1464,18 +1726,26 @@ def admin_program_edit(id):
 
         program = Programs.query.filter_by(id=id).first()
         if not program:
+            log_body = f'IP: {request.remote_addr} | Program not found'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Program does not exist'}), 400
 
         if program.program_code == new_program_code and program.program_name == new_program_name:
+            log_body = f'IP: {request.remote_addr} | Program not changed'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Same values given.'}), 400
 
         if Programs.query.filter_by(program_code=new_program_code).filter_by(program_name=new_program_name).first():
+            log_body = f'IP: {request.remote_addr} | Program already exists'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'Program already exists'}), 400
 
         setattr(program, 'program_name', new_program_name)
         setattr(program, 'program_code', new_program_code)
         db.session.commit()
 
+        log_body = f'IP: {request.remote_addr} | Program edited'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Program edited succesfully'}), 200
     except Exception as e:
         log_body = f'Admin > Program Edit > ERROR : {repr(e)}'
@@ -1492,6 +1762,8 @@ def admin_program_invite_students():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
@@ -1500,6 +1772,8 @@ def admin_program_invite_students():
         students_to_invite = data['emails']
 
         if not students_to_invite:
+            log_body = f'IP: {request.remote_addr} | No students to invite'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'No emails received'}), 400
 
         students_invited = []
@@ -1507,6 +1781,8 @@ def admin_program_invite_students():
         try:
             program = Programs.query.filter_by(program_name=program_name, program_code=program_code).first()
             if not program:
+                log_body = f'IP: {request.remote_addr} | Program not found'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'Program does not exist'}), 400
 
             register_url = FRONTEND_LINK + '/student/register'
@@ -1596,7 +1872,8 @@ def admin_program_invite_students():
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong in request operations'}), 500
         
-        print('Invited emails: ' + str(students_invited))
+        log_body = f'IP: {request.remote_addr} | Students invited'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Students invited succesfully: ' + str(students_invited)}), 200
     except Exception as e:
         log_body = f'Admin > Program > Add Students > ERROR : {repr(e)}'
@@ -1614,10 +1891,14 @@ def admin_get_programs():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         programs_list = get_programs()
         
+        log_body = f'IP: {request.remote_addr} | Programs list'
+        logging.info(f'{log_body}')
         return jsonify({'programs': programs_list}), 200
     except Exception as e:
         log_body = f'Admin > Program > ERROR : {repr(e)}'
@@ -1633,6 +1914,8 @@ def admin_program_remove():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         data = request.get_json()
@@ -1642,6 +1925,8 @@ def admin_program_remove():
         try:
             program = Programs.query.filter_by(program_name=program_name, program_code=program_code).first()
             if not program:
+                log_body = f'IP: {request.remote_addr} | Program not found'
+                logging.warning(f'{log_body}')
                 return jsonify({'message': 'Program does not exist'}), 400
 
             db.session.delete(program)
@@ -1651,6 +1936,8 @@ def admin_program_remove():
             logging.warning(f'IP: {request.remote_addr} | {log_body}')
             return jsonify({'message': 'Something went wrong in request operations'}), 500
 
+        log_body = f'IP: {request.remote_addr} | Program removed'
+        logging.info(f'{log_body}')
         return jsonify({'message': 'Program removed succesfully'}), 200
     except Exception as e:
         log_body = f'Admin > Program > Remove > ERROR : {repr(e)}'
@@ -1667,6 +1954,8 @@ def admin_data():
         user_type = jwt_identity['user_type']
 
         if user_type != 'admin':
+            log_body = f'IP: {request.remote_addr} | Invalid user type'
+            logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
         students_table_count  = general_select_count('students')
@@ -1758,6 +2047,8 @@ def admin_data():
             'filter_top5' : filter_top
         }
 
+        log_body = f'IP: {request.remote_addr} | Data retrieved'
+        logging.info(f'{log_body}')
         return jsonify(**data), 200
     except Exception as e:
         log_body = f'Admin > Data > ERROR : {repr(e)}'
