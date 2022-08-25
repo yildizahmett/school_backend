@@ -553,7 +553,7 @@ def get_specific_data(member, needed_data, get_raw=False, direct_data=False):
         return jsonify(final_data), 200
     except Exception as e:
         log_body = f'get_specific_data > ERROR : {repr(e)}'
-        logging.warning(f'{log_body}')
+        logging.warning(f'User: {member.email} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 def update_table_data(data, member, db):
@@ -583,7 +583,7 @@ def update_table_data(data, member, db):
         return message
     except Exception as e:
         log_body = f'update_table_data > ERROR : {repr(e)}'
-        logging.warning(f'{log_body}')
+        logging.warning(f'User: {member.email} | {log_body}')
         return 'ERROR: Something went wrong while changing data.'
 
 def update_profile_data(request, jwt_identitiy, Members, needed_data):
@@ -616,12 +616,12 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
                 return jsonify({'message': 'User updated successfully. ' + message}), 200
 
         except Exception as e:
-            logging.info('update_profile_data : Request Operations : ERROR : ' + repr(e))
+            logging.info(f'User: {email} | Update_profile_data : Request Operations : ERROR : ' + repr(e))
             return jsonify({'message': 'Something went wrong in request operations'}), 500
 
     except Exception as e:
         log_body = f'update_profile_data > ERROR : {repr(e)}'
-        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        logging.warning(f'User: {email} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
 def sort_by_key(data, param):
