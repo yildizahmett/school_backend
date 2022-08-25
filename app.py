@@ -10,6 +10,8 @@ from scripts.util import app, bcrypt, company_invite_total, employee_mail_queue,
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
+from scripts.send_mail import send_mail
+
 
 def generate_confirmation_token(email):
     try:
@@ -263,13 +265,10 @@ def student_confirm_new_password(token):
 
         hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
 
-        student = Students.query.filter_by(email=email).first()
+        student = Students.query.filter_by(email=email, is_active=True).first()
 
         if not student:
             return jsonify({'message': 'Student does not exist'}), 400
-
-        if student and not student.is_active:
-            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         setattr(student, 'password', hashed_password)
         db.session.commit()
@@ -322,13 +321,10 @@ def student_reset_password(token):
         if not email:
             return jsonify({'message': 'The confirmation link is invalid or has expired.'}), 400
 
-        student = Students.query.filter_by(email=email).first()
+        student = Students.query.filter_by(email=email, is_active=True).first()
 
-        if not Students.query.filter_by(email=email).first():
+        if not student:
             return jsonify({'message': 'Student does not exist'}), 400
-
-        if student and not student.is_active:
-            return jsonify({'message': 'Something went wrong. Please contact with admin.'}), 400
 
         hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
 
@@ -407,6 +403,129 @@ def employee_login():
             return jsonify({'message': 'Incorrect password or email'}), 400
     except Exception as e:
         log_body = f'Employee > Login > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+@app.route('/employee/change-password', methods=['POST'])
+@limiter.limit("3/second")
+@jwt_required()
+def employee_change_password():
+    try:
+        jwt_data = get_jwt_identity()
+        user_type = jwt_data['user_type']
+        email = jwt_data['email']
+
+        if user_type != 'employee':
+            return jsonify({'message': 'You are not authorized to perform this action'}), 401
+
+        data = request.get_json()
+        new_password = data['new_password']
+        password = data['password']
+
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        if not bcrypt.check_password_hash(employee.password, password):
+            return jsonify({'message': 'Incorrect password'}), 400
+
+        token = generate_confirmation_token([email, new_password])
+
+        if token == -1:
+            return jsonify({'message': 'An error occured while trying to send email.'}), 400
+
+        confirm_url = FRONTEND_LINK + '/employee/confirm-new-password/' + token
+        msg = f'Please click on the link to reset your password: {confirm_url}'
+        subj = 'Confirm new password'
+        employee_mail_queue([email], msg, subj)
+
+    except Exception as e:
+        log_body = f'Employee > Change Password > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+@app.route('/employee/confirm-new-password/<token>')
+@limiter.limit("3/second")
+def employee_confirm_new_password(token):
+    try:
+        email, new_password = confirm_token(token)
+
+        if not email:
+            return jsonify({'message': 'The confirmation link is invalid or has expired.'}), 400
+
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        setattr(employee, 'password', hashed_password)
+        db.session.commit()
+
+        return jsonify({'message': 'Password reset successfully'}), 200
+
+    except Exception as e:
+        log_body = f'Employee > Confirm New Password > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+@app.route('/employee/forgot-password', methods=['POST'])
+@limiter.limit("3/second")
+def employee_forgot_password():
+    try:
+        data = request.get_json()
+        email = data['email']
+
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        token = generate_confirmation_token(email)
+
+        if token == -1:
+            return jsonify({'message': 'An error occured while trying to send email.'}), 400
+
+        confirm_url = FRONTEND_LINK + '/employee/reset-password/' + token
+        msg = f'Please click on the link to reset your password: {confirm_url}'
+        subj = 'Reset password'
+        employee_mail_queue([email], msg, subj)
+
+        return jsonify({'message': 'Email sent successfully'}), 200
+
+    except Exception as e:
+        log_body = f'Employee > Forgot Password > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+@app.route('/employee/reset-password/<token>', methods=['POST'])
+@limiter.limit("3/second")
+def employee_reset_password(token):
+    try:
+        data = request.get_json()
+        new_password = data['new_password']
+
+        email = confirm_token(token)
+
+        if not email:
+            return jsonify({'message': 'The confirmation link is invalid or has expired.'}), 400
+
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
+
+        if not employee:
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+
+        setattr(employee, 'password', hashed_password)
+        db.session.commit()
+
+        return jsonify({'message': 'Password reset successfully'}), 200
+
+    except Exception as e:
+        log_body = f'Employee > Reset Password > ERROR : {repr(e)}'
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
 
