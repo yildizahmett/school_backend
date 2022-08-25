@@ -62,6 +62,20 @@ def post_search_talent(selected_filter, filtered_by):
     channel.basic_publish(exchange='', routing_key='search_logging', body=str(body))
     connection.close()
 
+def search_talent_log(selected_filter, filtered_by):
+    date = datetime.now()
+    date = date.strftime('%Y-%m-%d %H:%M:%S')
+    query = f'insert into search(filter_content, filter_type, filtered_by, filter_date) values '
+    for key, value in selected_filter.items():
+        for v in value:
+            query += f'(\'{v}\', \'{key}\', {filtered_by}, \'{date}\'),'
+    query = query[:-1]
+    query += ";"
+
+    with engine.connect() as con:
+        con.execute(query)
+        con.close()
+
 def student_mail_queue(emails, body, subject):
     if not isinstance(emails, list):
         return

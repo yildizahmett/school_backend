@@ -2,8 +2,8 @@ import pika
 import sys
 import os
 import time
-from send_mail import send_mail
-from db_queue import search_talent_log
+from scripts.send_mail import send_mail
+from scripts.util import search_talent_log
 
 def main():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
