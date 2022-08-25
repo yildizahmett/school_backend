@@ -15,6 +15,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import pika
 
+
 TOKEN_EXPIRE_TIME = 2 # HOURS
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')

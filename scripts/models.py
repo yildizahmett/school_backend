@@ -227,22 +227,3 @@ class Search(db.Model):
         self.filtered_by = filtered_by
         self.filter_date = filter_date
 
-class Logs(db.Model):
-    __tablename__ = 'logs'
-    id = db.Column(db.Integer, primary_key=True)
-    request_data = db.Column(pg_JSON)
-    return_data = db.Column(pg_JSON)
-    requested_by = db.Column(db.Integer, nullable=True)
-    http_code = db.Column(db.Integer, nullable=True)
-    error = db.Column(db.String(500), nullable=True)
-    process_start_date = db.Column(db.DateTime, nullable=True)
-    process_end_date = db.Column(db.DateTime, nullable=True)
-
-    def __init__(self, request_data, return_data, requested_by, http_code, error, process_start_date, process_end_date):
-        self.request_data = request_data
-        self.return_data = return_data
-        self.requested_by = requested_by
-        self.http_code = http_code
-        self.error = error
-        self.process_start_date = process_start_date
-        self.process_end_date = process_end_date
