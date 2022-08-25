@@ -6,7 +6,7 @@ import json
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, company_invite_total, general_select_count, get_employment_rate, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, search_statistics, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import app, bcrypt, company_invite_total, employee_mail_queue, general_select_count, get_employment_rate, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, search_statistics, student_mail_queue, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
@@ -243,7 +243,8 @@ def profile_update_settings():
 
         confirm_url = FRONTEND_LINK + '/student/confirm-new-password/' + token
         msg = 'Please click the link to confirm your new password: {} '.format(confirm_url)
-        send_mail(student.email, 'Password Change', msg)
+        subj = 'Confirm new password'
+        student_mail_queue([email], msg, subj)
 
         return jsonify({'message': 'Verification email sent'}), 200
     except Exception as e:
@@ -300,7 +301,8 @@ def student_forgot_password():
 
         confirm_url = FRONTEND_LINK + '/student/reset-password/' + token
         msg = 'Please click the link to reset your password: {} '.format(confirm_url)
-        send_mail(student.email, 'Password Reset', msg)
+        subj = 'Reset password'
+        student_mail_queue([email], msg, subj)
 
         return jsonify({'message': 'Verification email sent'}), 200
     except Exception as e:
@@ -764,11 +766,10 @@ def company_register():
 
             if company_users:
                 # Send mails to employees so they know they can register
-                for em in company_users:
-                    register_url = FRONTEND_LINK + '/employee/register'
-                    subj = 'Dear {} Employee'.format(company.company_name.upper())
-                    msg = 'You can register at {} with this id: {}'.format(register_url, company.special_id)
-                    send_mail(em, subj, msg)
+                register_url = FRONTEND_LINK + '/employee/register'
+                subj = 'Dear {} Employee'.format(company.company_name.upper())
+                msg = 'You can register at {} with this id: {}'.format(register_url, company.special_id)
+                employee_mail_queue(company_users, msg, subj)
 
             return jsonify({'message': 'Company created successfully'}), 201
         except Exception as e:
@@ -916,11 +917,10 @@ def company_add_user(company_id):
             db.session.commit()
 
             # Send mails to employees so they know they can register
-            for em in employees_to_add:
-                register_url = FRONTEND_LINK + '/employee/register'
-                subj = 'Dear {} Employee'.format(company.company_name.upper())
-                msg = f'You can register at {register_url} with this id: {company.special_id}'
-                send_mail(em, subj, msg)
+            register_url = FRONTEND_LINK + '/employee/register'
+            subj = 'Dear {} Employee'.format(company.company_name.upper())
+            msg = f'You can register at {register_url} with this id: {company.special_id}'
+            employee_mail_queue(employees_to_add, subj, msg)
 
             return jsonify({'message': 'Employees updated succesfully. Added: ' + str(final_employees)}), 200
         except Exception as e:
@@ -1421,8 +1421,8 @@ def admin_program_invite_students():
 
                             subj = 'New UP School Program'
                             msg = f'You are added to new UP School Program: {program_name} \nPlease update your profile informations.'
-                            send_mail(student.email, subj, msg)
-
+                            student_mail_queue([student.email], msg, subj)
+                            setattr(student, 'profile_complete', False)
 
                     except Exception as e:
                         log_body = f'Admin > Program Invite > Student > ERROR : {repr(e)}'
@@ -1453,7 +1453,7 @@ def admin_program_invite_students():
 
                             subj = 'Dear {} Graduate'.format(program_name)
                             msg = 'You can register with the following link: {} .'.format(register_url)
-                            send_mail(st_mail, subj, msg)
+                            student_mail_queue([st_mail], msg, subj)
                     except Exception as e:
                         log_body = f'Admin > Program Invite > Invite Students > ERROR : {repr(e)}'
                         logging.warning(f'IP: {request.remote_addr} | {log_body}')
@@ -1466,7 +1466,7 @@ def admin_program_invite_students():
 
                     subj = 'Dear {} Graduate'.format(program_name)
                     msg = 'You can register with the following link: {} .'.format(register_url)
-                    send_mail(st_mail, subj, msg)
+                    student_mail_queue([st_mail], msg, subj)
 
                 except Exception as e:
                     print('Error:', e)

@@ -13,6 +13,7 @@ import random
 import string
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import pika
 
 TOKEN_EXPIRE_TIME = 2 # HOURS
 app = Flask(__name__)
@@ -44,6 +45,37 @@ REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@m
 
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
+
+
+def student_mail_queue(emails, body, subject):
+    if not isinstance(emails, list):
+        return
+    
+    if len(emails) < 1:
+        return
+
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
+    channel.queue_declare(queue='student_mail_queue')
+    for email in emails:
+        mail = {"email": email, "body": body, "subject": subject}
+        channel.basic_publish(exchange='', routing_key='student_mail_sending', body=str(mail))
+    connection.close()
+
+def employee_mail_queue(emails, body, subject):
+    if not isinstance(emails, list):
+        return
+    
+    if len(emails) < 1:
+        return
+
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
+    channel.queue_declare(queue='employee_mail_queue')
+    for email in emails:
+        mail = {"email": email, "body": body, "subject": subject}
+        channel.basic_publish(exchange='', routing_key='employee_mail_sending', body=str(mail))
+    connection.close()
 
 def search_statistics(filter_type):
     additional_str = ''
