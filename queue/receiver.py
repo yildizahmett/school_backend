@@ -3,6 +3,7 @@ import sys
 import os
 import time
 from send_mail import send_mail
+from db_queue import search_talent_log
 
 def main():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -43,8 +44,12 @@ def main():
 
     def callback_search_log(ch, method, properties, body):
         print(" [x] Received %r" % body)
-        k=body.decode()
-        print(k)
+        info = eval(body.decode())
+
+        selected_filter = info['selected_filter']
+        filtered_by = info['filtered_by']
+
+        search_talent_log(selected_filter, filtered_by)
         time.sleep(1)
 
     channel.basic_consume(queue='student_mail_sending', on_message_callback=callback_std_mail, auto_ack=True)

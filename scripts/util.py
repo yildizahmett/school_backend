@@ -47,6 +47,21 @@ SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_educatio
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
 
+def post_search_talent(selected_filter, filtered_by):
+    if len(selected_filter.keys()) < 1:
+        return
+    if 'salary_min' in selected_filter:
+        del selected_filter['salary_min']
+    if 'salary_max' in selected_filter:
+        del selected_filter['salary_max']
+
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
+    channel.queue_declare(queue='search_logging')
+    body = {"selected_filter": selected_filter, "filtered_by": filtered_by}
+    channel.basic_publish(exchange='', routing_key='search_logging', body=str(body))
+    connection.close()
+
 def student_mail_queue(emails, body, subject):
     if not isinstance(emails, list):
         return
@@ -122,28 +137,6 @@ def company_invite_total():
         result = con.execute(query)
         con.close()
     return result.fetchone()[0]
-
-def post_search_talent(selected_filter, filtered_by):
-    if len(selected_filter.keys()) < 1:
-        return
-    if 'salary_min' in selected_filter:
-        del selected_filter['salary_min']
-    if 'salary_max' in selected_filter:
-        del selected_filter['salary_max']
-
-    date = datetime.now()
-    date = date.strftime('%Y-%m-%d %H:%M:%S')
-    query = f'insert into search(filter_content, filter_type, filtered_by, filter_date) values '
-    for key, value in selected_filter.items():
-        for v in value:
-            query += f'(\'{v}\', \'{key}\', {filtered_by}, \'{date}\'),'
-    query = query[:-1]
-    query += ";"
-
-    with engine.connect() as con:
-        con.execute(query)
-        con.close()
-
 
 def get_programs():
     query = text(f'select * from programs')
