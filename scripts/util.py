@@ -152,14 +152,13 @@ def get_employment_rate():
     return [dict(row) for row in result.fetchall()]
 
 def general_select_count(table_name, selected_filter = None):
-    where_query = ''
+    where_query = ' and '
     if selected_filter:
-        where_query = ' where '
         for key, value in selected_filter.items():
             where_query += f'{key} = {value} and '
         where_query = where_query[:-4]
 
-    query = text(f'select count(*) from {table_name} {where_query}')
+    query = text(f'select count(*) from {table_name} where is_active = True {where_query}')
     with engine.connect() as con:
         result = con.execute(query)
         con.close()
