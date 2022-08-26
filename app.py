@@ -1686,16 +1686,16 @@ def admin_employees_multiple_remove():
                     employee = Employees.query.filter_by(id=id, is_active=True).first()
                     company = Companies.query.filter_by(id=employee.company_id, is_active=True).first()
                     
-                    company_users = company.company_users
-                    print(company_users)
-                    company_users.remove(employee.email)
-                    print(company_users)
-                    setattr(company, 'company_users', company_users)
+                    current_employees = company.company_users[:]
+                    print(current_employees)
+                    current_employees.remove(employee.email)
+                    print(current_employees)
+                    setattr(company, 'company_users', current_employees)
                     db.session.commit()
                 except Exception as e:
                     log_body = f'ERROR: {repr(e)}'
                     logging.warning(f'{log_body}')
-
+        
             update_is_activate_employees(employees_to_remove)
 
             log_body = f'IP: {request.remote_addr} | Employees removed'
