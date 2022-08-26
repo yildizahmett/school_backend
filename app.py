@@ -1,12 +1,14 @@
 import math
-from flask import request, jsonify, url_for
+from flask import request, jsonify, url_for, send_file
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 import json
+import os
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import app, bcrypt, company_invite_total, employee_mail_queue, general_select_count, get_employment_rate, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, search_statistics, student_mail_queue, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import EMPLOYEE_EDIT_CHANGEABLE_FIELDS, app, bcrypt, company_invite_total, employee_mail_queue, general_select_count, get_employment_rate, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, search_statistics, student_mail_queue, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
@@ -36,6 +38,138 @@ def confirm_token(token, expiration=18000):
     except:
         return False
 
+
+@app.route('/student/upload-cv/<int:id>', methods=['POST'])
+@limiter.limit("1/second;2/minute;5/hour;10/day", override_defaults=False)
+@jwt_required()
+def upload_cv(id):
+    try:
+        jwt_data = get_jwt_identity()
+        user_type = jwt_data['user_type']
+        email = jwt_data['email']
+
+        if user_type != 'student':
+            log_body = f'User: {email} | Wrong user type'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'You are not a student'}), 401
+
+        student = Students.query.filter_by(email=email, is_active=True).first()
+        
+        if not student:
+            log_body = f'Student not found'
+            logging.warning(f'User: {email} | {log_body}')
+            return jsonify({'message': 'Student does not exist'}), 400
+
+        if student.id != id:
+            log_body = f'Student id does not match'
+            logging.warning(f'User: {email} | {log_body}')
+            return jsonify({'message': 'Student id does not match'}), 400
+
+        if 'file' not in request.files:
+            log_body = f'User: {email} | No file attached'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'No file attached'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            log_body = f'User: {email} | No file selected'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'No file selected'}), 400
+        
+        if (file.filename.split('.')[-1] != 'pdf' and not file):
+            log_body = f'User: {email} | Wrong file type'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'Wrong file type'}), 400
+
+        file.filename = "cv.pdf"
+        filename = secure_filename(file.filename)
+        
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        save_dir = current_directory + app.config['UPLOAD_FOLDER'] + "\\" + str(id) + "\\" + filename
+        
+        try:
+            file.save(save_dir)
+        except:
+            os.mkdir(current_directory + app.config['UPLOAD_FOLDER'] + "\\" + str(id))
+            file.save(save_dir)
+
+        log_body = f'User: {email} | File uploaded'
+        logging.info(f'{log_body}')
+        return jsonify({'message': 'File uploaded'}), 201
+    
+    except Exception as e:
+        log_body = f'User: {email} | {repr(e)}'
+        logging.warning(f'{log_body}')
+        return jsonify({'message': 'Something went wrong'}), 400
+
+
+@app.route('/employee/download-cv/<int:student_id>', methods=['GET'])
+@limiter.limit("1/second;5/minute;20/hour;100/day", override_defaults=False)
+@jwt_required()
+def download_cv(student_id):
+    try:
+        jwt_data = get_jwt_identity()
+        user_type = jwt_data['user_type']
+        email = jwt_data['email']
+
+        if user_type != 'employee':
+            log_body = f'User: {email} | Wrong user type'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'You are not authorized to perform this action'}), 401
+
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
+        if not employee:
+            log_body = f'Employee not found'
+            logging.warning(f'User: {email} | {log_body}')
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        if employee.t_c != True:
+            log_body = f'User: {email} | Terms and conditions not accepted'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'Terms and conditions not accepted.'}), 400
+
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        save_dir = current_directory + app.config['UPLOAD_FOLDER'] + "\\" + str(student_id) + "\\cv.pdf"
+        
+        if not os.path.exists(save_dir):
+            log_body = f'User: {email} | CV not found'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'CV not found'}), 400
+        
+        return send_file(save_dir, as_attachment=True)
+    
+    except Exception as e:
+        log_body = f'User: {email} | {repr(e)}'
+        logging.warning(f'{log_body}')
+        return jsonify({'message': 'Something went wrong'}), 400
+
+@app.route('/admin/download-cv/<int:student_id>', methods=['GET'])
+@limiter.limit("1/second;5/minute;20/hour;100/day", override_defaults=False)
+@jwt_required()
+def download_cv(student_id):
+    try:
+        jwt_data = get_jwt_identity()
+        user_type = jwt_data['user_type']
+        
+        if user_type != 'admin':
+            log_body = f'Wrong user type'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'You are not authorized to perform this action'}), 401
+
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        save_dir = current_directory + app.config['UPLOAD_FOLDER'] + "\\" + str(student_id) + "\\cv.pdf"
+        
+        if not os.path.exists(save_dir):
+            log_body = f'CV not found'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'CV not found'}), 400
+        
+        return send_file(save_dir, as_attachment=True)
+    
+    except Exception as e:
+        log_body = f'{repr(e)}'
+        logging.warning(f'{log_body}')
+        return jsonify({'message': 'Something went wrong'}), 400
 
 @app.route('/email-verification/<token>')
 @limiter.limit("3/second")
@@ -623,6 +757,83 @@ def employee_reset_password(token):
         log_body = f'Employee > Reset Password > ERROR : {repr(e)}'
         logging.warning(f'User: {email} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
+
+@app.route('/employee/profile', methods=['GET'])
+@limiter.limit("3/second")
+@jwt_required()
+def employee_profile():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'employee':
+            log_body = f'User: {jwt_identity["email"]} | Invalid user type'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'Invalid user type'}), 400
+
+        email = jwt_identity['email']
+        employee = Employees.query.filter_by(email=email, is_active=True).first()   
+        if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        employee_data = {
+            'id': employee.id,
+            'name': employee.name,
+            'surname': employee.surname,
+            'email': employee.email,
+            'phone': employee.phone,
+            't_c': employee.t_c,
+            't_c_date': employee.t_c_date,
+            't_c_expire_date': employee.t_c_expire_date,
+            'duration': employee.duration,
+            'company_name': employee.company_name,
+        }
+
+        log_body = f'User: {email} | Employee profile'
+        logging.info(f'{log_body}')
+        return jsonify({'message': 'Employee profile', 'employee': employee_data}), 200
+
+    except Exception as e:
+        log_body = f'Employee > Profile > ERROR : {repr(e)}'
+        logging.warning(f'User: {email} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
+@app.route('/employee/update-profile', methods=['POST'])
+@limiter.limit("3/second")
+@jwt_required()
+def employee_update_profile():
+    try:
+        jwt_identity = get_jwt_identity()
+        user_type = jwt_identity['user_type']
+
+        if user_type != 'employee':
+            log_body = f'User: {jwt_identity["email"]} | Invalid user type'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'Invalid user type'}), 400
+
+        email = jwt_identity['email']
+        employee = Employees.query.filter_by(email=email, is_active=True).first()
+        if not employee:
+            log_body = f'User: {email} | Employee not found'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'Employee does not exist'}), 400
+
+        data = request.get_json()
+
+        for field in EMPLOYEE_EDIT_CHANGEABLE_FIELDS:
+            if field in data:
+                setattr(employee, field, data[field])
+
+        db.session.commit()
+        return jsonify({'message': 'Employee profile updated'}), 200
+
+    except Exception as e:
+        log_body = f'Employee > Update Profile > ERROR : {repr(e)}'
+        logging.warning(f'User: {email} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
+
 
 @app.route('/employee/talent-market/<int:page_no>', methods=['GET'])
 @limiter.limit("3/second")

@@ -4,3 +4,4 @@ scripts/config.cfg
 scripts/config.cfg
 *.cfg
 debug.log
+*.pdf
