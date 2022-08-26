@@ -1682,6 +1682,19 @@ def admin_employees_multiple_remove():
 
         try:
             update_is_activate_employees(employees_to_remove)
+
+            for id in employees_to_remove:
+                try:
+                    employee = Employees.query.filter_by(id=id, is_active=True).first()
+                    company = Companies.query.filter_by(id=employee.company_id, is_active=True).first()
+
+                    company_users = company.company_users.remove(employee.email)
+                    setattr(company, 'company_users', company_users)
+                except:
+                    pass
+
+            db.session.commit()
+                
             log_body = f'IP: {request.remote_addr} | Employees removed'
             logging.info(f'{log_body}')
             return jsonify({'message': 'Employees removed succesfully.'}), 200

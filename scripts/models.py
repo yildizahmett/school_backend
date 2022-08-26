@@ -91,6 +91,7 @@ class Companies(db.Model):
     is_active = db.Column(db.Boolean, nullable=False)
     passive_date = db.Column(db.DateTime, nullable=True)
 
+    temp_employees = db.relationship('TempEmployees', backref='company_ref', lazy=True)
     employees = db.relationship('Employees', backref='company_ref', lazy=True)
     favourites = db.relationship('Favourites', backref='company_ref', lazy=True)
 
@@ -109,6 +110,22 @@ class Companies(db.Model):
 
     def to_dict(self):
         return {i.name: getattr(self, i.name) for i in self.__table__.columns}
+
+
+class TempEmployees(db.Model):
+    __tablename__ = 'temp_employees'
+    id=db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    is_active = db.Column(db.Boolean, nullable=False)
+    passive_date = db.Column(db.DateTime, nullable=True)
+
+    def __init__(self, email, company_id):
+        self.email = email
+        self.company_id = company_id
+        self.date = datetime.now()
+        self.is_active = True
 
 
 class Employees(db.Model):
