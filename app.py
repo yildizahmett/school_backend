@@ -2185,9 +2185,9 @@ def admin_data():
             logging.warning(f'{log_body}')
             return jsonify({'message': 'You are not an administrator'}), 401
 
-        students_table_count  = general_select_count('students')
+        students_table_count  = general_select_count('students', {'is_active': True})
         temps_table_count     = general_select_count('temps')
-        employees_table_count = general_select_count('employees')
+        employees_table_count = general_select_count('employees', {'is_active': True})
         
         # Ortalama İş Bulma Süresi Grafiği
         avg_job_find_time = 158.91
@@ -2195,12 +2195,12 @@ def admin_data():
         # Student data
         student_grad_total      = students_table_count + temps_table_count
         student_signup_total    = students_table_count
-        student_completed_total = general_select_count('students', {'profile_complete': "True"})
+        student_completed_total = general_select_count('students', {'profile_complete': "True", 'is_active': True})
 
         # Employee data
         employee_invite_total   = company_invite_total()
         employee_signup_total   = employees_table_count
-        employee_tc_total       = general_select_count('employees', {'t_c': "True"})
+        employee_tc_total       = general_select_count('employees', {'t_c': "True", 'is_active': True})
 
         grad_profile = {
             'grad_total': student_grad_total,

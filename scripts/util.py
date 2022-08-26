@@ -128,10 +128,10 @@ def company_based_employee_rates():
             case when sign_up is null then 0 else sign_up end sign_up,
             case when tc_accept is null then 0 else tc_accept end tc_accept 
             from (select K.*, D.sign_up, D.tc_accept 
-                from (select company_name, array_length(company_users, 1) as invites from companies) K
+                from (select company_name, array_length(company_users, 1) as invites from companies where is_active = True) K
             left join (select company_name, count(*) as sign_up, 
                     sum(case t_c when True then 1 else 0 end) as tc_accept 
-            from employees group by company_name) D on K.company_name = D.company_name) U
+            from employees where is_active = True group by company_name) D on K.company_name = D.company_name) U
             """
 
     with engine.connect() as con:
@@ -142,7 +142,7 @@ def company_based_employee_rates():
 
 def get_employment_rate():
     query = text(f'''select grad_status, count(grad_status) from students
-                     where grad_status is not null
+                     where grad_status is not null and is_active = True
                      group by grad_status''')
 
     with engine.connect() as con:
@@ -152,13 +152,14 @@ def get_employment_rate():
     return [dict(row) for row in result.fetchall()]
 
 def general_select_count(table_name, selected_filter = None):
-    where_query = ' and '
+    where_query = ''
     if selected_filter:
+        where_query = ' where '
         for key, value in selected_filter.items():
             where_query += f'{key} = {value} and '
         where_query = where_query[:-4]
 
-    query = text(f'select count(*) from {table_name} where is_active = True {where_query}')
+    query = text(f'select count(*) from {table_name} {where_query}')
     with engine.connect() as con:
         result = con.execute(query)
         con.close()
