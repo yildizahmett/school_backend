@@ -1438,7 +1438,7 @@ def company_add_user(company_id):
             register_url = FRONTEND_LINK + '/employee/register'
             subj = 'Dear {} Employee'.format(company.company_name.upper())
             msg = f'You can register at {register_url} with this id: {company.special_id}'
-            employee_mail_queue(employees_to_add, subj, msg)
+            employee_mail_queue(employees_to_add, msg, subj)
 
             log_body = f'IP: {request.remote_addr} | Employees added to company'
             logging.info(f'{log_body}')
