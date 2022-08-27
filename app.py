@@ -231,7 +231,11 @@ def report():
         db.session.commit()
 
         # TODO: Send email to REPORTING_MAILS
+        subj = "[URGENT] UP School Report"
+        body = f"User: {report_email} \nUser Type: {report_user} \nRoute: {report_route} \nMessage: {report_message}"
 
+        employee_mail_queue(REPORTING_MAILS, body, subj)
+        return  jsonify({'message': 'Report sent successfully'}), 200
     except Exception as e:
         log_body = f'report > ERROR > {repr(e)}'
         logging.warning(f'User: {"admin" if user_type == "admin" else report_email} | {log_body}')
