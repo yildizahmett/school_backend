@@ -124,6 +124,31 @@ def search_statistics(filter_type):
         con.close()
     return [dict(row) for row in result.fetchall()]
 
+def program_based_student_rates():
+    query = """
+            select 
+                case when z.program_name is null then p.program_name else z.program_name end,
+                case when sign_up is null then 0 else sign_up end, 
+                case when invite is null then 0 else invite end, 
+                case when profile_complete is null then 0 else profile_complete end
+            from 
+                (select program_name, count(program_name) as sign_up, sum(case profile_complete when True then 1 else 0 end) as profile_complete
+            from 
+                (select id, profile_complete, json_array_elements(school_programs) ->> 'program_name' as program_name from students) as t
+            group by program_name) z
+            full join 
+                (select program_name, count(program_name) as invite
+                from 
+                    (select id, unnest(program_names) as program_name from temps) k
+            group by program_name) p on z.program_name = p.program_name
+            """
+
+    with engine.connect() as con:
+        result = con.execute(query)
+        con.close()
+    
+    return [dict(row) for row in result.fetchall()]
+
 def company_based_employee_rates():
     query = """
             select U.company_name, U.invites,

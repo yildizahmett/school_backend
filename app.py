@@ -8,7 +8,7 @@ import os
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import EMPLOYEE_EDIT_CHANGEABLE_FIELDS, app, bcrypt, company_based_employee_rates, company_invite_total, employee_mail_queue, general_select_count, get_employment_rate, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, search_statistics, student_mail_queue, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import EMPLOYEE_EDIT_CHANGEABLE_FIELDS, app, bcrypt, company_based_employee_rates, company_invite_total, employee_mail_queue, general_select_count, get_employment_rate, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, program_based_student_rates, search_statistics, student_mail_queue, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
@@ -2216,30 +2216,7 @@ def admin_data():
 
         company_signup = company_based_employee_rates()
         employment_rate = get_employment_rate()
-
-        grad_profile_programs = {
-            'data-science' : {
-                'grad_total': 140,
-                'signup_total': 60,
-                'completed_total' : 30
-            },
-            'frontend' : {
-                'grad_total': 20,
-                'signup_total': 37,
-                'completed_total' : 21
-            },
-            'backend' : {
-                'grad_total': 30,
-                'signup_total': 31,
-                'completed_total' : 26
-            },
-            'fullstack' : {
-                'grad_total': 90,
-                'signup_total': 39,
-                'completed_total' : 24
-            }
-        }
-
+        grad_profile_programs = program_based_student_rates()
         
         job_title_search = search_statistics('job_title')
         highest_education_grad_date_search = search_statistics('highest_education_grad_date')
