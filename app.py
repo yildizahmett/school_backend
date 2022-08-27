@@ -40,7 +40,7 @@ def confirm_token(token, expiration=18000):
 
 
 @app.route('/student/upload-cv/<int:id>', methods=['POST'])
-@limiter.limit("1/second;2/minute;5/hour;10/day", override_defaults=False)
+@limiter.limit("2/second;2/minute;5/hour;10/day", override_defaults=False)
 @jwt_required()
 def upload_cv(id):
     try:
@@ -104,7 +104,7 @@ def upload_cv(id):
 
 
 @app.route('/employee/download-cv/<int:student_id>', methods=['GET'])
-@limiter.limit("1/second;5/minute;20/hour;100/day", override_defaults=False)
+@limiter.limit("2/second;5/minute;20/hour;100/day", override_defaults=False)
 @jwt_required()
 def employee_download_cv(student_id):
     try:
@@ -144,7 +144,7 @@ def employee_download_cv(student_id):
         return jsonify({'message': 'Something went wrong'}), 400
 
 @app.route('/admin/download-cv/<int:student_id>', methods=['GET'])
-@limiter.limit("1/second;5/minute;20/hour;100/day", override_defaults=False)
+@limiter.limit("2/second;5/minute;20/hour;100/day", override_defaults=False)
 @jwt_required()
 def download_cv(student_id):
     try:
@@ -172,7 +172,7 @@ def download_cv(student_id):
         return jsonify({'message': 'Something went wrong'}), 400
 
 @app.route('/email-verification/<token>')
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def email_verify(token):
     try:
         email = confirm_token(token)
@@ -205,7 +205,7 @@ def email_verify(token):
 
 
 @app.route('/report', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def report():
     try:
@@ -242,7 +242,7 @@ def report():
 #   STUDENT Routes
 # ========================================================================================
 @app.route('/student/register', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def student_register():
     try:
         data = request.get_json()
@@ -305,7 +305,7 @@ def student_register():
 
 
 @app.route('/student/login', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def student_login():
     try:
         data = request.get_json()
@@ -342,35 +342,35 @@ def student_login():
 #   General, Activities, Hardskills, Softskills, Job, Settings
 #   'Settings' route will be coded later -> features mail sending, changing email and password
 @app.route('/student/profile-update/general', methods=['GET', 'POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def profile_update_general():
     return update_profile_data(request, get_jwt_identity(), Students, DC_ST_GENERAL)
 
 
 @app.route('/student/profile-update/activities', methods=['GET', 'POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def profile_update_activities():
     return update_profile_data(request, get_jwt_identity(), Students, DC_ST_ACTIVITIES)
 
 
 @app.route('/student/profile-update/hardskills', methods=['GET', 'POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def profile_update_hardskills():
     return update_profile_data(request, get_jwt_identity(), Students, DC_ST_HARDSKILLS)
 
 
 @app.route('/student/profile-update/job', methods=['GET', 'POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def profile_update_job():
     return update_profile_data(request, get_jwt_identity(), Students, DC_ST_JOB)
 
 
 @app.route('/student/profile-update/settings/change-password', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def profile_update_settings():
     try:
@@ -421,7 +421,7 @@ def profile_update_settings():
 
 
 @app.route('/student/confirm-new-password/<token>')
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def student_confirm_new_password(token):
     try:
         email, new_password = confirm_token(token)
@@ -453,7 +453,7 @@ def student_confirm_new_password(token):
 
 
 @app.route('/student/forgot-password', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def student_forgot_password():
     try:
         data = request.get_json()
@@ -488,7 +488,7 @@ def student_forgot_password():
 
 
 @app.route('/student/reset-password/<token>', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def student_reset_password(token):
     try:
         data = request.get_json()
@@ -531,7 +531,7 @@ def student_reset_password(token):
 #   EMPLOYEE Routes
 # ========================================================================================
 @app.route('/employee/register', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def employee_register():
     try:
         data = request.get_json()
@@ -574,7 +574,7 @@ def employee_register():
         return jsonify({'message': 'Something went wrong'}), 500
     
 @app.route('/employee/login', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def employee_login():
     try:
         data = request.get_json()
@@ -606,7 +606,7 @@ def employee_login():
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/change-password', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def employee_change_password():
     try:
@@ -657,7 +657,7 @@ def employee_change_password():
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/confirm-new-password/<token>')
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def employee_confirm_new_password(token):
     try:
         email, new_password = confirm_token(token)
@@ -689,7 +689,7 @@ def employee_confirm_new_password(token):
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/forgot-password', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def employee_forgot_password():
     try:
         data = request.get_json()
@@ -724,7 +724,7 @@ def employee_forgot_password():
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/reset-password/<token>', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def employee_reset_password(token):
     try:
         data = request.get_json()
@@ -759,7 +759,7 @@ def employee_reset_password(token):
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/profile', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def employee_profile():
     try:
@@ -801,7 +801,7 @@ def employee_profile():
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/update-profile', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def employee_update_profile():
     try:
@@ -836,7 +836,7 @@ def employee_update_profile():
 
 
 @app.route('/employee/talent-market/<int:page_no>', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def employee_talent_get(page_no):
     try:
@@ -883,7 +883,7 @@ def employee_talent_get(page_no):
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/add-favourite', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def employee_add_favourite():
     try:
@@ -936,7 +936,7 @@ def employee_add_favourite():
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/remove-favourite', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def employee_remove_favourite():
     try:
@@ -987,7 +987,7 @@ def employee_remove_favourite():
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/my-favourites', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def employee_my_favourites():
     try:
@@ -1019,7 +1019,7 @@ def employee_my_favourites():
 
 
 @app.route('/employee/student-profile/<int:student_id>', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def employee_student_profile(student_id):
     try:
@@ -1057,7 +1057,7 @@ def employee_student_profile(student_id):
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/t-c', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def employee_t_c():
     try:
@@ -1102,7 +1102,7 @@ def employee_t_c():
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/employee/t-c', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def employee_t_c_update():
     try:
@@ -1152,7 +1152,7 @@ def employee_t_c_update():
 #   ADMINISTRATOR Routes
 # ========================================================================================
 @app.route('/admin/login', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 def administrator_login():
     try:
         data = request.get_json()
@@ -1188,7 +1188,7 @@ def administrator_login():
 
 
 @app.route('/admin/company', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_test_companies():
     try:
@@ -1217,7 +1217,7 @@ def admin_test_companies():
 
 
 @app.route('/admin/company/register', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def company_register():
     try:
@@ -1278,7 +1278,7 @@ def company_register():
 
 # Admin removes a company from DB
 @app.route('/admin/company/remove', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def company_remove():
     try:
@@ -1318,7 +1318,7 @@ def company_remove():
 
 # Admin gets specific company's data
 @app.route('/admin/company/<int:company_id>', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def get_company(company_id):
     try:
@@ -1353,7 +1353,7 @@ def get_company(company_id):
 
 
 @app.route('/admin/company/<int:company_id>/edit', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def edit_company(company_id):
     try:
@@ -1393,7 +1393,7 @@ def edit_company(company_id):
 
 
 @app.route('/admin/company/<int:company_id>/add-employee', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def company_add_user(company_id):
     try:
@@ -1456,7 +1456,7 @@ def company_add_user(company_id):
 
 # Admin removes an employee of a company
 @app.route('/admin/company/<int:company_id>/remove-employee', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def company_remove_user(company_id):
     try:
@@ -1504,7 +1504,7 @@ def company_remove_user(company_id):
 
 
 @app.route('/admin/employee/<int:page_no>', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_employees(page_no):
     try:
@@ -1546,7 +1546,7 @@ def admin_employees(page_no):
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/admin/employee/get/<int:employee_id>', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_employee_get(employee_id):
     try:
@@ -1578,7 +1578,7 @@ def admin_employee_get(employee_id):
 
 
 @app.route('/admin/employee/edit/<int:employee_id>', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_employee_edit(employee_id):
     try:
@@ -1634,7 +1634,7 @@ def admin_employee_edit(employee_id):
 
 
 @app.route('/admin/employee/favourites/<int:employee_id>', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_employee_favourites(employee_id):
     try:
@@ -1665,7 +1665,7 @@ def admin_employee_favourites(employee_id):
 
 
 @app.route('/admin/employee/multiple-remove', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_employees_multiple_remove():
     try:
@@ -1714,7 +1714,7 @@ def admin_employees_multiple_remove():
 
 
 @app.route('/admin/student/<int:page_no>', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_students(page_no):
     try:
@@ -1757,7 +1757,7 @@ def admin_students(page_no):
 
 
 @app.route('/admin/student/get/<int:student_id>', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_student_get(student_id):
     try:
@@ -1789,7 +1789,7 @@ def admin_student_get(student_id):
 
 
 @app.route('/admin/student/edit/<int:student_id>', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_student_edit(student_id):
     try:
@@ -1834,7 +1834,7 @@ def admin_student_edit(student_id):
 
 
 @app.route('/admin/student/favourites/<int:student_id>', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_student_favorite(student_id):
     try:
@@ -1865,7 +1865,7 @@ def admin_student_favorite(student_id):
 
 # Admin - Multiple remove students
 @app.route('/admin/student/multiple-remove', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_students_multiple_remove():
     try:
@@ -1898,7 +1898,7 @@ def admin_students_multiple_remove():
 
 
 @app.route('/admin/program/create', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_create_program():
     try:
@@ -1934,7 +1934,7 @@ def admin_create_program():
 
 
 @app.route('/admin/program/edit/<id>', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_program_edit(id):
     try:
@@ -1981,7 +1981,7 @@ def admin_program_edit(id):
 
 
 @app.route('/admin/program/invite', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_program_invite_students():
     try:
@@ -2110,7 +2110,7 @@ def admin_program_invite_students():
 
 # get programs
 @app.route('/admin/program', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_get_programs():
     try:
@@ -2133,7 +2133,7 @@ def admin_get_programs():
         return jsonify({'message': 'Something went wrong'}), 500
 
 @app.route('/admin/program/remove', methods=['POST'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_program_remove():
     try:
@@ -2173,7 +2173,7 @@ def admin_program_remove():
 
 
 @app.route('/admin/data', methods=['GET'])
-@limiter.limit("3/second")
+@limiter.limit("2/second")
 @jwt_required()
 def admin_data():
     try:
