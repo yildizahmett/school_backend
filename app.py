@@ -104,7 +104,7 @@ def upload_cv(id):
 
 
 @app.route('/employee/download-cv/<int:student_id>', methods=['GET'])
-@limiter.limit("2/second;5/minute;20/hour;100/day", override_defaults=False)
+@limiter.limit("20/second;50/minute;200/hour;1000/day", override_defaults=False)
 @jwt_required()
 def employee_download_cv(student_id):
     try:

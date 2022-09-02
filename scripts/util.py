@@ -635,15 +635,16 @@ def update_table_data(data, member, db):
 
 def update_profile_data(request, jwt_identitiy, Members, needed_data):
     try:
-        user_type = jwt_identitiy['user_type']
-        email = jwt_identitiy['email']
-
         message = ''
-
+        user_type = jwt_identitiy['user_type']
+        
         if user_type != 'student':
             log_body = f'update_profile_data > ERROR : User type is not student'
             logging.warning(f'User: {email} | {log_body}')
             return jsonify({'message': 'You are not a student'}), 401
+
+        user_type = jwt_identitiy['user_type']
+        email = jwt_identitiy['email']
 
         try:
             
