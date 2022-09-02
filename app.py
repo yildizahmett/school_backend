@@ -1051,9 +1051,11 @@ def employee_student_profile(student_id):
 
         student_info = get_specific_data(student, select_std(employee.t_c), get_raw=True, direct_data=True)
 
+        is_fav = (Favourites.query.filter_by(student_id=student_id, employee_id=employee.id, is_active=True).first()) is not None
+
         log_body = f'User: {email} | Student profile'
         logging.info(f'{log_body}')
-        return jsonify({'student': student_info, 't_c': employee.t_c}), 200
+        return jsonify({'student': student_info, 't_c': employee.t_c, 'is_fav': is_fav}), 200
 
     except Exception as e:
         log_body = f'Employee > Student Profile > ERROR : {repr(e)}'
