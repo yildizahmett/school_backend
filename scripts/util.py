@@ -407,8 +407,8 @@ def db_filter_employee(selected_table_name, selected_filter, to_sort, is_ascendi
         exec_str += "("
         if key == 'comp_skills':
             for i in value:
-                exec_str += "'" + i + "' = ANY(comp_skills) and "
-            exec_str = exec_str[:-5] + ") and "
+                exec_str += "'" + i + "' = ANY(comp_skills) or "
+            exec_str = exec_str[:-4] + ") and "
 
         elif key == 'languages':
             exec_str += "obj->> 'name' IN ("
@@ -465,8 +465,8 @@ def db_filter_student_count(selected_table_name, selected_filter):
         exec_str += "("
         if key == 'comp_skills':
             for i in value:
-                exec_str += "'" + i + "' = ANY(comp_skills) and "
-            exec_str = exec_str[:-5] + ") and "
+                exec_str += "'" + i + "' = ANY(comp_skills) or "
+            exec_str = exec_str[:-4] + ") and "
 
         elif key == 'languages':
             exec_str += "obj->> 'name' IN ("
