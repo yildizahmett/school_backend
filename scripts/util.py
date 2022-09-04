@@ -44,7 +44,7 @@ logging.basicConfig(format=format,
                         logging.StreamHandler()
                     ])
 
-REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@mef.edu.tr", "kaya.kerrem@gmail.com", "alperensayar@gmail.com"]
+REPORTING_MAILS = ["yildizah@mef.edu.tr", "yildizahmet2009@gmail.com", "kayake@mef.edu.tr", "kaya.kerrem@gmail.com", "alperensayar@gmail.com", "upschoolplatform@gmail.com"]
 
 SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
