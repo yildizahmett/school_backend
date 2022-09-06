@@ -15,6 +15,63 @@ from scripts.models import Companies, Employees, Favourites, Reports, Students, 
 from scripts.send_mail import send_mail
 
 
+def generate_email_template(text, link):
+    html = f"""\
+    <html>\
+    <head>\
+    <style>\
+    * {{\
+    margin: 0;\
+    font-family: Arial, Helvetica, sans-serif;\
+    }}\
+    .container {{\
+    display: grid;\
+    grid-template-columns: 1fr 1fr 1fr;\
+    background-color: #332C49;\
+    height: 100vh;\
+    }}\
+    .content {{\
+    padding: 3rem;\
+    background-color: #332C49;\
+    box-shadow: 0 3px 3px 3px #212121;
+    }}\
+    .logo {{\
+    padding: 0;\
+    margin: 2rem auto;\
+    max-width: 219px;\
+    }}\
+    .box {{\
+    margin: 0 auto;\
+    padding: 1rem;\
+    background-color: #f2f2f2;\
+    border-style: solid;\
+    border-color: #e2e2e2;\
+    border-radius: 15px;\
+    box-shadow: 0 5px 1rem #212121;\
+    max-width: 24rem;\
+    }}\
+    </style>\
+    </head>\
+    <body>\
+    <div class="container">\
+    <div class="empty-column"></div>\
+    <section class="content">\
+    <div class="box">\
+    <div class="logo">\
+    <img src="https://static.wixstatic.com/media/407b54_c3dd483f8c114756be830147489ef479~mv2.png/v1/fill/w_219,h_59,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/yatay.png" alt="logo" width="219" height="59">\
+    </div>\
+    <p style="display: inline;">{text}</p>\
+    <a style="margin: 0 0 1rem 0;word-break: break-all;" href="{link}">{link}</a>\
+    </div>\
+    </section>\
+    <div class="empty-column"></div>\
+    </div>\
+    </body>\
+    </html>"""
+    
+    return html
+
+
 def generate_confirmation_token(email):
     try:
         serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
@@ -411,7 +468,8 @@ def profile_update_settings():
             return jsonify({'message': 'An error has occured while trying to send email'}), 400
 
         confirm_url = FRONTEND_LINK + '/student/confirm-new-password/' + token
-        msg = 'Please click the link to confirm your new password: {} '.format(confirm_url)
+        # msg = 'Please click the link to confirm your new password: {} '.format(confirm_url)
+        msg = generate_email_template('Please click the link to confirm your new password: ', confirm_url)
         subj = 'Confirm new password'
         student_mail_queue([email], msg, subj)
 
@@ -478,8 +536,9 @@ def student_forgot_password():
             return jsonify({'message': 'An error has occured while trying to send email.'}), 400
 
         confirm_url = FRONTEND_LINK + '/student/reset-password/' + token
-        msg = 'Please click the link to reset your password: {} '.format(confirm_url)
-        subj = 'Reset password'
+        # msg = 'Please click the link to reset your password: {} '.format(confirm_url)
+        msg = generate_email_template('Please click the link to reset your password: ', confirm_url)
+        subj = 'Reset Password'
         student_mail_queue([email], msg, subj)
 
         log_body = f'User: {email} | Password reset email sent'
@@ -647,7 +706,8 @@ def employee_change_password():
             return jsonify({'message': 'An error occured while trying to send email.'}), 400
 
         confirm_url = FRONTEND_LINK + '/employee/confirm-new-password/' + token
-        msg = f'Please click on the link to reset your password: {confirm_url}'
+        # msg = f'Please click on the link to reset your password: {confirm_url}'
+        msg = generate_email_template('Please click the link to confirm your new password: ', confirm_url)
         subj = 'Confirm new password'
         employee_mail_queue([email], msg, subj)
 
@@ -714,7 +774,8 @@ def employee_forgot_password():
             return jsonify({'message': 'An error occured while trying to send email.'}), 400
 
         confirm_url = FRONTEND_LINK + '/employee/reset-password/' + token
-        msg = f'Please click on the link to reset your password: {confirm_url}'
+        # msg = f'Please click on the link to reset your password: {confirm_url}'
+        msg = generate_email_template('Please click the link to reset your password: ', confirm_url)
         subj = 'Reset password'
         employee_mail_queue([email], msg, subj)
 
@@ -1266,7 +1327,8 @@ def company_register():
                 # Send mails to employees so they know they can register
                 register_url = FRONTEND_LINK + '/employee/register'
                 subj = 'Dear {} Employee'.format(company.company_name.upper())
-                msg = 'You can register at {} with this id: {}'.format(register_url, company.special_id)
+                # msg = 'You can register at {} with this id: {}'.format(register_url, company.special_id)
+                msg = generate_email_template(f'With this id {company.special_id} you can register at: ', register_url)
                 employee_mail_queue(company_users, msg, subj)
             
             log_body = f'IP: {request.remote_addr} | Company registered'
@@ -1443,7 +1505,8 @@ def company_add_user(company_id):
             # Send mails to employees so they know they can register
             register_url = FRONTEND_LINK + '/employee/register'
             subj = 'Dear {} Employee'.format(company.company_name.upper())
-            msg = f'You can register at {register_url} with this id: {company.special_id}'
+            # msg = f'You can register at {register_url} with this id: {company.special_id}'
+            msg = generate_email_template(f'With this id {company.special_id} you can register at: ', register_url)
             employee_mail_queue(employees_to_add, msg, subj)
 
             log_body = f'IP: {request.remote_addr} | Employees added to company'
@@ -2047,7 +2110,8 @@ def admin_program_invite_students():
                             db.session.commit()
 
                             subj = 'New UP School Program'
-                            msg = f'You are added to new UP School Program: {program_name} \nPlease update your profile informations.'
+                            # msg = f'You are added to new UP School Program: {program_name} \nPlease update your profile informations.'
+                            msg = generate_email_template(f'You are added to new UP School Program: {program_name}. Please update your profile informations: ', FRONTEND_LINK)
                             student_mail_queue([student.email], msg, subj)
                             setattr(student, 'profile_complete', False)
 
@@ -2079,7 +2143,8 @@ def admin_program_invite_students():
                             db.session.commit()
 
                             subj = 'Dear {} Graduate'.format(program_name)
-                            msg = 'You can register with the following link: {} .'.format(register_url)
+                            # msg = 'You can register with the following link: {} .'.format(register_url)
+                            msg = generate_email_template('You can register with the following link: ', register_url)
                             student_mail_queue([st_mail], msg, subj)
                     except Exception as e:
                         log_body = f'Admin > Program Invite > Invite Students > ERROR : {repr(e)}'
@@ -2092,7 +2157,8 @@ def admin_program_invite_students():
                     db.session.add(temp_student)
 
                     subj = 'Dear {} Graduate'.format(program_name)
-                    msg = 'You can register with the following link: {} .'.format(register_url)
+                    # msg = 'You can register with the following link: {} .'.format(register_url)
+                    msg = generate_email_template('You can register with the following link: ', register_url)
                     student_mail_queue([st_mail], msg, subj)
 
                 except Exception as e:

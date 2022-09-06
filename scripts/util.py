@@ -580,7 +580,7 @@ DC_ST_ACTIVITIES    = 'activities'
 DC_ST_HARDSKILLS    = 'hardskills'
 DC_ST_JOB           = 'job'
 
-FRONTEND_LINK = 'http://localhost:3000'
+FRONTEND_LINK = 'https://school-frontend.vercel.app'
 
 def random_id_generator(size=8, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
