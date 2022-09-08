@@ -12,65 +12,7 @@ from scripts.util import EMPLOYEE_EDIT_CHANGEABLE_FIELDS, app, bcrypt, company_b
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
-from scripts.send_mail import send_mail
-
-
-def generate_email_template(text, link):
-    html = f"""\
-    <html>\
-    <head>\
-    <style>\
-    * {{\
-    margin: 0;\
-    font-family: Arial, Helvetica, sans-serif;\
-    }}\
-    .container {{\
-    display: grid;\
-    grid-template-columns: 1fr 1fr 1fr;\
-    background-color: #332C49;\
-    height: 100vh;\
-    }}\
-    .content {{\
-    padding: 3rem;\
-    background-color: #332C49;\
-    box-shadow: 0 3px 3px 3px #212121;
-    }}\
-    .logo {{\
-    padding: 0;\
-    margin: 2rem auto;\
-    max-width: 219px;\
-    }}\
-    .box {{\
-    margin: 0 auto;\
-    padding: 1rem;\
-    background-color: #f2f2f2;\
-    border-style: solid;\
-    border-color: #e2e2e2;\
-    border-radius: 15px;\
-    box-shadow: 0 5px 1rem #212121;\
-    max-width: 24rem;\
-    }}\
-    </style>\
-    </head>\
-    <body>\
-    <div class="container">\
-    <div class="empty-column"></div>\
-    <section class="content">\
-    <div class="box">\
-    <div class="logo">\
-    <img src="https://lh3.googleusercontent.com/drive-viewer/AJc5JmQpHjdHea7XnbT8AVgsovS6X4srrzpLcpURorFz6z7sPp3Fo8HvuUDF91_Yi2eHMUMch9qm60A=w1857-h981" alt="logo" width="219" height="59">\
-    </div>\
-    <p style="display: inline;">{text}</p>\
-    <a style="margin: 0 0 1rem 0;word-break: break-all;" href="{link}">{link}</a>\
-    </div>\
-    </section>\
-    <div class="empty-column"></div>\
-    </div>\
-    </body>\
-    </html>"""
-    
-    return html
-
+from scripts.send_mail import send_mail, generate_email_template
 
 def generate_confirmation_token(email):
     try:

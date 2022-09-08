@@ -4,9 +4,10 @@ import os
 import time
 from scripts.send_mail import send_mail
 from scripts.util import search_talent_log
+from scripts.util import app
 
 def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=app.config['RABBITMQ_HOST']))
     channel = connection.channel()
 
     channel.queue_declare(queue='student_mail_sending')
