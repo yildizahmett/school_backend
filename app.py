@@ -329,9 +329,13 @@ def student_register():
 
         try:
             student = Students(email, hashed_password, name, surname)
+            all_program = Programs.query.with_entities(Programs.program_name).filter_by(is_active=True).all()
+            all_program = [item for (item,) in all_program]
 
             programs = []
             for i in range(len(temp_student.program_names)):
+                if not temp_student.program_names[i] in all_program:
+                    continue
 
                 program_to_add = {
                     "github_link": "",
