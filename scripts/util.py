@@ -334,6 +334,8 @@ def db_filter_admin(selected_table_name, selected_filter, to_sort, is_ascending,
             exec_str = exec_str[:-1] + ") and "
         elif key == 't_c':
             exec_str += f"t_c = '{value[0]}' and "
+        elif key == 'profile_complete':
+            exec_str += f"profile_complete = '{value[0]}' and "
 
     exec_str = exec_str[:-5]
 
@@ -382,6 +384,8 @@ def db_filter_admin_count(selected_table_name, selected_filter):
             exec_str = exec_str[:-1] + ") and "
         elif key == 't_c':
             exec_str += f"t_c = '{value[0]}' and "
+        elif key == 'profile_complete':
+            exec_str += f"profile_complete = '{value[0]}' and "
 
     exec_str = exec_str[:-5]
 
