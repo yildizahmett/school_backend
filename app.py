@@ -58,7 +58,7 @@ def generate_email_template(text, link):
     <section class="content">\
     <div class="box">\
     <div class="logo">\
-    <img src="https://static.wixstatic.com/media/407b54_c3dd483f8c114756be830147489ef479~mv2.png/v1/fill/w_219,h_59,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/yatay.png" alt="logo" width="219" height="59">\
+    <img src="https://lh3.googleusercontent.com/drive-viewer/AJc5JmQpHjdHea7XnbT8AVgsovS6X4srrzpLcpURorFz6z7sPp3Fo8HvuUDF91_Yi2eHMUMch9qm60A=w1857-h981" alt="logo" width="219" height="59">\
     </div>\
     <p style="display: inline;">{text}</p>\
     <a style="margin: 0 0 1rem 0;word-break: break-all;" href="{link}">{link}</a>\
