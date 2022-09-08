@@ -24,7 +24,7 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=TOKEN_EXPIRE_TIME)
 limiter = Limiter(
     app,
     key_func=get_remote_address,
-    default_limits=["1000 per day", "500 per hour", "20 per minute"],
+    default_limits=["20000 per hour", "3000 per minute"],
     storage_uri = app.config['RATELIMIT_STORAGE_URI'],
     key_prefix='UPS'
 )
