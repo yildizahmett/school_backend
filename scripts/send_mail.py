@@ -1,7 +1,7 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from util import app
+from scripts.util import app
 
 def generate_email_template(text, link):
     html = f"""\
