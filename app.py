@@ -253,6 +253,8 @@ def student_register():
         password = data['password']
         name = data['name']
         surname = data['surname']
+        accepted_kvkk = data['accepted_kvkk']
+        accepted_email = data['accepted_email']
 
         old_student = Students.query.filter_by(email=email, is_active=True).first()
 
@@ -266,6 +268,11 @@ def student_register():
             log_body = f'Student not found'
             logging.warning(f'User: {email} | {log_body}')
             return jsonify({'message': 'This email is not invited'}), 400
+
+        if accepted_kvkk != True or accepted_email != True:
+            log_body = f'Kvkk or email not accepted'
+            logging.warning(f'User: {email} | {log_body}')
+            return jsonify({'message': 'Kvkk or email not accepted'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
@@ -549,6 +556,8 @@ def employee_register():
         name = data['name']
         surname = data['surname']
         special_id = data['special_id']
+        accepted_kvkk = data['accepted_kvkk']
+        accepted_email = data['accepted_email']
 
         company = Companies.query.filter_by(special_id=special_id, is_active=True).first()
         if not company:
@@ -567,6 +576,11 @@ def employee_register():
             log_body = f'User: {email} | Employee already exists'
             logging.warning(f'{log_body}')
             return jsonify({'message': 'Email already exists'}), 400
+
+        if accepted_kvkk != True or accepted_email != True:
+            log_body = f'User: {email} | Terms not accepted'
+            logging.warning(f'{log_body}')
+            return jsonify({'message': 'Please accept the terms'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         employee = Employees(name, surname, email, hashed_password, company_id=company.id, company_name=company.company_name)
