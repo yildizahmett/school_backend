@@ -555,6 +555,7 @@ def employee_register():
         password = data['password']
         name = data['name']
         surname = data['surname']
+        phone = data['phone']
         special_id = data['special_id']
         accepted_kvkk = data['accepted_kvkk']
         accepted_email = data['accepted_email']
@@ -583,7 +584,7 @@ def employee_register():
             return jsonify({'message': 'Please accept the terms'}), 400
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        employee = Employees(name, surname, email, hashed_password, company_id=company.id, company_name=company.company_name)
+        employee = Employees(name, surname, phone, email, hashed_password, company_id=company.id, company_name=company.company_name)
 
         db.session.add(employee)
         db.session.commit()
@@ -2286,6 +2287,21 @@ def admin_data():
         logging.warning(f'IP: {request.remote_addr} | {log_body}')
         return jsonify({'message': 'Something went wrong'}), 500
     
+
+@app.route('/logout', methods=['POST'])
+@limiter.limit("500/second")
+@jwt_required()
+def logout():
+    try:
+        
+        
+        log_body = f'IP: {request.remote_addr} | Logout'
+        logging.info(f'{log_body}')
+        return jsonify({'message': 'Successfully logged out'}), 200
+    except Exception as e:
+        log_body = f'Logout > ERROR : {repr(e)}'
+        logging.warning(f'IP: {request.remote_addr} | {log_body}')
+        return jsonify({'message': 'Something went wrong'}), 500
 
 # ========================================================================================
 #   End of ADMINISTRATOR Routes

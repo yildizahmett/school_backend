@@ -151,9 +151,10 @@ class Employees(db.Model):
 
     favourites      = db.relationship('Favourites', backref='employee_ref', lazy=True)
 
-    def __init__(self, name, surname, email, password, company_id, company_name):
+    def __init__(self, name, surname, phone, email, password, company_id, company_name):
         self.name = name
         self.surname = surname
+        self.phone = phone
         self.email = email
         self.password = password
         self.company_id = company_id
