@@ -8,7 +8,7 @@ import os
 
 from itsdangerous import URLSafeTimedSerializer
 
-from scripts.util import EMPLOYEE_EDIT_CHANGEABLE_FIELDS, app, bcrypt, company_based_employee_rates, company_invite_total, employee_mail_queue, general_select_count, get_employment_rate, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, program_based_student_rates, search_statistics, student_mail_queue, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
+from scripts.util import EMPLOYEE_EDIT_CHANGEABLE_FIELDS, app, avg_job_find_time, bcrypt, company_based_employee_rates, company_invite_total, employee_mail_queue, general_select_count, get_employment_rate, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, program_based_student_rates, search_statistics, student_mail_queue, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
 from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
@@ -2221,9 +2221,6 @@ def admin_data():
         students_table_count  = general_select_count('students', {'is_active': True})
         temps_table_count     = general_select_count('temps')
         employees_table_count = general_select_count('employees', {'is_active': True})
-        
-        # Ortalama İş Bulma Süresi Grafiği
-        avg_job_find_time = 158.91
 
         # Student data
         student_grad_total      = students_table_count + temps_table_count
@@ -2275,7 +2272,7 @@ def admin_data():
             'account_signup': account_signup,
             'employment_rate' : employment_rate,
             'grad_profile_programs' : grad_profile_programs,
-            'avg_job_find_time' : avg_job_find_time,
+            'avg_job_find_time' : avg_job_find_time(),
             'filter_top5' : filter_top
         }
 

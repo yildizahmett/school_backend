@@ -126,6 +126,19 @@ def search_statistics(filter_type):
         con.close()
     return [dict(row) for row in result.fetchall()]
 
+def avg_job_find_time():
+    query = '''select avg(job_time) from
+                (select case when DATE_PART('day', job_find_time - signup_date) = 0 then 1 
+                else DATE_PART('day', job_find_time - signup_date) end as job_time from
+                (select job_find_time, date as signup_date from students 
+                where is_active = True and job_find_time is not null) t) k'''
+
+    with engine.connect() as con:
+        result = con.execute(query)
+        con.close()
+
+    return result.fetchone()[0]
+
 def program_based_student_rates():
     query = """
             select 
