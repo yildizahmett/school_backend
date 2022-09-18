@@ -662,16 +662,17 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
 
             # Check student info is completed
             student_info = student.to_dict()
-            student_info_prof_comp = [{key: val} for key, val in student_info.items() if key in PROFILE_COMPLETE_KEYS]
+            student_info_prof_comp = { key: val for key, val in student_info.items() if key in PROFILE_COMPLETE_KEYS }
             if (not student.profile_complete) and all(student_info_prof_comp.values()) and all(student_info["school_programs"][0].values()):
-                setattr(student, 'profile_complete', True)               
+                setattr(student, 'profile_complete', True)
+                db.session.commit()           
 
             if request.method == 'GET':
                 requested_data = get_specific_data(student, needed_data)
                 return requested_data
 
             elif request.method == 'POST':
-                if (not student_info['job_find_time']) and (request.get_json()['grad_status'] != 'Unemployed'):
+                if needed_data == 'general' and (not student_info['job_find_time']) and (request.get_json()['grad_status'] != 'Unemployed'):
                     setattr(student, 'job_find_time', datetime.now())
 
                 message += update_table_data(request.get_json(), student, db)
