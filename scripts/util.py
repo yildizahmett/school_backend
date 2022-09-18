@@ -50,6 +50,8 @@ SAFE_TALENT_COLUMNS = ['id', 'job_title', 'highest_education', 'highest_educatio
 UNSAFE_TALENT_COLUMNS = ['id', 'name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 'onsite_city', 'languages']
 
 EMPLOYEE_EDIT_CHANGEABLE_FIELDS = ['name', 'surname', 'phone']
+PROFILE_COMPLETE_KEYS = ['name', 'surname', 'email', 'phone', 'job_title', 'highest_education', 'highest_education_grad_date', 'highest_education_department', 'workplace_type', 'comp_skills', 
+                         'onsite_city', 'languages', 'city', 'country', 'education', 'summary', 'linkedin', 'github', 'birth_date', 'salary_min', 'salary_currency']
 
 def post_search_talent(selected_filter, filtered_by):
     if len(selected_filter.keys()) < 1:
@@ -660,7 +662,8 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
 
             # Check student info is completed
             student_info = student.to_dict()
-            if (not student.profile_complete) and all(student_info.values()) and all(student_info["school_programs"][0].values()):
+            student_info_prof_comp = student_info[PROFILE_COMPLETE_KEYS]
+            if (not student.profile_complete) and all(student_info_prof_comp.values()) and all(student_info["school_programs"][0].values()):
                 setattr(student, 'profile_complete', True)               
 
             if request.method == 'GET':
@@ -668,6 +671,9 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
                 return requested_data
 
             elif request.method == 'POST':
+                if (not student_info['job_find_time']) and (request.get_json()['grad_status'] != 'Unemployed'):
+                    setattr(student, 'job_find_time', datetime.now())
+
                 message += update_table_data(request.get_json(), student, db)
                 log_body = f'update_profile_data > SUCCESS : {message}'
                 logging.info(f'User: {email} | {log_body}')
