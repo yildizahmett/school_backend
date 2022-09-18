@@ -662,7 +662,7 @@ def update_profile_data(request, jwt_identitiy, Members, needed_data):
 
             # Check student info is completed
             student_info = student.to_dict()
-            student_info_prof_comp = [{key: val} for key, val in student_info.entries() if key in PROFILE_COMPLETE_KEYS]
+            student_info_prof_comp = [{key: val} for key, val in student_info.items() if key in PROFILE_COMPLETE_KEYS]
             if (not student.profile_complete) and all(student_info_prof_comp.values()) and all(student_info["school_programs"][0].values()):
                 setattr(student, 'profile_complete', True)               
 
