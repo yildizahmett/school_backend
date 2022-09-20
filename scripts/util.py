@@ -15,6 +15,23 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import pika
 
+def json_to_dict(filename):
+    with open(filename, 'r') as j:
+        data = json.load(j)
+    return data
+
+data_category = json_to_dict('./json_files/category.json')
+
+# Data Category Constants
+DC_AD_STUDENT       = 'admin-students'
+DC_AD_COMPANIES     = 'admin-companies'
+DC_AD_EMPLOYEES     = 'admin-employees'
+DC_ST_GENERAL       = 'general'
+DC_ST_ACTIVITIES    = 'activities'
+DC_ST_HARDSKILLS    = 'hardskills'
+DC_ST_JOB           = 'job'
+
+FRONTEND_LINK = 'https://school-frontend.vercel.app'
 
 TOKEN_EXPIRE_TIME = 2 # HOURS
 app = Flask(__name__)
@@ -582,24 +599,6 @@ def db_count_employee_fav(student_id):
 
     return data[0]
 
-
-def json_to_dict(filename):
-    with open(filename, 'r') as j:
-        data = json.load(j)
-    return data
-
-data_category = json_to_dict('./json_files/category.json')
-
-# Data Category Constants
-DC_AD_STUDENT       = 'admin-students'
-DC_AD_COMPANIES     = 'admin-companies'
-DC_AD_EMPLOYEES     = 'admin-employees'
-DC_ST_GENERAL       = 'general'
-DC_ST_ACTIVITIES    = 'activities'
-DC_ST_HARDSKILLS    = 'hardskills'
-DC_ST_JOB           = 'job'
-
-FRONTEND_LINK = 'https://school-frontend.vercel.app'
 
 def random_id_generator(size=8, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))

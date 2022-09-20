@@ -11,6 +11,7 @@ from itsdangerous import URLSafeTimedSerializer
 from scripts.util import EMPLOYEE_EDIT_CHANGEABLE_FIELDS, app, avg_job_find_time, bcrypt, company_based_employee_rates, company_invite_total, employee_mail_queue, general_select_count, get_employment_rate, limiter, db_count_employee_fav, db_count_student_fav, db_filter_admin_count, db_filter_employee, db_filter_student_count, db_get_employee_for_fav, db_get_student_for_fav, get_companies, get_fav_amount, get_favourited_student_ids, get_my_favourites, get_programs, jwt, db, engine, get_specific_data, post_search_talent, program_based_student_rates, search_statistics, student_mail_queue, update_company_name, update_is_activate_employees, update_is_activate_students, update_is_active_company, update_table_data, update_profile_data, random_id_generator, logging, db_filter_admin
 from scripts.util import FRONTEND_LINK, DC_AD_STUDENT, DC_AD_COMPANIES, DC_AD_EMPLOYEES, DC_ST_GENERAL, DC_ST_ACTIVITIES, DC_ST_HARDSKILLS, DC_ST_JOB
 from scripts.util import SAFE_TALENT_COLUMNS, UNSAFE_TALENT_COLUMNS, REPORTING_MAILS, select_fav, select_std
+from scripts.util import data_category
 from scripts.models import Companies, Employees, Favourites, Reports, Students, Temps, Programs
 from scripts.send_mail import send_mail, generate_email_template
 
@@ -1564,7 +1565,7 @@ def admin_employees(page_no):
         number_of_employees = db_filter_admin_count("employees", selected_filter)
         number_of_pages = math.ceil(number_of_employees / entry_amount)
 
-        employees = db_filter_admin('employees', selected_filter, selected_sort, is_ascending, limit, offset)
+        employees = db_filter_admin('employees', selected_filter, selected_sort, is_ascending, limit, offset, data_category[DC_AD_EMPLOYEES])
         fav_amounts = get_fav_amount(is_employee=True)
 
         log_body = f'IP: {request.remote_addr} | Employees retrieved'
@@ -1774,7 +1775,7 @@ def admin_students(page_no):
         number_of_students = db_filter_admin_count("students", selected_filter)
         number_of_pages = math.ceil(number_of_students / entry_amount)
 
-        students = db_filter_admin('students', selected_filter, selected_sort, is_ascending, limit, offset)
+        students = db_filter_admin('students', selected_filter, selected_sort, is_ascending, limit, offset, data_category[DC_AD_STUDENT])
         fav_amounts = get_fav_amount(is_student=True)
 
         log_body = f'IP: {request.remote_addr} | Students retrieved'
