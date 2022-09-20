@@ -3,7 +3,7 @@
     "activities": ["id", "profile_complete", "school_programs"],
     "hardskills": ["id", "profile_complete", "educations", "experiences", "projects", "languages", "certificates", "volunteer", "comp_skills", "hobbies", "linkedin", "github", "medium"],
     "job": ["id", "profile_complete", "workplace_type", "salary_min", "salary_currency", "onsite_city"],
-    "admin-students": ["id", "program_name", "name", "surname", "email", "phone", "grad_status", "profile_complete", "highest_education_grad_date", "job_find_time", "pool_amount", "date"],
+    "admin-students": ["id", "school_programs", "name", "surname", "email", "phone", "grad_status", "profile_complete", "highest_education_grad_date", "job_find_time", "date"],
     "admin-companies": ["id", "company_name", "special_id", "company_users"],
-    "admin-employees": ["id", "company_name", "name", "surname", "email", "phone", "t_c", "sign_up_date", "duration", "pool_amount"]
+    "admin-employees": ["id", "company_name", "name", "surname", "email", "phone", "t_c", "t_c_date", "date"]
 }
