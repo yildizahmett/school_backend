@@ -31,8 +31,6 @@ DC_ST_ACTIVITIES    = 'activities'
 DC_ST_HARDSKILLS    = 'hardskills'
 DC_ST_JOB           = 'job'
 
-FRONTEND_LINK = 'https://school-frontend.vercel.app'
-
 TOKEN_EXPIRE_TIME = 2 # HOURS
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
@@ -51,6 +49,8 @@ jwt = JWTManager(app)
 db = SQLAlchemy(app)
 engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'], engine_opts={'pool_size': 20, 'pool_recycle': 3600})
 CORS(app)
+
+FRONTEND_LINK = app.config['FRONTEND_LINK']
 
 format = '| %(asctime)s | %(funcName)s: %(lineno)d | %(message)s | %(levelname)s'
 logging.basicConfig(format=format, 
