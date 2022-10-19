@@ -30,7 +30,7 @@ class Students(db.Model):
     surname         = db.Column(db.String(120), nullable=False)
     gender          = db.Column(db.String(120), nullable=True)
     phone           = db.Column(db.String(25), nullable=True) # the length may be shortened
-    summary         = db.Column(db.String(255), nullable=True)
+    summary         = db.Column(db.String(3000), nullable=True)
     linkedin        = db.Column(db.String(240), nullable=True)
     github          = db.Column(db.String(240), nullable=True)
     medium          = db.Column(db.String(240), nullable=True)
